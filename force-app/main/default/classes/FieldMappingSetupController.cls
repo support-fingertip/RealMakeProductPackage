@@ -28,7 +28,7 @@ public with sharing class FieldMappingSetupController {
     public static List<FieldOption> getLeadFields() {
         List<FieldOption> fieldOptions = new List<FieldOption>();
 
-        Schema.SObjectType leadType = Schema.getGlobalDescribe().get('Lead__c');
+        Schema.SObjectType leadType = NamespaceUtil.describeObject('Lead__c');
         if (leadType == null) {
             return fieldOptions;
         }

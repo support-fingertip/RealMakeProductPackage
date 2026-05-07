@@ -88,7 +88,7 @@ public with sharing class FormulaCalculationService {
      */
     private static SObject getRecordWithLookups(Id recordId, String objectAPI) {
         // Build query to get all lookup fields
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(objectAPI).getDescribe().fields.getMap();
         List<String> fields = new List<String>{'Id'};
         
         for(String fieldName : fieldMap.keySet()) {
@@ -322,8 +322,8 @@ public with sharing class FormulaCalculationService {
         String targetObjectAPI,
         String sourceObjectAPI
     ) {
-        Map<String, Schema.SObjectField> targetFields = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe().fields.getMap();
-        Map<String, Schema.SObjectField> sourceFields = Schema.getGlobalDescribe().get(sourceObjectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> targetFields = NamespaceUtil.describeObject(targetObjectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> sourceFields = NamespaceUtil.describeObject(sourceObjectAPI).getDescribe().fields.getMap();
         
         // Pattern to match field API names
         Pattern fieldPattern = Pattern.compile('\\b([A-Za-z][A-Za-z0-9_]*)__c\\b');
@@ -624,7 +624,7 @@ public with sharing class FormulaCalculationService {
     }
     
     private static Map<Id, SObject> getRecordsWithAllFields(Set<Id> recordIds, String objectAPI) {
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(objectAPI).getDescribe().fields.getMap();
         List<String> fields = new List<String>{'Id'};
 
         for(String fieldName : fieldMap.keySet()) {
@@ -656,7 +656,7 @@ public with sharing class FormulaCalculationService {
      * Includes numeric, picklist, boolean, and reference fields
      */
     private static SObject getRecordWithAllCalculableFields(Id recordId, String objectAPI) {
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(objectAPI).getDescribe().fields.getMap();
         List<String> fields = new List<String>{'Id'};
 
         for(String fieldName : fieldMap.keySet()) {

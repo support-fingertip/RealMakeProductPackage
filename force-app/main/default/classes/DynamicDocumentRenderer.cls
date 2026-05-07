@@ -454,7 +454,7 @@ public with sharing class DynamicDocumentRenderer {
             objectApiName = Id.valueOf(recordId).getSObjectType().getDescribe().getName();
         }
 
-        Schema.SObjectType sType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
         if (sType == null) return null;
 
         Map<String, Schema.SObjectField> fieldMap = sType.getDescribe().fields.getMap();

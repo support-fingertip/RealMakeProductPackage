@@ -77,9 +77,9 @@ public class FieldMapperInvocable {
         SObject targetRecord;
         
         if (String.isNotBlank(targetRecordId)) {
-            targetRecord = Schema.getGlobalDescribe().get(toObject).newSObject(targetRecordId);
+            targetRecord = NamespaceUtil.describeObject(toObject).newSObject(targetRecordId);
         } else {
-            targetRecord = Schema.getGlobalDescribe().get(toObject).newSObject();
+            targetRecord = NamespaceUtil.describeObject(toObject).newSObject();
         }
         
         Boolean hasChanges = false;
@@ -112,7 +112,7 @@ public class FieldMapperInvocable {
                     logError(sourceRecordId, targetRecordId, errors, config.Id, isInsert ? 'Insert' : 'Update');
                 } else {
                     if (String.isBlank(targetRecordId)) {
-                        SObject sourceUpdate = Schema.getGlobalDescribe().get(fromObject).newSObject(sourceRecordId);
+                        SObject sourceUpdate = NamespaceUtil.describeObject(fromObject).newSObject(sourceRecordId);
                         Database.update(sourceUpdate, false);
                     }
                 }

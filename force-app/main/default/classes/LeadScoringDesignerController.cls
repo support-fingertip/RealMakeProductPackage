@@ -130,7 +130,7 @@ public with sharing class LeadScoringDesignerController {
         List<FieldInfo> fields = new List<FieldInfo>();
         if (String.isBlank(objectApiName)) return fields;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return fields;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -166,7 +166,7 @@ public with sharing class LeadScoringDesignerController {
         List<PicklistOption> options = new List<PicklistOption>();
         if (String.isBlank(objectApiName) || String.isBlank(fieldApiName)) return options;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return options;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -200,7 +200,7 @@ public with sharing class LeadScoringDesignerController {
         List<PicklistOption> options = new List<PicklistOption>();
         if (String.isBlank(objectApiName)) return options;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null || !objType.getDescribe().isAccessible()) return options;
 
         // Check if object has a Name field

@@ -203,9 +203,11 @@ public with sharing class AriaLeadFormController {
     @TestVisible
     private static List<Map<String, Object>> getPicklistValues(String objectName, String fieldName) {
         List<Map<String, Object>> out = new List<Map<String, Object>>();
-        Schema.SObjectType sobjType = Schema.getGlobalDescribe().get(objectName);
+        Schema.SObjectType sobjType = NamespaceUtil.describeObject(objectName);
         if (sobjType == null) return out;
-        Schema.DescribeFieldResult dfr = sobjType.getDescribe().fields.getMap().get(fieldName).getDescribe();
+        Schema.SObjectField sfField = NamespaceUtil.describeField(sobjType, fieldName);
+        if (sfField == null) return out;
+        Schema.DescribeFieldResult dfr = sfField.getDescribe();
         for (Schema.PicklistEntry e : dfr.getPicklistValues()) {
             if (e.isActive()) {
                 out.add(new Map<String, Object>{ 'label' => e.getLabel(), 'value' => e.getValue() });

@@ -99,7 +99,7 @@ public with sharing class FormulaBuilderController {
         List<Map<String, String>> picklistValues = new List<Map<String, String>>();
         
         try {
-            Schema.DescribeSObjectResult objDescribe = Schema.getGlobalDescribe().get(objectAPI).getDescribe();
+            Schema.DescribeSObjectResult objDescribe = NamespaceUtil.describeObject(objectAPI).getDescribe();
             Schema.DescribeFieldResult fieldDescribe = objDescribe.fields.getMap().get(fieldAPI).getDescribe();
             
             List<Schema.PicklistEntry> picklistEntries = fieldDescribe.getPicklistValues();
@@ -149,7 +149,7 @@ public with sharing class FormulaBuilderController {
     public static List<Map<String, String>> getLookupFields(String targetObjectAPI, String sourceObjectAPI) {
         List<Map<String, String>> lookupFields = new List<Map<String, String>>();
         
-        Schema.DescribeSObjectResult targetDescribe = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe();
+        Schema.DescribeSObjectResult targetDescribe = NamespaceUtil.describeObject(targetObjectAPI).getDescribe();
         Map<String, Schema.SObjectField> fieldMap = targetDescribe.fields.getMap();
         
         for(String fieldName : fieldMap.keySet()) {
@@ -180,10 +180,10 @@ public with sharing class FormulaBuilderController {
         Map<String, Object> result = new Map<String, Object>();
         
         List<Map<String, String>> fields = new List<Map<String, String>>();
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(objectAPI).getDescribe().fields.getMap();
         
         // Get object label for display
-        String objectLabel = Schema.getGlobalDescribe().get(objectAPI).getDescribe().getLabel();
+        String objectLabel = NamespaceUtil.describeObject(objectAPI).getDescribe().getLabel();
         
         for(String fieldName : fieldMap.keySet()) {
             Schema.DescribeFieldResult dfr = fieldMap.get(fieldName).getDescribe();
@@ -215,8 +215,8 @@ public with sharing class FormulaBuilderController {
         List<Map<String, String>> allFields = new List<Map<String, String>>();
         
         // Get Source Object fields
-        Map<String, Schema.SObjectField> sourceFieldMap = Schema.getGlobalDescribe().get(sourceObjectAPI).getDescribe().fields.getMap();
-        String sourceLabel = Schema.getGlobalDescribe().get(sourceObjectAPI).getDescribe().getLabel();
+        Map<String, Schema.SObjectField> sourceFieldMap = NamespaceUtil.describeObject(sourceObjectAPI).getDescribe().fields.getMap();
+        String sourceLabel = NamespaceUtil.describeObject(sourceObjectAPI).getDescribe().getLabel();
         
         for(String fieldName : sourceFieldMap.keySet()) {
             Schema.DescribeFieldResult dfr = sourceFieldMap.get(fieldName).getDescribe();
@@ -234,8 +234,8 @@ public with sharing class FormulaBuilderController {
         }
         
         // Get Target Object fields
-        Map<String, Schema.SObjectField> targetFieldMap = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe().fields.getMap();
-        String targetLabel = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe().getLabel();
+        Map<String, Schema.SObjectField> targetFieldMap = NamespaceUtil.describeObject(targetObjectAPI).getDescribe().fields.getMap();
+        String targetLabel = NamespaceUtil.describeObject(targetObjectAPI).getDescribe().getLabel();
         
         for(String fieldName : targetFieldMap.keySet()) {
             Schema.DescribeFieldResult dfr = targetFieldMap.get(fieldName).getDescribe();
@@ -375,7 +375,7 @@ public with sharing class FormulaBuilderController {
 
             // If no existing target record, create an empty one
             if(targetRecord == null) {
-                targetRecord = Schema.getGlobalDescribe().get(targetObjectAPI).newSObject();
+                targetRecord = NamespaceUtil.describeObject(targetObjectAPI).newSObject();
                 targetRecord.put(lookupField, unitId);
             }
 
@@ -434,7 +434,7 @@ public with sharing class FormulaBuilderController {
      */
     private static SObject queryExistingTargetRecord(String targetObjectAPI, String lookupField, Id sourceId) {
         try {
-            Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe().fields.getMap();
+            Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(targetObjectAPI).getDescribe().fields.getMap();
             List<String> fields = new List<String>{'Id'};
 
             for(String fieldName : fieldMap.keySet()) {
@@ -463,8 +463,8 @@ public with sharing class FormulaBuilderController {
     }
 
     private static String replaceFieldsForTest(String formula, SObject targetRecord, SObject unit, String targetObjectAPI, String sourceObjectAPI) {
-        Map<String, Schema.SObjectField> targetFields = Schema.getGlobalDescribe().get(targetObjectAPI).getDescribe().fields.getMap();
-        Map<String, Schema.SObjectField> sourceFields = Schema.getGlobalDescribe().get(sourceObjectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> targetFields = NamespaceUtil.describeObject(targetObjectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> sourceFields = NamespaceUtil.describeObject(sourceObjectAPI).getDescribe().fields.getMap();
 
         Pattern fieldPattern = Pattern.compile('\\b([A-Za-z][A-Za-z0-9_]*)__c\\b');
         Matcher matcher = fieldPattern.matcher(formula);
@@ -526,7 +526,7 @@ public with sharing class FormulaBuilderController {
     }
     
     private static Map<Id, SObject> getRecordsWithAllFieldsDynamic(Set<Id> recordIds, String objectAPI) {
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectAPI).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> fieldMap = NamespaceUtil.describeObject(objectAPI).getDescribe().fields.getMap();
         List<String> fields = new List<String>{'Id'};
 
         for(String fieldName : fieldMap.keySet()) {
@@ -580,7 +580,7 @@ public with sharing class FormulaBuilderController {
 
         if (String.isBlank(objectAPI)) return richTextFields;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectAPI);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectAPI);
         if (objType == null) return richTextFields;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();

@@ -414,7 +414,7 @@ public class ResponseMapper {
         // Create SObject instances
         for (String objectName : objectFieldMap.keySet()) {
             try {
-                Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectName);
+                Schema.SObjectType objectType = NamespaceUtil.describeObject(objectName);
                 if (objectType == null) {
                     System.debug(LoggingLevel.WARN,
                         'ResponseMapper: Unknown SObject type "' + objectName + '"'

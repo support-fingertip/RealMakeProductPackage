@@ -321,7 +321,7 @@ public with sharing class DocumentViewerController {
         }
 
         // Validate fields exist
-        Schema.SObjectType sType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
         if (sType == null) return null;
         Map<String, Schema.SObjectField> fieldMap = sType.getDescribe().fields.getMap();
 
@@ -373,7 +373,7 @@ public with sharing class DocumentViewerController {
         List<Map<String, String>> result = new List<Map<String, String>>();
         if (String.isBlank(objectApiName) || String.isBlank(fieldApiName)) return result;
 
-        Schema.SObjectType sType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
         if (sType == null) return result;
 
         Schema.SObjectField field = sType.getDescribe().fields.getMap().get(fieldApiName.toLowerCase());

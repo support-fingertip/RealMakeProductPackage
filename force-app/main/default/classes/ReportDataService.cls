@@ -203,7 +203,7 @@ public with sharing class ReportDataService {
         Map<String, String> parentLookupMap = resolveLookupFields(objectName, parentFields);
 
         // Update parent column labels for lookups (show "Owner Name" not "Owner ID")
-        Schema.SObjectType parentObjType = Schema.getGlobalDescribe().get(objectName);
+        Schema.SObjectType parentObjType = NamespaceUtil.describeObject(objectName);
         Map<String, Schema.SObjectField> parentFieldDescMap = parentObjType != null
             ? parentObjType.getDescribe().fields.getMap() : new Map<String, Schema.SObjectField>();
         for (ReportColumn pc : parentCols) {
@@ -509,8 +509,8 @@ public with sharing class ReportDataService {
 
     // Find the lookup field from child object back to parent
     private static String findLookupField(String childObjectName, String parentObjectName) {
-        Schema.SObjectType childType = Schema.getGlobalDescribe().get(childObjectName);
-        Schema.SObjectType parentType = Schema.getGlobalDescribe().get(parentObjectName);
+        Schema.SObjectType childType = NamespaceUtil.describeObject(childObjectName);
+        Schema.SObjectType parentType = NamespaceUtil.describeObject(parentObjectName);
         if (childType == null || parentType == null) return null;
 
         for (Schema.SObjectField field : childType.getDescribe().fields.getMap().values()) {
@@ -802,7 +802,7 @@ public with sharing class ReportDataService {
         result.columns = new List<ReportColumn>();
         result.rows = new List<Map<String, Object>>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectName);
         Map<String, Schema.SObjectField> fieldDescMap = objType.getDescribe().fields.getMap();
 
         for (String fn : fieldNames) {
@@ -1008,7 +1008,7 @@ public with sharing class ReportDataService {
     // Also detects fields already in dot notation (e.g., Owner.Name) and passes them through
     private static Map<String, String> resolveLookupFields(String objectName, List<String> fields) {
         Map<String, String> lookupMap = new Map<String, String>();
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectName);
         if (objType == null) return lookupMap;
 
         Map<String, Schema.SObjectField> fieldDescMap = objType.getDescribe().fields.getMap();
@@ -1078,7 +1078,7 @@ public with sharing class ReportDataService {
             if (fieldName.contains('.')) {
                 return fieldName.replace('__r.', ' ').replace('.', ' ');
             }
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectName);
             if (objType != null) {
                 Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
                 if (fieldMap.containsKey(fieldName.toLowerCase())) {

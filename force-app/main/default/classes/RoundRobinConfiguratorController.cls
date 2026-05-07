@@ -212,7 +212,7 @@ public with sharing class RoundRobinConfiguratorController {
         String safeSearch = String.escapeSingleQuotes(searchText.trim()) + '%';
         String safeObject = String.escapeSingleQuotes(objectName.trim());
 
-        Schema.SObjectType targetType = Schema.getGlobalDescribe().get(safeObject);
+        Schema.SObjectType targetType = NamespaceUtil.describeObject(safeObject);
         if (targetType == null) return results;
 
         String query = 'SELECT Id, Name FROM ' + safeObject +

@@ -996,13 +996,13 @@ public with sharing class DiscountApprovalEngine {
     }
 
     private static String getDiscountStatus(Cost_Sheet__c cs, Integer fieldNumber) {
-        String fieldName = 'Discount_' + fieldNumber + '_Status__c';
+        String fieldName = NamespaceUtil.qualify('Discount_' + fieldNumber + '_Status__c');
         Object val = cs.get(fieldName);
         return val != null ? String.valueOf(val) : 'N/A';
     }
 
     private static void setDiscountStatus(Cost_Sheet__c cs, Integer fieldNumber, String status) {
-        String fieldName = 'Discount_' + fieldNumber + '_Status__c';
+        String fieldName = NamespaceUtil.qualify('Discount_' + fieldNumber + '_Status__c');
         cs.put(fieldName, status);
     }
 

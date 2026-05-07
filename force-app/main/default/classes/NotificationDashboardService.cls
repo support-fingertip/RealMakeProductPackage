@@ -8,8 +8,9 @@
 public with sharing class NotificationDashboardService {
 
     // ── Static Config Cache (single SOQL per transaction) ──────────
-    private static List<Dashboard_Tab_Config__mdt> cachedTabConfigs;
-    private static List<Dashboard_Field_Config__mdt> cachedFieldConfigs;
+    // @TestVisible so tests can pre-populate these caches (CMDT can't be inserted via DML).
+    @TestVisible private static List<Dashboard_Tab_Config__mdt> cachedTabConfigs;
+    @TestVisible private static List<Dashboard_Field_Config__mdt> cachedFieldConfigs;
     private static String cachedProfileName;
     private static Set<String> cachedHeadProfiles;
 
@@ -286,7 +287,7 @@ public with sharing class NotificationDashboardService {
 
         // Validate the sObject and field exist
         String safeName = String.escapeSingleQuotes(sObjectName);
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(safeName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(safeName);
         if (objType == null) {
             throw new AuraHandledException('Invalid object: ' + safeName);
         }

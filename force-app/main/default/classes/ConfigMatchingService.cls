@@ -145,7 +145,7 @@ public with sharing class ConfigMatchingService {
         List<Map<String, String>> fields = new List<Map<String, String>>();
         if (String.isBlank(objectApiName)) return fields;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return fields;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -173,7 +173,7 @@ public with sharing class ConfigMatchingService {
         List<Map<String, String>> values = new List<Map<String, String>>();
         if (String.isBlank(objectApiName) || String.isBlank(fieldApiName)) return values;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return values;
 
         Schema.SObjectField field = objType.getDescribe().fields.getMap().get(fieldApiName.toLowerCase());

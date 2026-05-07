@@ -24,7 +24,7 @@ public with sharing class FieldMapperController {
     public static List<FieldInfo> getFieldList(String objectApiName) {
         List<FieldInfo> fieldList = new List<FieldInfo>();
         
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return fieldList;
         }
@@ -60,7 +60,7 @@ public with sharing class FieldMapperController {
     public static List<FieldInfo> getCompatibleFields(String objectApiName, String fieldType) {
         List<FieldInfo> compatibleFields = new List<FieldInfo>();
         
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return compatibleFields;
         }

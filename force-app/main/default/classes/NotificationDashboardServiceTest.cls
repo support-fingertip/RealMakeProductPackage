@@ -5,6 +5,56 @@
 @isTest
 private class NotificationDashboardServiceTest {
 
+    /**
+     * Seed in-memory Custom Metadata records into the service's static cache so the
+     * dashboard tests do not depend on org-installed CMDT (CMDT can't be inserted via DML).
+     */
+    private static void seedCmdtMocks() {
+        NotificationDashboardService.cachedTabConfigs = new List<Dashboard_Tab_Config__mdt>{
+            new Dashboard_Tab_Config__mdt(
+                Tab_Name__c = 'Today\'s Leads', Tab_Key__c = 'TODAY_LEADS',
+                Sort_Order__c = 1, Icon_Name__c = 'standard:lead',
+                SObject_Names__c = 'Lead__c', Allowed_Profiles__c = 'System Administrator',
+                Empty_State_Text__c = 'No leads today',
+                Show_Badge_Count__c = true, Status_Actions_JSON__c = '[]', Is_Active__c = true
+            ),
+            new Dashboard_Tab_Config__mdt(
+                Tab_Name__c = 'Today\'s Agendas', Tab_Key__c = 'TODAY_AGENDAS',
+                Sort_Order__c = 2, Icon_Name__c = 'standard:event',
+                SObject_Names__c = 'Followup__c,Site_Visit__c', Allowed_Profiles__c = 'System Administrator',
+                Empty_State_Text__c = 'No agendas today',
+                Show_Badge_Count__c = true, Status_Actions_JSON__c = '[]', Is_Active__c = true
+            ),
+            new Dashboard_Tab_Config__mdt(
+                Tab_Name__c = 'Pending Items', Tab_Key__c = 'PENDING_ITEMS',
+                Sort_Order__c = 3, Icon_Name__c = 'standard:task',
+                SObject_Names__c = 'Followup__c', Allowed_Profiles__c = 'System Administrator',
+                Empty_State_Text__c = 'No pending items',
+                Show_Badge_Count__c = true, Status_Actions_JSON__c = '[]', Is_Active__c = true
+            )
+        };
+        NotificationDashboardService.cachedFieldConfigs = new List<Dashboard_Field_Config__mdt>{
+            new Dashboard_Field_Config__mdt(
+                SObject_Name__c = 'Lead__c', Field_API_Name__c = 'First_Name__c',
+                Display_Label__c = 'First Name', Display_Order__c = 1, Context__c = 'CARD',
+                Field_Type__c = 'TEXT', Is_Title_Field__c = true,
+                Badge_Variant__c = '', CSS_Class__c = '', Is_Active__c = true
+            ),
+            new Dashboard_Field_Config__mdt(
+                SObject_Name__c = 'Followup__c', Field_API_Name__c = 'Subject__c',
+                Display_Label__c = 'Subject', Display_Order__c = 1, Context__c = 'CARD',
+                Field_Type__c = 'TEXT', Is_Title_Field__c = true,
+                Badge_Variant__c = '', CSS_Class__c = '', Is_Active__c = true
+            ),
+            new Dashboard_Field_Config__mdt(
+                SObject_Name__c = 'Site_Visit__c', Field_API_Name__c = 'Scheduled_Date__c',
+                Display_Label__c = 'Scheduled', Display_Order__c = 1, Context__c = 'CARD',
+                Field_Type__c = 'DATETIME', Is_Title_Field__c = true,
+                Badge_Variant__c = '', CSS_Class__c = '', Is_Active__c = true
+            )
+        };
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  TEST SETUP
     // ═══════════════════════════════════════════════════════════════════
@@ -68,6 +118,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testGetDashboardConfig() {
+        seedCmdtMocks();
         Test.startTest();
         Map<String, Object> config = NotificationDashboardController.getDashboardConfig();
         Test.stopTest();
@@ -88,6 +139,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testGetTabDataTodayAgendas() {
+        seedCmdtMocks();
         Test.startTest();
         NotificationDashboardService.TabDataResult result =
             NotificationDashboardController.getTabData('TODAY_AGENDAS', 200, 0);
@@ -99,6 +151,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testGetTabDataPendingItems() {
+        seedCmdtMocks();
         Test.startTest();
         NotificationDashboardService.TabDataResult result =
             NotificationDashboardController.getTabData('PENDING_ITEMS', 200, 0);
@@ -121,6 +174,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testGetTabDataTodayLeads() {
+        seedCmdtMocks();
         Test.startTest();
         NotificationDashboardService.TabDataResult result =
             NotificationDashboardController.getTabData('TODAY_LEADS', 10, 0);
@@ -133,6 +187,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testGetTabDataTodayLeadsPagination() {
+        seedCmdtMocks();
         // Create additional leads for pagination
         Project__c proj = [SELECT Id FROM Project__c LIMIT 1];
         List<Lead__c> extraLeads = new List<Lead__c>();
@@ -257,6 +312,7 @@ private class NotificationDashboardServiceTest {
 
     @isTest
     static void testRecordCardFieldValues() {
+        seedCmdtMocks();
         Test.startTest();
         NotificationDashboardService.TabDataResult result =
             NotificationDashboardController.getTabData('TODAY_AGENDAS', 200, 0);

@@ -15,7 +15,7 @@ public with sharing class FieldDiscoveryService {
     public static List<DynamicApprovalController.FieldPathOption> discoverUserLookups(String objectApiName) {
         List<DynamicApprovalController.FieldPathOption> allPaths = new List<DynamicApprovalController.FieldPathOption>();
         
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return allPaths;
         }

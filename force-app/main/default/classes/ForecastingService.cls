@@ -504,7 +504,7 @@ public with sharing class ForecastingService {
         List<SourceBreakdown> results = new List<SourceBreakdown>();
 
         String leadWhere = buildLeadWhereClause(filter);
-        String sourceQuery = 'SELECT Lead_Source__c, COUNT(Id) cnt FROM Lead__c WHERE Lead_Source__c != null AND Lead_Status__c NOT IN (\'Unqualified\', \'Closed Lost\')';
+        String sourceQuery = 'SELECT Lead_Source__c src, COUNT(Id) cnt FROM Lead__c WHERE Lead_Source__c != null AND Lead_Status__c NOT IN (\'Unqualified\', \'Closed Lost\')';
         if (String.isNotBlank(leadWhere)) {
             sourceQuery += ' AND ' + leadWhere;
         }
@@ -512,13 +512,13 @@ public with sharing class ForecastingService {
 
         Map<String, Integer> leadsBySource = new Map<String, Integer>();
         for (AggregateResult ar : Database.query(sourceQuery)) {
-            String src = (String) ar.get('Lead_Source__c');
+            String src = (String) ar.get('src');
             Integer cnt = (Integer) ar.get('cnt');
             leadsBySource.put(src, cnt);
         }
 
         // Get bookings by source
-        String bkSourceQuery = 'SELECT Lead__r.Lead_Source__c, COUNT(Id) cnt, SUM(Grand_Total__c) rev FROM Booking__c WHERE Lead__c != null AND Is_Cancelled__c = false AND Lead__r.Lead_Source__c != null';
+        String bkSourceQuery = 'SELECT Lead__r.Lead_Source__c src, COUNT(Id) cnt, SUM(Grand_Total__c) rev FROM Booking__c WHERE Lead__c != null AND Is_Cancelled__c = false AND Lead__r.Lead_Source__c != null';
         String bkWhere = buildChildWhereClause(filter, 'Lead__r.');
         if (String.isNotBlank(bkWhere)) {
             bkSourceQuery += ' AND ' + bkWhere;
@@ -528,13 +528,13 @@ public with sharing class ForecastingService {
         Map<String, Integer> bookingsBySource = new Map<String, Integer>();
         Map<String, Decimal> revenueBySource = new Map<String, Decimal>();
         for (AggregateResult ar : Database.query(bkSourceQuery)) {
-            String src = (String) ar.get('Lead_Source__c');
+            String src = (String) ar.get('src');
             bookingsBySource.put(src, (Integer) ar.get('cnt'));
             revenueBySource.put(src, ar.get('rev') != null ? (Decimal) ar.get('rev') : 0);
         }
 
         // Get site visits by source
-        String svSourceQuery = 'SELECT Lead__r.Lead_Source__c, COUNT(Id) cnt FROM Site_Visit__c WHERE Lead__c != null AND Lead__r.Lead_Source__c != null';
+        String svSourceQuery = 'SELECT Lead__r.Lead_Source__c src, COUNT(Id) cnt FROM Site_Visit__c WHERE Lead__c != null AND Lead__r.Lead_Source__c != null';
         String svWhere = buildChildWhereClause(filter, 'Lead__r.');
         if (String.isNotBlank(svWhere)) {
             svSourceQuery += ' AND ' + svWhere;
@@ -543,7 +543,7 @@ public with sharing class ForecastingService {
 
         Map<String, Integer> svsBySource = new Map<String, Integer>();
         for (AggregateResult ar : Database.query(svSourceQuery)) {
-            String src = (String) ar.get('Lead_Source__c');
+            String src = (String) ar.get('src');
             svsBySource.put(src, (Integer) ar.get('cnt'));
         }
 
@@ -591,24 +591,24 @@ public with sharing class ForecastingService {
         // Count leads per campaign
         Map<Id, Integer> leadsByCamp = new Map<Id, Integer>();
         for (AggregateResult ar : [
-            SELECT Campaign__c, COUNT(Id) cnt
+            SELECT Campaign__c camp, COUNT(Id) cnt
             FROM Lead__c
             WHERE Campaign__c IN :campIds
             GROUP BY Campaign__c
         ]) {
-            leadsByCamp.put((Id) ar.get('Campaign__c'), (Integer) ar.get('cnt'));
+            leadsByCamp.put((Id) ar.get('camp'), (Integer) ar.get('cnt'));
         }
 
         // Count bookings + revenue per campaign
         Map<Id, Integer> bookingsByCamp = new Map<Id, Integer>();
         Map<Id, Decimal> revenueByCamp = new Map<Id, Decimal>();
         for (AggregateResult ar : [
-            SELECT Lead__r.Campaign__c, COUNT(Id) cnt, SUM(Grand_Total__c) rev
+            SELECT Lead__r.Campaign__c camp, COUNT(Id) cnt, SUM(Grand_Total__c) rev
             FROM Booking__c
             WHERE Lead__r.Campaign__c IN :campIds AND Is_Cancelled__c = false
             GROUP BY Lead__r.Campaign__c
         ]) {
-            Id campId = (Id) ar.get('Campaign__c');
+            Id campId = (Id) ar.get('camp');
             bookingsByCamp.put(campId, (Integer) ar.get('cnt'));
             revenueByCamp.put(campId, ar.get('rev') != null ? (Decimal) ar.get('rev') : 0);
         }
@@ -661,11 +661,11 @@ public with sharing class ForecastingService {
         // Sources
         opts.sources = new List<OptionItem>();
         for (AggregateResult ar : [
-            SELECT Lead_Source__c FROM Lead__c
+            SELECT Lead_Source__c src FROM Lead__c
             WHERE Lead_Source__c != null
             GROUP BY Lead_Source__c ORDER BY Lead_Source__c
         ]) {
-            String src = (String) ar.get('Lead_Source__c');
+            String src = (String) ar.get('src');
             opts.sources.add(new OptionItem(src, src));
         }
 

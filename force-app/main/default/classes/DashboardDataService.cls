@@ -172,7 +172,7 @@ public with sharing class DashboardDataService {
             List<SObject> records = Database.query(query);
 
             // Build field labels from describe
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectName);
             Map<String, Schema.SObjectField> fieldDescMap = objType.getDescribe().fields.getMap();
 
             ReportResult result = new ReportResult();

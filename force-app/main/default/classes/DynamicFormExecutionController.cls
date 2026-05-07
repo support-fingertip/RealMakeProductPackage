@@ -176,7 +176,7 @@ public with sharing class DynamicFormExecutionController {
     public static Map<String, FieldMetadata> getFieldsMetadata(String objectApiName, List<String> fieldApiNames) {
         Map<String, FieldMetadata> fieldsMetadata = new Map<String, FieldMetadata>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return fieldsMetadata;
         }
@@ -227,7 +227,7 @@ public with sharing class DynamicFormExecutionController {
                                                String saveFormNameToField) {
         Savepoint sp = Database.setSavepoint();
         try {
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
             SObject parentRecord = objType.newSObject();
 
             Map<String, Schema.SObjectField> parentFieldMap = objType.getDescribe().fields.getMap();
@@ -235,12 +235,18 @@ public with sharing class DynamicFormExecutionController {
             for (String fieldName : fieldValues.keySet()) {
                 Object value = fieldValues.get(fieldName);
                 if (value != null) {
-                    parentRecord.put(fieldName, castFieldValue(parentFieldMap, fieldName, value));
+                    Schema.SObjectField sfField = NamespaceUtil.describeField(objType, fieldName);
+                    if (sfField != null) {
+                        parentRecord.put(sfField, castFieldValue(parentFieldMap, fieldName, value));
+                    }
                 }
             }
 
             if (String.isNotBlank(saveFormNameToField)) {
-                parentRecord.put(saveFormNameToField, formName);
+                Schema.SObjectField formNameField = NamespaceUtil.describeField(objType, saveFormNameToField);
+                if (formNameField != null) {
+                    parentRecord.put(formNameField, formName);
+                }
             }
 
             insert parentRecord;
@@ -260,19 +266,25 @@ public with sharing class DynamicFormExecutionController {
 
                     if (rows == null || rows.isEmpty()) continue;
 
-                    Schema.SObjectType childObjType = Schema.getGlobalDescribe().get(childObjectName);
+                    Schema.SObjectType childObjType = NamespaceUtil.describeObject(childObjectName);
                     Map<String, Schema.SObjectField> childFieldMap = childObjType.getDescribe().fields.getMap();
 
                     for (Object rowObj : rows) {
                         Map<String, Object> row = (Map<String, Object>) rowObj;
                         SObject childRecord = childObjType.newSObject();
 
-                        childRecord.put(relationshipField, parentId);
+                        Schema.SObjectField relField = NamespaceUtil.describeField(childObjType, relationshipField);
+                        if (relField != null) {
+                            childRecord.put(relField, parentId);
+                        }
 
                         for (String fieldName : row.keySet()) {
                             Object value = row.get(fieldName);
                             if (value != null && fieldName != 'tempId') {
-                                childRecord.put(fieldName, castFieldValue(childFieldMap, fieldName, value));
+                                Schema.SObjectField sfField = NamespaceUtil.describeField(childObjType, fieldName);
+                                if (sfField != null) {
+                                    childRecord.put(sfField, castFieldValue(childFieldMap, fieldName, value));
+                                }
                             }
                         }
 
@@ -297,6 +309,9 @@ public with sharing class DynamicFormExecutionController {
         if (value == null) return null;
 
         Schema.SObjectField sField = fieldMap.get(fieldName.toLowerCase());
+        if (sField == null) {
+            sField = fieldMap.get(NamespaceUtil.qualify(fieldName).toLowerCase());
+        }
         if (sField == null) return value;
 
         Schema.DisplayType fieldType = sField.getDescribe().getType();
@@ -336,7 +351,7 @@ public with sharing class DynamicFormExecutionController {
     @AuraEnabled
     public static Map<String, Object> getRecordValuesForClone(String objectApiName, String recordId) {
         try {
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
             if (objType == null) {
                 throw new AuraHandledException('Invalid object: ' + objectApiName);
             }

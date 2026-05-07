@@ -200,16 +200,16 @@ public with sharing class PostSalesConstants {
         List<PicklistOption> options = new List<PicklistOption>();
 
         try {
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectName);
             if (objType == null) return options;
 
             Schema.DescribeSObjectResult objDescribe = objType.getDescribe();
             Map<String, Schema.SObjectField> fieldMap = objDescribe.fields.getMap();
 
-            String fieldNameLower = fieldName.toLowerCase();
-            if (!fieldMap.containsKey(fieldNameLower)) return options;
+            Schema.SObjectField sfField = NamespaceUtil.describeField(objType, fieldName);
+            if (sfField == null) return options;
 
-            Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldNameLower).getDescribe();
+            Schema.DescribeFieldResult fieldDescribe = sfField.getDescribe();
 
             for (Schema.PicklistEntry entry : fieldDescribe.getPicklistValues()) {
                 if (entry.isActive()) {

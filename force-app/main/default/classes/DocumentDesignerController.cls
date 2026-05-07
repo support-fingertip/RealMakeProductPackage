@@ -203,7 +203,7 @@ public with sharing class DocumentDesignerController {
         List<FieldOption> fields = new List<FieldOption>();
         if (String.isBlank(objectApiName)) return fields;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return fields;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -234,7 +234,7 @@ public with sharing class DocumentDesignerController {
         List<FieldOption> fields = new List<FieldOption>();
         if (String.isBlank(objectApiName) || String.isBlank(lookupFieldName)) return fields;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return fields;
 
         Schema.DescribeFieldResult lookupField = objType.getDescribe().fields.getMap()
@@ -242,7 +242,7 @@ public with sharing class DocumentDesignerController {
         if (lookupField == null || lookupField.getReferenceTo().isEmpty()) return fields;
 
         String parentObjectName = lookupField.getReferenceTo()[0].getDescribe().getName();
-        Schema.SObjectType parentType = Schema.getGlobalDescribe().get(parentObjectName);
+        Schema.SObjectType parentType = NamespaceUtil.describeObject(parentObjectName);
         if (parentType == null) return fields;
 
         Map<String, Schema.SObjectField> parentFieldMap = parentType.getDescribe().fields.getMap();
@@ -260,7 +260,7 @@ public with sharing class DocumentDesignerController {
         List<RelationshipOption> result = new List<RelationshipOption>();
         if (String.isBlank(objectApiName)) return result;
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return result;
 
         for (Schema.ChildRelationship rel : objType.getDescribe().getChildRelationships()) {
