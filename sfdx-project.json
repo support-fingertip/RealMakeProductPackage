@@ -1,0 +1,10 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "name": "RealMake-Product",
+  "sourceApiVersion": "62.0"
+}
