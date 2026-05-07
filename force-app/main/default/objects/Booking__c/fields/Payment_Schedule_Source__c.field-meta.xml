@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Schedule_Source__c</fullName>
+    <label>Payment Schedule Source</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>From Quote</fullName>
+                <default>false</default>
+                <label>From Quote</label>
+            </value>
+            <value>
+                <fullName>Master Schedule</fullName>
+                <default>false</default>
+                <label>Master Schedule</label>
+            </value>
+            <value>
+                <fullName>Custom Schedule</fullName>
+                <default>false</default>
+                <label>Custom Schedule</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

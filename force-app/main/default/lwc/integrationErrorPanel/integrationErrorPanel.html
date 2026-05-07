@@ -1,0 +1,207 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="utility:error">
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}
+                ></lightning-button>
+                <template if:false={compactMode}>
+                    <lightning-button-menu
+                        alternative-text="Bulk Actions"
+                        icon-name="utility:threedots"
+                        menu-alignment="right"
+                        onselect={handleBulkAction}
+                        disabled={noBulkSelection}
+                    >
+                        <lightning-menu-item label="Resolve Selected" value="resolve"></lightning-menu-item>
+                        <lightning-menu-item label="Retry Selected" value="retry"></lightning-menu-item>
+                        <lightning-menu-item label="Mark as Dead Letter" value="dead_letter"></lightning-menu-item>
+                    </lightning-button-menu>
+                </template>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-p-horizontal_medium">
+            <!-- Filters (hidden in compact mode) -->
+            <template if:false={compactMode}>
+                <lightning-layout multiple-rows="true" class="slds-m-bottom_small">
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <lightning-combobox
+                            label="Severity"
+                            value={filterSeverity}
+                            options={severityFilterOptions}
+                            onchange={handleSeverityChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <lightning-combobox
+                            label="Error Type"
+                            value={filterErrorType}
+                            options={errorTypeFilterOptions}
+                            onchange={handleErrorTypeChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <lightning-combobox
+                            label="Resolution Status"
+                            value={filterResolved}
+                            options={resolvedFilterOptions}
+                            onchange={handleResolvedChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <lightning-combobox
+                            label="Dead Letter"
+                            value={filterDeadLetter}
+                            options={deadLetterFilterOptions}
+                            onchange={handleDeadLetterChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </template>
+
+            <!-- Loading -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <!-- Error Count -->
+                <div class="slds-m-bottom_x-small slds-text-body_small slds-text-color_weak">
+                    <template if:false={compactMode}>
+                        {filteredErrorCount} error(s) found
+                        <template if:true={selectedCount}>
+                            <span class="slds-m-left_small">({selectedCount} selected)</span>
+                        </template>
+                    </template>
+                </div>
+
+                <!-- Compact View -->
+                <template if:true={compactMode}>
+                    <template if:true={hasErrors}>
+                        <ul class="slds-has-dividers_bottom-space">
+                            <template for:each={compactErrors} for:item="error">
+                                <li key={error.Id} class="slds-item slds-p-vertical_x-small">
+                                    <div class="slds-grid slds-grid_vertical-align-center">
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <lightning-badge
+                                                label={error.Severity__c}
+                                                class={error.severityBadgeClass}
+                                            ></lightning-badge>
+                                        </div>
+                                        <div class="slds-col slds-size_3-of-12 slds-p-left_small">
+                                            <span class="slds-text-body_small slds-text-color_weak">{error.Error_Type__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12 slds-p-left_small">
+                                            <span class="slds-truncate slds-text-body_small" title={error.Error_Message__c}>
+                                                {error.truncatedMessage}
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                                            <template if:true={error.Is_Dead_Letter__c}>
+                                                <lightning-icon icon-name="utility:warning" size="x-small" alternative-text="Dead Letter" title="Dead Letter"></lightning-icon>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template if:false={hasErrors}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-p-vertical_small slds-align_absolute-center">
+                            No active errors.
+                        </p>
+                    </template>
+                </template>
+
+                <!-- Full Data Table -->
+                <template if:false={compactMode}>
+                    <template if:true={hasErrors}>
+                        <lightning-datatable
+                            key-field="Id"
+                            data={filteredErrors}
+                            columns={columns}
+                            sorted-by={sortedBy}
+                            sorted-direction={sortedDirection}
+                            onsort={handleSort}
+                            onrowaction={handleRowAction}
+                            onrowselection={handleRowSelection}
+                            show-row-number-column
+                            max-row-selection="100"
+                        ></lightning-datatable>
+                    </template>
+                    <template if:false={hasErrors}>
+                        <div class="slds-p-vertical_large slds-align_absolute-center">
+                            <p class="slds-text-body_regular slds-text-color_weak">
+                                No error logs found matching the current filters.
+                            </p>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Error Detail Modal -->
+    <template if:true={showErrorDetail}>
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-modal="true"
+            aria-labelledby="error-detail-heading"
+            class="slds-modal slds-fade-in-open slds-modal_medium"
+        >
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={handleCloseDetail}
+                    ></lightning-button-icon>
+                    <h1 id="error-detail-heading" class="slds-modal__title slds-hyphenate">
+                        Error Detail
+                    </h1>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-layout multiple-rows="true">
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label slds-text-color_weak">Error Type:</dt>
+                                <dd class="slds-item_detail">{selectedError.Error_Type__c}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Severity:</dt>
+                                <dd class="slds-item_detail">
+                                    <lightning-badge label={selectedError.Severity__c} class={selectedError.severityBadgeClass}></lightning-badge>
+                                </dd>
+                            </dl>
+                        </lightning-layout-item>
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label slds-text-color_weak">Dead Letter:</dt>
+                                <dd class="slds-item_detail">{selectedError.deadLetterLabel}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Created:</dt>
+                                <dd class="slds-item_detail">{selectedError.CreatedDate}</dd>
+                            </dl>
+                        </lightning-layout-item>
+                        <lightning-layout-item size="12" padding="around-small">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Error Message</h3>
+                            <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto;">
+                                {selectedError.Error_Message__c}
+                            </pre>
+                        </lightning-layout-item>
+                    </lightning-layout>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning-button label="Close" onclick={handleCloseDetail} class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Retry" variant="brand" onclick={handleRetryFromDetail}></lightning-button>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+    </template>
+</template>

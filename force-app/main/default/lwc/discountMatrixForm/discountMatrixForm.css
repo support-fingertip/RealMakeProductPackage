@@ -1,0 +1,22 @@
+/* Match standard Salesforce record page styling */
+
+.slds-section__title {
+    border-bottom: 1px solid #dddbda;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: #514f4d;
+}
+
+.slds-section {
+    margin-bottom: 1rem;
+}
+
+.slds-docked-form-footer {
+    border-top: 1px solid #dddbda;
+    background: #f3f2f2;
+    margin-top: 1rem;
+}

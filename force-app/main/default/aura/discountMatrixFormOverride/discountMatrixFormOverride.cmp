@@ -1,0 +1,3 @@
+<aura:component implements="lightning:actionOverride,force:hasRecordId" access="global">
+    <c:discountMatrixForm></c:discountMatrixForm>
+</aura:component>

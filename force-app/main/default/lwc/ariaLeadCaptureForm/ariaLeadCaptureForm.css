@@ -1,0 +1,137 @@
+.aria-form-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: aria-form-fade 0.18s ease-out;
+}
+@keyframes aria-form-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.aria-form-card {
+    background: #ffffff;
+    width: min(460px, 95vw);
+    max-height: 90vh;
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.32);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: aria-form-pop 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes aria-form-pop {
+    from { transform: translateY(20px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.aria-form-header {
+    background: linear-gradient(135deg, #312e81 0%, #6d28d9 50%, #0ea5e9 100%);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.aria-form-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+.aria-form-close {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.aria-form-close:hover { background: rgba(255, 255, 255, 0.25); }
+
+.aria-form-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.aria-form-hint {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+.aria-form-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #dc2626;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+}
+.aria-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.aria-form-project-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: -4px 0 4px;
+}
+.aria-form-project-info-pill {
+    background: #f3e8ff;
+    color: #5b21b6;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.aria-form-help {
+    flex: 1;
+    font-size: 11.5px;
+    color: #6b7280;
+    align-self: center;
+}
+
+.aria-form-actions {
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.aria-btn {
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+}
+.aria-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.aria-btn--secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.aria-btn--secondary:hover:not(:disabled) { background: #f1f5f9; }
+.aria-btn--primary {
+    background: linear-gradient(135deg, #6d28d9, #0ea5e9);
+    color: #fff;
+}
+.aria-btn--primary:hover:not(:disabled) { transform: translateY(-1px); }

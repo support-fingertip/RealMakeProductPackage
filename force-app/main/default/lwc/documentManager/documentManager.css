@@ -1,0 +1,398 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.document-manager {
+    background:  #f8fafc;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.header-section {
+    background:  linear-gradient(135deg, #1e3a5f, #2d5a87);
+    color: white;
+    padding: 12px;
+}
+
+.header-section h1 {
+    color: white;
+    margin: 0;
+}
+
+.progress-section {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.progress-text {
+    font-weight: 600;
+}
+
+.progress-stats {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius:  5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height:  100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.category-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin:  10px;
+}
+
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.document-card-wrapper {
+    position: relative;
+}
+
+.document-card {
+    background:  white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.document-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.document-card.uploaded {
+    border: 2px solid #22c55e;
+}
+
+.document-card.empty {
+    border:  2px dashed #cbd5e1;
+}
+
+.card-thumbnail {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.thumbnail-img {
+    width:  100%;
+    height:  100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.document-card:hover.thumbnail-img {
+    transform:  scale(1.05);
+}
+
+.pdf-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height:  100%;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+}
+
+.empty-thumbnail {
+    flex-direction: column;
+    gap: 6px;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.empty-thumbnail:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.upload-icon {
+    transition: transform 0.3s ease;
+}
+
+.empty-thumbnail:hover .upload-icon {
+    transform: scale(1.2);
+}
+
+.upload-text {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.uploaded-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    background: #22c55e;
+    border-radius: 50%;
+    display:  flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+}
+
+.file-count {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: #3b82f6;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.file-count:hover {
+    background: #2563eb;
+    transform:  scale(1.1);
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left:  0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card-thumbnail:hover.card-overlay {
+    opacity:  1;
+}
+
+.overlay-icon {
+    color: white;
+}
+
+.overlay-text {
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.card-info {
+    padding: 8px;
+    background: white;
+    border-top: 1px solid #f1f5f9;
+}
+
+.doc-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow:  ellipsis;
+    display: block;
+}
+
+.status-uploaded {
+    font-size: 12px;
+    display: block;
+    margin-top: 4px;
+    color: #22c55e;
+}
+
+.status-not-uploaded {
+    font-size: 12px;
+    display: block;
+    margin-top:  4px;
+    color: #94a3b8;
+}
+
+.card-actions-bottom {
+    display: flex;
+    justify-content: space-around;
+    padding:  6px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.card-upload-btn {
+    padding: 6px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.full-width-btn {
+    width: 100%;
+}
+
+.upload-instructions {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #bae6fd;
+    text-align: center;
+}
+
+.upload-container {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fafafa;
+}
+
+/* Download Modal Styles */
+.download-icon-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    border-radius: 50%;
+}
+
+.download-progress-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.progress-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    display: flex;
+    align-items: center;
+    justify-content:  center;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.progress-percentage {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.current-file {
+    font-size: 13px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin:  0 auto;
+}
+
+.custom-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.custom-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* File List Modal Styles */
+.file-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width:  24px;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    color:  #475569;
+}
+
+.file-icon-small {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border-radius:  4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.file-thumb-small {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-title {
+    max-width: 200px;
+}
+
+.file-extension {
+    display: inline-block;
+    padding:  2px 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.slds-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .document-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .card-thumbnail {
+        height: 90px;
+    }
+}

@@ -1,0 +1,342 @@
+<template>
+    <div class="form-container">
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </template>
+
+        <!-- Header -->
+        <div class="form-header">
+            <h2 class="slds-text-heading_medium">{formTitle}</h2>
+        </div>
+
+        <!-- Clone Mode: Source Info -->
+        <template lwc:if={isCloneMode}>
+            <div class="form-section">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Source Period</h3>
+                <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                    <p>{sourceFilterDisplay}</p>
+                </div>
+
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input
+                            type="date"
+                            label="New Period Start"
+                            value={clonePeriodStart}
+                            onchange={handleClonePeriodStartChange}
+                            required
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input
+                            type="date"
+                            label="New Period End"
+                            value={clonePeriodEnd}
+                            onchange={handleClonePeriodEndChange}
+                            required
+                        ></lightning-input>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Standard Form (create / edit / bulk) -->
+        <template lwc:else>
+            <!-- Metric -->
+            <div class="form-section">
+                <lightning-combobox
+                    label="Metric"
+                    value={metric}
+                    options={metricOptions}
+                    onchange={handleMetricChange}
+                    placeholder="Select a metric..."
+                    required
+                ></lightning-combobox>
+            </div>
+
+            <!-- Period Type -->
+            <div class="form-section">
+                <lightning-combobox
+                    label="Period Type"
+                    value={periodType}
+                    options={periodTypeOptions}
+                    onchange={handlePeriodTypeChange}
+                ></lightning-combobox>
+            </div>
+
+            <!-- Period Selector -->
+            <div class="form-section">
+                <template lwc:if={isCustomPeriod}>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                type="date"
+                                label="Period Start"
+                                value={periodStart}
+                                onchange={handlePeriodStartChange}
+                                required
+                            ></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                type="date"
+                                label="Period End"
+                                value={periodEnd}
+                                onchange={handlePeriodEndChange}
+                                required
+                            ></lightning-input>
+                        </div>
+                    </div>
+                </template>
+                <template lwc:if={showStandardPeriodSelector}>
+                    <lightning-combobox
+                        label={periodSelectorLabel}
+                        value={selectedPeriodValue}
+                        options={periodOptions}
+                        onchange={handlePeriodChange}
+                        placeholder="Select a period..."
+                        required
+                    ></lightning-combobox>
+                    <template lwc:if={periodStart}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            {periodStart} to {periodEnd}
+                        </p>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Target Level -->
+            <div class="form-section">
+                <lightning-combobox
+                    label="Target Level"
+                    value={targetLevel}
+                    options={targetLevelOptions}
+                    onchange={handleTargetLevelChange}
+                ></lightning-combobox>
+            </div>
+
+            <!-- Organization Info (Organization level) -->
+            <template lwc:if={showOrganizationInfo}>
+                <div class="form-section">
+                    <div class="slds-box slds-box_x-small slds-theme_info slds-m-top_x-small">
+                        <div class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
+                            <div class="slds-col slds-no-flex">
+                                <lightning-icon icon-name="utility:info" size="x-small" alternative-text="Info"></lightning-icon>
+                            </div>
+                            <div class="slds-col">
+                                <p class="slds-text-body_small">
+                                    <strong>Organization-level target</strong> &mdash; This target applies to the entire organization.
+                                    Actuals will be rolled up from all Team and User-level child targets linked via the Parent Target field.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Team Role (Team level) -->
+            <template lwc:if={showTeamPicker}>
+                <div class="form-section">
+                    <template lwc:if={hasTeamOptions}>
+                        <lightning-combobox
+                            label="Team (Role)"
+                            value={teamRole}
+                            options={teamOptions}
+                            onchange={handleTeamRoleChange}
+                            placeholder="Select a team role..."
+                            required
+                        ></lightning-combobox>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            Teams are derived from Salesforce User Roles. Actuals will be aggregated for all users in this role.
+                        </p>
+                    </template>
+                    <template lwc:else>
+                        <label class="slds-form-element__label">Team (Role)</label>
+                        <div class="slds-box slds-box_x-small slds-theme_shade slds-m-top_xx-small">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                No User Roles found in your organization. Please create User Roles in Salesforce Setup, or enter a custom team name below.
+                            </p>
+                        </div>
+                        <lightning-input
+                            label="Custom Team Name"
+                            value={teamRole}
+                            onchange={handleTeamRoleInputChange}
+                            placeholder="Enter a team name (e.g., Sales Team, Pre-Sales)..."
+                            required
+                            class="slds-m-top_x-small"
+                        ></lightning-input>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Assignee (User level, non-bulk) -->
+            <template lwc:if={showAssigneePicker}>
+                <div class="form-section">
+                    <lightning-combobox
+                        label="Assignee"
+                        value={assigneeId}
+                        options={userOptions}
+                        onchange={handleAssigneeChange}
+                        placeholder="Select a user..."
+                        required
+                    ></lightning-combobox>
+                </div>
+            </template>
+
+            <!-- Project -->
+            <div class="form-section">
+                <lightning-combobox
+                    label="Project (Optional)"
+                    value={projectId}
+                    options={projectOptions}
+                    onchange={handleProjectChange}
+                    placeholder="Select a project..."
+                ></lightning-combobox>
+            </div>
+
+            <!-- Target Value (non-bulk) -->
+            <template lwc:if={isNotBulkMode}>
+                <div class="form-section">
+                    <lightning-input
+                        type="number"
+                        label="Target Value"
+                        value={targetValue}
+                        onchange={handleTargetValueChange}
+                        min="0"
+                        step="0.01"
+                        required
+                    ></lightning-input>
+                </div>
+            </template>
+
+            <!-- Description -->
+            <div class="form-section">
+                <lightning-textarea
+                    label="Description"
+                    value={description}
+                    onchange={handleDescriptionChange}
+                    max-length="1000"
+                ></lightning-textarea>
+            </div>
+
+            <!-- Bulk Assignment Section -->
+            <template lwc:if={isBulkMode}>
+                <div class="form-section bulk-section">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Assign to Users</h3>
+
+                    <!-- Add User Row -->
+                    <div class="slds-grid slds-gutters slds-grid_vertical-align-end slds-m-bottom_medium">
+                        <div class="slds-col slds-size_5-of-12">
+                            <lightning-combobox
+                                label="User"
+                                value={_bulkUserId}
+                                options={userOptions}
+                                onchange={handleBulkUserChange}
+                                placeholder="Select a user..."
+                            ></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12">
+                            <lightning-input
+                                type="number"
+                                label="Target Value"
+                                value={_bulkValue}
+                                onchange={handleBulkValueInput}
+                                min="0"
+                                step="0.01"
+                            ></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_3-of-12">
+                            <lightning-button
+                                label="Add"
+                                variant="neutral"
+                                onclick={handleAddUser}
+                            ></lightning-button>
+                        </div>
+                    </div>
+
+                    <!-- Uniform Value -->
+                    <template lwc:if={hasBulkAssignments}>
+                        <div class="slds-grid slds-gutters slds-grid_vertical-align-end slds-m-bottom_medium">
+                            <div class="slds-col slds-size_6-of-12">
+                                <lightning-input
+                                    type="number"
+                                    label="Set Uniform Value"
+                                    value={_uniformValue}
+                                    onchange={handleUniformValueChange}
+                                    min="0"
+                                    step="0.01"
+                                ></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_6-of-12">
+                                <lightning-button
+                                    label="Apply to All"
+                                    variant="neutral"
+                                    onclick={handleApplyUniformValue}
+                                ></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Assignments Table -->
+                    <template lwc:if={hasBulkAssignments}>
+                        <div class="bulk-table">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col"><div class="slds-truncate">User</div></th>
+                                        <th scope="col"><div class="slds-truncate">Target Value</div></th>
+                                        <th scope="col"><div class="slds-truncate">Action</div></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={bulkAssignments} for:item="assignment">
+                                        <tr key={assignment.userId}>
+                                            <td>
+                                                <div class="slds-truncate">{assignment.userName}</div>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    type="number"
+                                                    variant="label-hidden"
+                                                    value={assignment.targetValue}
+                                                    data-userid={assignment.userId}
+                                                    onchange={handleBulkValueChange}
+                                                    min="0"
+                                                    step="0.01"
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Remove"
+                                                    variant="bare"
+                                                    data-userid={assignment.userId}
+                                                    onclick={handleRemoveUser}
+                                                ></lightning-button-icon>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+
+        <!-- Footer -->
+        <div class="form-footer">
+            <lightning-button
+                label="Cancel"
+                variant="neutral"
+                onclick={handleCancel}
+            ></lightning-button>
+            <lightning-button
+                label={saveButtonLabel}
+                variant="brand"
+                onclick={handleSave}
+                disabled={isLoading}
+            ></lightning-button>
+        </div>
+    </div>
+</template>

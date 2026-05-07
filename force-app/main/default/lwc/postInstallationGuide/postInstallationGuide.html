@@ -1,0 +1,84 @@
+<!-- This is an HTML comment -->
+<template>
+    <div class="pig-container">
+        <!-- Header -->
+        <div class="pig-header">
+            <div class="pig-header-left">
+                <div class="pig-header-icon">
+                    <lightning-icon icon-name="standard:guidance_center" size="medium" alternative-text="Post Installation Guide"></lightning-icon>
+                </div>
+                <div>
+                    <h1 class="pig-title">Post Installation Guide</h1>
+                    <p class="pig-subtitle">Upload the seed Custom Metadata records, then configure each feature - Round Robin, Lead Duplication, Cost Sheet, Discount Matrix, Site Visit, Push to Sales.</p>
+                </div>
+            </div>
+            <div class="pig-header-actions">
+                <lightning-button label="Expand All" icon-name="utility:expand_all" onclick={handleExpandAll} variant="neutral"></lightning-button>
+                <lightning-button label="Collapse All" icon-name="utility:collapse_all" onclick={handleCollapseAll} variant="neutral" class="slds-m-left_x-small"></lightning-button>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="pig-search">
+            <lightning-input
+                type="search"
+                label="Search the guide"
+                variant="label-hidden"
+                placeholder="Search steps, tools, or configurations..."
+                value={searchTerm}
+                onchange={handleSearchChange}>
+            </lightning-input>
+        </div>
+
+        <!-- Steps -->
+        <template if:true={hasResults}>
+            <lightning-accordion
+                allow-multiple-sections-open
+                active-section-name={activeSections}
+                onsectiontoggle={handleSectionToggle}>
+                <template for:each={filteredSteps} for:item="step">
+                    <lightning-accordion-section key={step.id} name={step.id} label={step.title}>
+                        <div class="pig-step">
+                            <div class="pig-step-header">
+                                <span class="pig-step-number">{step.number}</span>
+                                <lightning-icon icon-name={step.icon} size="small" class="pig-step-icon"></lightning-icon>
+                                <p class="pig-step-summary">{step.summary}</p>
+                            </div>
+                            <ul class="pig-step-list">
+                                <template for:each={step.bullets} for:item="bullet">
+                                    <li key={bullet} class="pig-step-list-item">
+                                        <lightning-icon icon-name="utility:check" size="xx-small" class="pig-bullet-icon"></lightning-icon>
+                                        <span>{bullet}</span>
+                                    </li>
+                                </template>
+                            </ul>
+                            <template if:true={step.links}>
+                                <div class="pig-links">
+                                    <p class="pig-links-title">Helpful links</p>
+                                    <template for:each={step.links} for:item="link">
+                                        <a key={link.url} href={link.url} target="_blank" rel="noopener" class="pig-link">
+                                            <lightning-icon icon-name="utility:new_window" size="xx-small"></lightning-icon>
+                                            <span>{link.label}</span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-accordion-section>
+                </template>
+            </lightning-accordion>
+        </template>
+
+        <template if:false={hasResults}>
+            <div class="pig-empty">
+                <lightning-icon icon-name="utility:search" size="small"></lightning-icon>
+                <p>No steps match your search. Try a different keyword.</p>
+            </div>
+        </template>
+
+        <div class="pig-footer">
+            <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+            <span>Need help? Refer to the README in the project root or contact your implementation partner.</span>
+        </div>
+    </div>
+</template>

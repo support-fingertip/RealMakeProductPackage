@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Document Viewer</masterLabel>
+    <description>Reusable component to show and generate document templates for any record. Place on any Lightning Record Page.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__FlowScreen</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage">
+            <property name="cardTitle" type="String" default="Documents" label="Card Title" description="Title shown on the card header" />
+            <property name="hideDescription" type="Boolean" default="false" label="Hide Description" description="Hide template description" />
+            <property name="layout" type="String" default="list" label="Layout" datasource="list,grid,compact" description="Display layout: list, grid, or compact" />
+        </targetConfig>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="recordId" type="String" label="Record ID" description="The record ID to generate documents for" />
+            <property name="objectApiName" type="String" label="Object API Name" description="Object API name (auto-detected if blank)" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

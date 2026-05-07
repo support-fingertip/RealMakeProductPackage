@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Prevent_Edit_During_Pending_Approval</fullName>
+    <active>true</active>
+    <description>Prevents users from editing the Cost Sheet while discount approval is pending. The cost sheet is locked (Is_Locked__c = true) from the time discounts are submitted for approval until the approval is completed or recalled.</description>
+    <errorConditionFormula>AND(
+    Is_Locked__c = TRUE,
+    OR(
+        ISCHANGED(Base_Price__c),
+        ISCHANGED(Base_Rate_Sqft__c),
+        ISCHANGED(Super_Builtup_Area__c),
+        ISCHANGED(Carpet_Area__c),
+        ISCHANGED(UDS__c),
+        ISCHANGED(PLC_Charges__c),
+        ISCHANGED(Amenity_Charges__c),
+        ISCHANGED(Infra_Charges__c),
+        ISCHANGED(Doc_Charges__c),
+        ISCHANGED(Move_In_Charges__c),
+        ISCHANGED(Floor_Rise_Sqft__c),
+        ISCHANGED(Corpus_Fund_Sqft__c),
+        ISCHANGED(Maintenance_Sqft_Month__c),
+        ISCHANGED(Maintenance_Months__c),
+        ISCHANGED(Discount_1__c),
+        ISCHANGED(Discount_2__c),
+        ISCHANGED(Discount_3__c),
+        ISCHANGED(Discount_4__c),
+        ISCHANGED(Discount_5__c),
+        ISCHANGED(Discount_6__c),
+        ISCHANGED(GST_Percentage__c),
+        ISCHANGED(Registration_Pct__c),
+        ISCHANGED(Stamp_Duty_Pct__c),
+        ISCHANGED(Payment_Plan_Type__c),
+        ISCHANGED(Unit__c),
+        ISCHANGED(Lead__c),
+        ISCHANGED(Project__c)
+    )
+)</errorConditionFormula>
+    <errorMessage>This Cost Sheet cannot be edited while discount approval is pending. Please wait for the approval to be completed, or recall the approval first.</errorMessage>
+</ValidationRule>

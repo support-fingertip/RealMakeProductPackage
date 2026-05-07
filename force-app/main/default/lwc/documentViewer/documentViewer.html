@@ -1,0 +1,152 @@
+<template>
+    <div class="viewer-container">
+        <!-- Header -->
+        <div class="viewer-header">
+            <div class="viewer-header-left">
+                <div class="viewer-icon-wrap">
+                    <lightning-icon icon-name="standard:document" size="small"></lightning-icon>
+                </div>
+                <div class="viewer-title-wrap">
+                    <h2 class="viewer-title">{cardTitle}</h2>
+                    <template if:true={hasTemplates}>
+                        <span class="viewer-count">{templateCount} template{pluralSuffix}</span>
+                    </template>
+                </div>
+            </div>
+            <lightning-button-icon icon-name="utility:refresh"
+                alternative-text="Refresh" onclick={handleRefresh}
+                variant="bare" size="medium" class="viewer-refresh"></lightning-button-icon>
+        </div>
+
+        <!-- Loading -->
+        <template if:true={isLoading}>
+            <div class="viewer-loading">
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error -->
+        <template if:true={error}>
+            <div class="viewer-error">
+                <lightning-icon icon-name="utility:error" size="x-small" variant="error"></lightning-icon>
+                <span>{error}</span>
+            </div>
+        </template>
+
+        <!-- Templates -->
+        <template if:false={isLoading}>
+            <!-- Preview Panel -->
+            <template if:true={showPreview}>
+                <div class="preview-panel">
+                    <div class="preview-header">
+                        <div class="preview-header-left">
+                            <lightning-icon icon-name="doctype:pdf" size="x-small"></lightning-icon>
+                            <span class="preview-doc-title">{previewDocName}</span>
+                        </div>
+                        <div class="preview-header-right">
+                            <lightning-button-icon icon-name="utility:download"
+                                alternative-text="Download" data-url={previewUrl}
+                                onclick={handleDownloadPdf} variant="border-filled"
+                                size="small" tooltip="Open in new tab"></lightning-button-icon>
+                            <lightning-button-icon icon-name="utility:close"
+                                alternative-text="Close preview" onclick={handleClosePreview}
+                                variant="border-filled" size="small"></lightning-button-icon>
+                        </div>
+                    </div>
+                    <div class="preview-body">
+                        <iframe src={previewUrl} class="preview-iframe" title="Document Preview"></iframe>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={showPreview}>
+                <template if:true={hasTemplates}>
+                    <div class={containerClass}>
+                        <template for:each={templates} for:item="doc">
+
+                            <!-- LIST LAYOUT -->
+                            <template if:true={isListLayout}>
+                                <div key={doc._key} class="doc-item" data-id={doc.id}>
+                                    <div class="doc-item-left">
+                                        <div class="doc-icon-circle">
+                                            <lightning-icon icon-name="doctype:pdf" size="x-small"></lightning-icon>
+                                        </div>
+                                        <div class="doc-item-info">
+                                            <span class="doc-item-name">{doc.name}</span>
+                                            <template if:true={doc._hasDescription}>
+                                                <span class="doc-item-desc">{doc.description}</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="doc-item-actions-always">
+                                        <button class="doc-btn doc-btn-view" data-url={doc.pdfUrl}
+                                            data-name={doc.name} onclick={handlePreviewPdf} title="Preview">
+                                            <lightning-icon icon-name="utility:preview" size="xx-small"></lightning-icon>
+                                            <span>View</span>
+                                        </button>
+                                        <button class="doc-btn doc-btn-download" data-url={doc.pdfUrl}
+                                            onclick={handleDownloadPdf} title="Open in new tab">
+                                            <lightning-icon icon-name="utility:download" size="xx-small"></lightning-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- GRID LAYOUT -->
+                            <template if:true={isGridLayout}>
+                                <div key={doc._key} class="doc-card" data-id={doc.id}>
+                                    <div class="doc-card-top">
+                                        <div class="doc-card-icon-wrap">
+                                            <lightning-icon icon-name="doctype:pdf" size="medium"></lightning-icon>
+                                        </div>
+                                        <div class="doc-card-badge">PDF</div>
+                                    </div>
+                                    <div class="doc-card-body">
+                                        <span class="doc-card-name">{doc.name}</span>
+                                        <template if:true={doc._hasDescription}>
+                                            <span class="doc-card-desc">{doc.description}</span>
+                                        </template>
+                                    </div>
+                                    <div class="doc-card-footer-split">
+                                        <button class="doc-card-action" data-url={doc.pdfUrl}
+                                            data-name={doc.name} onclick={handlePreviewPdf}>
+                                            <lightning-icon icon-name="utility:preview" size="xx-small"></lightning-icon>
+                                            <span>View</span>
+                                        </button>
+                                        <button class="doc-card-action" data-url={doc.pdfUrl}
+                                            onclick={handleDownloadPdf}>
+                                            <lightning-icon icon-name="utility:download" size="xx-small"></lightning-icon>
+                                            <span>PDF</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- COMPACT LAYOUT -->
+                            <template if:true={isCompactLayout}>
+                                <div key={doc._key} class="doc-compact-item" data-url={doc.pdfUrl}
+                                     data-name={doc.name} onclick={handlePreviewPdf} title={doc.name}>
+                                    <lightning-icon icon-name="doctype:pdf" size="xx-small"></lightning-icon>
+                                    <span>{doc.name}</span>
+                                </div>
+                            </template>
+
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasTemplates}>
+                    <template if:false={error}>
+                        <div class="viewer-empty">
+                            <div class="viewer-empty-icon">
+                                <lightning-icon icon-name="utility:file" size="large"></lightning-icon>
+                            </div>
+                            <p class="viewer-empty-title">No Documents</p>
+                            <p class="viewer-empty-desc">No document templates available for this record.</p>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </template>
+    </div>
+</template>

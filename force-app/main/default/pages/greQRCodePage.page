@@ -1,0 +1,42 @@
+<apex:page standardController="Project__c"
+           renderAs="pdf" showHeader="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+    <html>
+        <head>
+            <style>
+                body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding-top: 100px;
+                }
+                h1 {
+                font-size: 28px;
+                color: #333;
+                }
+                .qr-container {
+                margin: 40px auto;
+                }
+                .qr-container img {
+                width="300" 
+                height="300"
+                }
+                .footer {
+                font-size: 18px;
+                font-weight: bold;
+                color: #333;
+                margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Real Estate GRE Form</h1>
+            <div class="qr-container">
+                <!-- QR Code (from GRE_QR_Code__c formula field) -->
+                <!--apex:outputField value="{!Project__c.GRE_Qr_Code__c}"/> -->
+                
+                
+            </div>
+            
+            <div class="footer">Project {!Project__c.Name}</div>
+        </body>
+    </html>
+</apex:page>

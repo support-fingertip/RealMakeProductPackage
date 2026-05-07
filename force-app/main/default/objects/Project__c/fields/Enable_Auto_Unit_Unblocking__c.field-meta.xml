@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enable_Auto_Unit_Unblocking__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enable or disable automatic unit unblocking when customer does not pay within the configured days. When enabled, booking will be cancelled and unit status changed to Available.</description>
+    <inlineHelpText>Enable automatic unit unblocking after non-payment</inlineHelpText>
+    <label>Enable Auto Unit Unblocking</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

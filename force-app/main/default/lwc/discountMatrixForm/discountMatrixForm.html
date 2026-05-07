@@ -1,0 +1,165 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="slds-p-around_large slds-text-align_center">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <!-- Full limit warning -->
+        <template if:true={isFull}>
+            <div class="slds-p-around_large">
+                <div class="slds-illustration slds-illustration_small">
+                    <div class="slds-text-longform">
+                        <h3 class="slds-text-heading_medium">Maximum Limit Reached</h3>
+                        <p class="slds-text-body_regular slds-m-top_small">
+                            All 6 discount matrix records already exist (one per discount field 1-6). You cannot create more.
+                        </p>
+                    </div>
+                </div>
+                <div class="slds-m-top_large slds-text-align_center">
+                    <lightning-button label="Go Back" variant="neutral" onclick={handleCancel}></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Standard-style New Record Form -->
+        <template if:false={isFull}>
+            <lightning-record-edit-form
+                object-api-name="Discount_Approval_Matrix__c"
+                record-id={recordId}
+                onsubmit={handleSubmit}
+                onsuccess={handleSuccess}
+                onerror={handleError}
+                onload={handleLoad}>
+
+                <!-- Page Header -->
+                <div class="slds-page-header slds-page-header_record-home">
+                    <div class="slds-page-header__row">
+                        <div class="slds-page-header__col-title">
+                            <div class="slds-media">
+                                <div class="slds-media__figure">
+                                    <lightning-icon icon-name="custom:custom25" size="medium"></lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <div class="slds-page-header__name">
+                                        <div class="slds-page-header__name-title">
+                                            <span class="slds-page-header__title slds-truncate">{cardTitle}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Body -->
+                <div class="slds-form slds-p-around_medium">
+
+                    <!-- Section: Matrix Information -->
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Matrix Information">Matrix Information</span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Discount_Field_Number__c" required></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Discount_Label__c" required></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Approval_Level__c" required></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Project__c" required></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox
+                                        label="Unit Field (for validation)"
+                                        value={selectedUnitField}
+                                        placeholder="Select a Unit field..."
+                                        options={unitFieldOptions}
+                                        onchange={handleUnitFieldChange}>
+                                    </lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Is_Active__c"></lightning-input-field>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Approval Limits -->
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Approval Limits">Approval Limits</span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Min_Value__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Max_Value__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Approval_Threshold__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <!-- empty for alignment -->
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Min_Pct__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Max_Pct__c"></lightning-input-field>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Approver Details -->
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Approver Details">Approver Details</span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Approver_User__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Delegated_Approver__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Approver_Role__c"></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input-field field-name="Escalation_Hours__c"></lightning-input-field>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer Buttons (standard style) -->
+                <div class="slds-docked-form-footer slds-p-around_small slds-text-align_center">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancel}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Save"
+                        variant="brand"
+                        type="submit"
+                        disabled={saveDisabled}>
+                    </lightning-button>
+                </div>
+            </lightning-record-edit-form>
+        </template>
+    </template>
+</template>

@@ -1,0 +1,59 @@
+<template>
+    <div class="wrapper">
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Sales Admin Console</h1>
+                <p>Manage operations, approvals, and forecasting</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-bar">
+
+            <div class={bulkClass} data-name="bulk" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:groups" size="x-small"></lightning-icon>
+                <span>Bulk Lead Reassignment</span>
+            </div>
+
+            <div class={approvalClass} data-name="approval" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:approval" size="x-small"></lightning-icon>
+                <span>Bulk Approval Center</span>
+            </div>
+
+            <div class={inventoryClass} data-name="inventory" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:product" size="x-small"></lightning-icon>
+                <span>Inventory Management</span>
+            </div>
+
+            <div class={forecastClass} data-name="forecast" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:chart" size="x-small"></lightning-icon>
+                <span>Sales Forecast</span>
+            </div>
+
+        </div>
+
+        <!-- Content -->
+        <div class="content-card">
+
+            <template if:true={isBulk}>
+                <c-bulk-lead-reassignment></c-bulk-lead-reassignment>
+            </template>
+
+            <template if:true={isApproval}>
+                <c-approval-center></c-approval-center>
+            </template>
+
+            <template if:true={isInventory}>
+                <c-projectboard></c-projectboard>
+            </template>
+
+            <template if:true={isForecast}>
+                <c-sales-forecaster></c-sales-forecaster>
+            </template>
+
+        </div>
+
+    </div>
+</template>

@@ -1,0 +1,318 @@
+<template>
+    <lightning-card title="Formula Builder" icon-name="custom:custom63">
+
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Project Selection - Only show if NOT on record page -->
+        <template if:false={isOnRecordPage}>
+            <div class="slds-p-around_medium">
+                <lightning-combobox
+                    label="Select Project"
+                    value={selectedProjectId}
+                    placeholder="Choose a project"
+                    options={projectOptions}
+                    onchange={handleProjectChange}>
+                </lightning-combobox>
+            </div>
+        </template>
+
+        <!-- Template List -->
+        <template if:true={selectedProjectId}>
+            <div class="slds-p-horizontal_medium slds-p-top_medium">
+                <lightning-button 
+                    label="New Template" 
+                    variant="brand"
+                    onclick={handleNewTemplate}
+                    icon-name="utility:add">
+                </lightning-button>
+            </div>
+
+            <!-- Existing Templates -->
+            <div class="slds-p-around_medium">
+                <template if:true={templates}>
+                    <template for:each={templates} for:item="template">
+                        <div key={template.Id} class="slds-box slds-m-bottom_small">
+                            <div class="slds-grid slds-gutters slds-grid_vertical-align-center">
+                                <!-- Template Name & Description -->
+                                <div class="slds-col slds-size_5-of-12">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_xx-small">{template.Template_Name__c}</h3>
+                                    <p class="slds-text-body_small slds-text-color_weak">{template.Description__c}</p>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        {template.Source_Object_API_Name__c} → {template.Target_Object_API_Name__c}
+                                    </p>
+                                </div>
+                                
+                                <!-- Status Badge -->
+                                <div class="slds-col slds-size_2-of-12">
+                                    <lightning-badge 
+                                        label={template.statusLabel}
+                                        class={template.badgeClass}>
+                                    </lightning-badge>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="slds-col slds-size_5-of-12 slds-text-align_right">
+                                    <div class="slds-button-group" role="group">
+                                        <lightning-button 
+                                            label="Edit" 
+                                            onclick={handleEditTemplate}
+                                            data-id={template.Id}
+                                            class="slds-m-right_xx-small">
+                                        </lightning-button>
+                                        <lightning-button 
+                                            label={template.toggleLabel}
+                                            variant={template.toggleVariant}
+                                            onclick={handleToggleStatus}
+                                            data-id={template.Id}
+                                            class="slds-m-right_xx-small">
+                                        </lightning-button>
+                                        <lightning-button 
+                                            label="Delete" 
+                                            variant="destructive"
+                                            onclick={handleDeleteTemplate}
+                                            data-id={template.Id}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:false={templates.length}>
+                    <div class="slds-text-align_center slds-p-vertical_large">
+                        <p class="slds-text-color_weak">No calculation templates found for this project.</p>
+                        <p class="slds-text-color_weak slds-m-top_x-small">Click "New Template" to create one.</p>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Template Builder Modal -->
+        <template if:true={showTemplateBuilder}>
+            <section class="slds-modal slds-fade-in-open" role="dialog">
+                <div class="slds-modal__container" style="max-width: 90%; width: 90%;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">{modalTitle}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" style="max-height: 70vh; overflow-y: auto;">
+                        
+                        <!-- Template Details -->
+                        <div class="slds-m-bottom_large">
+                            <lightning-input
+                                label="Template Name"
+                                value={currentTemplate.templateName}
+                                onchange={handleTemplateNameChange}
+                                required>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Object Selection -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_large">
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Source Object"
+                                    value={currentTemplate.sourceObject}
+                                    placeholder="Select source object"
+                                    options={objectOptions}
+                                    onchange={handleSourceObjectChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Target Object"
+                                    value={currentTemplate.targetObject}
+                                    placeholder="Select target object"
+                                    options={objectOptions}
+                                    onchange={handleTargetObjectChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                        </div>
+
+                        <!-- Lookup Field Selection -->
+                        <template if:true={showLookupField}>
+                            <div class="slds-m-bottom_large">
+                                <lightning-combobox
+                                    label="Source Lookup Field"
+                                    value={currentTemplate.sourceLookupField}
+                                    placeholder="Select lookup field"
+                                    options={lookupFieldOptions}
+                                    onchange={handleLookupFieldChange}
+                                    required>
+                                </lightning-combobox>
+                                <div class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                                    Field in {currentTemplate.targetObject} that links to {currentTemplate.sourceObject}
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="slds-m-bottom_large">
+                            <lightning-textarea
+                                label="Description"
+                                value={currentTemplate.description}
+                                onchange={handleDescriptionChange}>
+                            </lightning-textarea>
+                        </div>
+
+                        <!-- Calculation Detail Rich Text Field -->
+                        <template if:true={showLookupField}>
+                            <div class="slds-m-bottom_large">
+                                <lightning-combobox
+                                    label="Calculation Detail Field (Rich Text)"
+                                    value={currentTemplate.calculationDetailField}
+                                    placeholder="Select rich text field to store calculation details..."
+                                    options={richTextFieldOptions}
+                                    onchange={handleCalculationDetailFieldChange}>
+                                </lightning-combobox>
+                                <div class="slds-text-color_weak slds-text-body_small slds-m-top_xx-small">
+                                    Select a rich text field on {currentTemplate.targetObject} to save step-by-step calculation details with values and formulas
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Steps Section -->
+                        <div class="slds-m-bottom_medium">
+                            <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                <div class="slds-col">
+                                    <h3 class="slds-text-heading_small">Calculation Steps</h3>
+                                </div>
+                                <div class="slds-col slds-text-align_right">
+                                    <lightning-button 
+                                        label="Add Step" 
+                                        variant="brand"
+                                        onclick={handleAddStep}
+                                        icon-name="utility:add">
+                                    </lightning-button>
+                                </div>
+                            </div>
+
+                            <!-- Step List -->
+                            <template if:true={hasSteps}>
+                                <template for:each={currentTemplate.steps} for:item="step">
+                                    <div key={step.id} class="slds-box slds-m-bottom_small">
+                                        <div class="slds-grid slds-gutters slds-grid_vertical-align-center">
+                                            <div class="slds-col slds-size_1-of-12">
+                                                <span class="slds-badge slds-badge_lightest">Step {step.stepNumber}</span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <strong>{step.stepLabel}</strong>
+                                                <template if:true={step.variableName}>
+                                                    <span class="slds-text-color_weak"> ({step.variableName})</span>
+                                                </template>
+                                                <br/>
+                                                <code class="slds-text-body_small slds-text-color_success">{step.formula}</code>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12 slds-text-align_right">
+                                                <lightning-button-icon 
+                                                    icon-name="utility:edit" 
+                                                    alternative-text="Edit"
+                                                    title="Edit Step"
+                                                    onclick={handleEditStep}
+                                                    data-id={step.id}
+                                                    class="slds-m-right_xx-small">
+                                                </lightning-button-icon>
+                                                <lightning-button-icon 
+                                                    icon-name="utility:delete" 
+                                                    alternative-text="Delete"
+                                                    title="Delete Step"
+                                                    onclick={handleDeleteStep}
+                                                    data-id={step.id}
+                                                    variant="error">
+                                                </lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasSteps}>
+                                <div class="slds-text-align_center slds-p-vertical_medium slds-box">
+                                    <p class="slds-text-color_weak">No steps added yet. Click "Add Step" to begin.</p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Test Section -->
+                        <template if:true={canTest}>
+                            <div class="slds-box slds-theme_shade slds-m-top_large">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Test Calculation</h3>
+                                <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <lightning-combobox
+                                            label="Select Source Record to Test"
+                                            value={selectedTestUnitId}
+                                            placeholder="Choose a record"
+                                            options={sourceRecordOptions}
+                                            onchange={handleTestRecordChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <lightning-button 
+                                            label="Run Test" 
+                                            variant="success"
+                                            onclick={handleRunTest}
+                                            disabled={testButtonDisabled}
+                                            icon-name="utility:play"
+                                            class="slds-size_1-of-1">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+
+                                <!-- Test Results -->
+                                <template if:true={testResults}>
+                                    <div class="slds-m-top_medium slds-box slds-theme_default">
+                                        <h4 class="slds-text-heading_small slds-m-bottom_small">Test Results:</h4>
+                                        <template for:each={testResults.stepResults} for:item="result">
+                                            <div key={result.stepLabel} class="slds-p-vertical_xx-small">
+                                                <strong>{result.stepLabel}:</strong> 
+                                                <span class="slds-text-color_success slds-text-title_bold">{result.result}</span>
+                                            </div>
+                                        </template>
+                                        <div class="slds-border_top slds-m-top_small slds-p-top_small">
+                                            <strong class="slds-text-heading_small">Final Result: </strong>
+                                            <span class="slds-text-heading_small slds-text-color_success">
+                                                ₹ {testResults.finalResult}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            label="Cancel" 
+                            onclick={handleCancelTemplate}
+                            class="slds-m-right_xx-small">
+                        </lightning-button>
+                        <lightning-button 
+                            label="Save Template" 
+                            variant="brand"
+                            onclick={handleSaveTemplate}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- Step Builder Modal -->
+        <template if:true={showStepBuilder}>
+            <c-step-builder
+                step={currentStep}
+                available-fields={availableFieldsForStep}
+                booking-fields={bookingFieldOptionsForStep}
+                existing-variables={existingVariables}
+                onsave={handleStepSave}
+                oncancel={handleStepCancel}>
+            </c-step-builder>
+        </template>
+
+    </lightning-card>
+</template>

@@ -1,0 +1,585 @@
+<template>
+    <!-- Loading -->
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- No dashboards -->
+    <template if:true={noDashboards}>
+        <div class="empty-state slds-text-align_center slds-p-around_xx-large">
+            <lightning-icon icon-name="standard:dashboard" size="large" class="slds-m-bottom_medium"></lightning-icon>
+            <h2 class="slds-text-heading_medium slds-m-bottom_small">No Dashboards Available</h2>
+            <p class="slds-text-color_weak">Contact your administrator to configure dashboards.</p>
+        </div>
+    </template>
+
+    <!-- Dashboard Selector & Content -->
+    <template if:true={hasDashboards}>
+        <div class="dashboard-container">
+
+            <!-- Gradient Header (configured) -->
+            <template if:true={hasHeader}>
+                <div class="gradient-header" style={headerStyle}>
+                    <div class="gradient-header-content slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                        <div class="slds-col">
+                            <h1 class="gradient-header-title">{headerTitle}</h1>
+                            <template if:true={headerSubtitle}>
+                                <p class="gradient-header-subtitle">{headerSubtitle}</p>
+                            </template>
+                        </div>
+                        <div class="slds-col slds-shrink-none slds-grid slds-grid_vertical-align-center header-actions">
+                            <template if:true={showHeaderDate}>
+                                <span class="gradient-header-date">{currentDateFormatted}</span>
+                            </template>
+                            <template if:true={showDashboard}>
+                                <lightning-button-icon icon-name="utility:download" alternative-text="Download"
+                                    title="Download Dashboard as Image"
+                                    onclick={handleDownloadDashboard} variant="border-filled" size="medium"
+                                    class="header-action-btn"></lightning-button-icon>
+                            </template>
+                            <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                                onclick={handleApplyFilters} variant="border-filled" size="medium"
+                                class="header-action-btn"></lightning-button-icon>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Standard Header (no gradient) -->
+            <template if:false={hasHeader}>
+                <div class="dashboard-header slds-grid slds-grid_vertical-align-center slds-p-around_medium">
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-combobox label="Select Dashboard" value={selectedDashboardId}
+                            options={dashboardOptions} onchange={handleDashboardChange}
+                            variant="label-hidden" placeholder="Choose a dashboard..."></lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-grow slds-text-align_center">
+                        <h1 class="dashboard-title">{dashboardTitle}</h1>
+                    </div>
+                    <div class="slds-col slds-shrink-none slds-grid slds-grid_vertical-align-center" style="gap: 8px;">
+                        <template if:true={showDashboard}>
+                            <lightning-button-icon icon-name="utility:download" alternative-text="Download"
+                                onclick={handleDownloadDashboard} variant="border-filled" size="medium"
+                                class="header-action-btn"></lightning-button-icon>
+                        </template>
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleApplyFilters} variant="border-filled" size="medium"
+                            class="header-action-btn"></lightning-button-icon>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Dashboard selector (when header present) -->
+            <template if:true={hasHeader}>
+                <div class="selector-bar slds-p-horizontal_medium slds-p-vertical_x-small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <div class="slds-col slds-size_1-of-4">
+                            <lightning-combobox label="Dashboard" value={selectedDashboardId}
+                                options={dashboardOptions} onchange={handleDashboardChange}
+                                variant="label-hidden" placeholder="Choose a dashboard..."></lightning-combobox>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Filters Bar -->
+            <template if:true={hasFilters}>
+                <div class="filter-bar">
+                    <div class="slds-grid slds-gutters_x-small slds-wrap slds-grid_vertical-align-end">
+                        <template for:each={renderedFilters} for:item="filter">
+                            <template if:false={filter.isHierarchy}>
+                                <div key={filter.id} class={filter.filterColClass}>
+                                    <template if:true={filter.isDateRange}>
+                                        <div class="slds-grid slds-gutters_xx-small">
+                                            <div class="slds-col">
+                                                <lightning-input type="date" label={filter.label}
+                                                    value={filter.startDate} data-filter-id={filter.id}
+                                                    onchange={handleDateStartChange} placeholder="From"></lightning-input>
+                                            </div>
+                                            <div class="slds-col">
+                                                <lightning-input type="date" label="&nbsp;"
+                                                    value={filter.endDate} data-filter-id={filter.id}
+                                                    onchange={handleDateEndChange} placeholder="To"></lightning-input>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template if:true={filter.isDateLiteral}>
+                                        <lightning-combobox label={filter.label} value={filter.currentValue}
+                                            options={dateLiteralOptions} data-filter-id={filter.id}
+                                            onchange={handleFilterChange}></lightning-combobox>
+                                    </template>
+                                    <template if:true={filter.isPicklist}>
+                                        <lightning-combobox label={filter.label} value={filter.currentValue}
+                                            options={filter.picklistOptions} data-filter-id={filter.id}
+                                            onchange={handleFilterChange} placeholder="All"></lightning-combobox>
+                                    </template>
+                                    <template if:true={filter.isText}>
+                                        <lightning-input label={filter.label} value={filter.currentValue}
+                                            data-filter-id={filter.id} onchange={handleFilterChange}
+                                            placeholder="Type to filter..."></lightning-input>
+                                    </template>
+                                    <template if:true={filter.isCurrentUser}>
+                                        <lightning-input type="toggle" label={filter.label}
+                                            checked={filter.currentValue} data-filter-id={filter.id}
+                                            onchange={handleFilterChange}></lightning-input>
+                                    </template>
+                                    <template if:true={filter.isUserHierarchy}>
+                                        <lightning-input type="toggle" label={filter.label}
+                                            checked={filter.currentValue} data-filter-id={filter.id}
+                                            onchange={handleFilterChange}></lightning-input>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                        <div class="slds-col slds-grow-none slds-m-bottom_x-small slds-p-top_large">
+                            <lightning-button label="Apply" variant="brand" onclick={handleApplyFilters}
+                                class="slds-m-right_xx-small"></lightning-button>
+                            <lightning-button label="Clear" variant="neutral" onclick={handleClearFilters}></lightning-button>
+                        </div>
+                    </div>
+                    <!-- Cascading Hierarchy Filters -->
+                    <template for:each={renderedFilters} for:item="hFilter">
+                        <template if:true={hFilter.isHierarchy}>
+                            <div key={hFilter.id} class="slds-m-top_x-small">
+                                <div class="hierarchy-filter-container">
+                                    <div class="hierarchy-header">
+                                        <span class="hierarchy-label">{hFilter.label}
+                                            <template if:true={hFilter.hierarchyModeLabel}> ({hFilter.hierarchyModeLabel})</template>
+                                        </span>
+                                        <lightning-button-icon icon-name="utility:close" alternative-text="Clear"
+                                            data-filter-id={hFilter.id} onclick={handleClearHierarchy}
+                                            size="small" variant="bare"></lightning-button-icon>
+                                    </div>
+                                    <div class="hierarchy-levels slds-grid slds-gutters_small slds-wrap">
+                                        <template for:each={hFilter.hierarchyLevels} for:item="level">
+                                            <div key={level.key} class="slds-col slds-size_1-of-6 hierarchy-level">
+                                                <lightning-combobox label={level.levelLabel}
+                                                    value={level.selectedUserId}
+                                                    options={level.userOptions}
+                                                    data-filter-id={level.filterId}
+                                                    data-level-index={level.levelIndex}
+                                                    onchange={handleHierarchyChange}
+                                                    placeholder="Select..."></lightning-combobox>
+                                            </div>
+                                        </template>
+                                        <template if:true={hFilter.hierarchyLoading}>
+                                            <div class="slds-col slds-size_1-of-6 slds-grid slds-grid_vertical-end slds-p-bottom_xx-small">
+                                                <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Dashboard Loading -->
+            <template if:true={isDashboardLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Dashboard Components Grid -->
+            <template if:true={showDashboard}>
+                <div class="slds-grid slds-wrap slds-gutters_small components-grid">
+                    <template for:each={renderedComponents} for:item="comp">
+                        <div key={comp.id} class={comp.sizeClass}>
+                            <div class="dashboard-card">
+
+                                <!-- ═══ CARD HEADER with EMOJI ICON ═══ -->
+                                <div class="card-header">
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-grow">
+                                        <!-- Emoji icon with colored background -->
+                                        <template if:true={comp.emojiIcon}>
+                                            <div class="card-emoji-icon" style={comp.iconBgStyle}>
+                                                <span style="font-size:16px;line-height:1;">{comp.emojiIcon}</span>
+                                            </div>
+                                        </template>
+                                        <template if:false={comp.emojiIcon}>
+                                            <lightning-icon icon-name={comp.displayIcon} size="x-small"
+                                                class="slds-m-right_x-small card-icon"></lightning-icon>
+                                        </template>
+                                        <template if:true={comp.hasExtraIcons}>
+                                            <template for:each={comp.extraIcons} for:item="ei">
+                                                <lightning-icon key={ei.key} icon-name={ei.icon} size="xx-small"
+                                                    class="slds-m-right_xx-small card-icon"></lightning-icon>
+                                            </template>
+                                        </template>
+                                        <span class="card-title slds-m-left_x-small">{comp.title}</span>
+                                    </div>
+                                    <div class="slds-grid slds-grid_vertical-align-center" style="gap:8px;">
+                                        <template if:true={comp.hasBadge}>
+                                            <span class="card-badge">{comp.badgeText}</span>
+                                        </template>
+                                        <lightning-button-icon icon-name="utility:table" alternative-text="View Report"
+                                            title="View Report" data-comp-id={comp.id} onclick={handleViewReport}
+                                            variant="bare" size="small" class="view-report-btn"></lightning-button-icon>
+                                    </div>
+                                </div>
+
+                                <!-- Error state -->
+                                <template if:true={comp.hasError}>
+                                    <div class="card-body slds-text-align_center slds-text-color_error">
+                                        <lightning-icon icon-name="utility:warning" size="small" variant="error"
+                                            class="slds-m-bottom_x-small"></lightning-icon>
+                                        <p class="slds-text-body_small">{comp.errorMessage}</p>
+                                    </div>
+                                </template>
+
+                                <!-- ═══ KPI CARD — with emoji icon + colored bg ═══ -->
+                                <template if:true={comp.isKpi}>
+                                    <template if:false={comp.hasError}>
+                                        <div class={comp.kpiBorderClass}>
+                                            <div class="kpi-body">
+                                                <!-- Emoji icon wrap with dynamic color background -->
+                                                <div class={comp.kpiIconClass} style={comp.iconBgStyle}>
+                                                    <template if:true={comp.emojiIcon}>
+                                                        <span class="kpi-emoji-icon">{comp.emojiIcon}</span>
+                                                    </template>
+                                                    <template if:false={comp.emojiIcon}>
+                                                        <lightning-icon icon-name={comp.displayIcon} size="small"></lightning-icon>
+                                                    </template>
+                                                </div>
+                                                <div class="kpi-content">
+                                                    <p class="kpi-label">{comp.title}</p>
+                                                    <p class={comp.kpiValueClass}>{comp.formattedValue}</p>
+                                                    <p class="kpi-sub">{comp.aggregation} of {comp.field}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Legacy Chart -->
+                                <template if:true={comp.isChart}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body chart-body">
+                                            <div data-chart-id={comp.id} class="chart-container"></div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Progress Bars -->
+                                <template if:true={comp.isProgressBar}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <template for:each={comp.processedItems} for:item="item">
+                                                <div key={item.key} class="progress-item">
+                                                    <div class="progress-item-header">
+                                                        <span class="progress-item-label">{item.groupLabel}</span>
+                                                        <span class={item.achievementClass} style={item.achievementStyle}>{item.achievementPct}%</span>
+                                                    </div>
+                                                    <div class="progress-bar-track">
+                                                        <div class={item.barFillClass} style={item.progressWidth}></div>
+                                                    </div>
+                                                    <div class="progress-item-footer">
+                                                        <span class="progress-actual">Actual: {item.formattedPrimary}</span>
+                                                        <template if:true={item.hasTarget}>
+                                                            <span class="progress-target">Target: {item.formattedTarget}</span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Ranked List -->
+                                <template if:true={comp.isRankedList}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <template for:each={comp.processedItems} for:item="item">
+                                                <div key={item.key} class="ranked-item">
+                                                    <div class={item.rankClass}>{item.rank}</div>
+                                                    <div class="ranked-item-info">
+                                                        <span class="ranked-item-name">{item.groupLabel}</span>
+                                                        <template if:true={item.hasSubtitle}>
+                                                            <span class="ranked-item-subtitle">{item.subtitle}</span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="ranked-item-values">
+                                                        <span class="ranked-item-primary">{item.formattedPrimary}</span>
+                                                        <template if:true={item.formattedSecondary}>
+                                                            <span class="ranked-item-secondary">{item.formattedSecondary}</span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Metric Cards -->
+                                <template if:true={comp.isMetricCards}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <div class="metric-cards-grid">
+                                                <template for:each={comp.processedItems} for:item="item">
+                                                    <div key={item.key} class="metric-card-item">
+                                                        <div class="metric-card-header">
+                                                            <span class="metric-card-name">{item.groupLabel}</span>
+                                                            <template if:true={item.hasBadge}>
+                                                                <span class="metric-card-type-badge badge-default">{item.badgeText}</span>
+                                                            </template>
+                                                        </div>
+                                                        <template if:true={item.hasSubtitle}>
+                                                            <div class="metric-card-subtitle">{item.subtitle}</div>
+                                                        </template>
+                                                        <template if:true={item.hasMetrics}>
+                                                            <div class="metric-card-metrics">
+                                                                <template for:each={item.metricsDisplay} for:item="m">
+                                                                    <div key={m.key} class="metric-card-metric">
+                                                                        <span class="metric-card-metric-label">{m.label}</span>
+                                                                        <span class="metric-card-metric-value">{m.value}</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={item.hasAchievement}>
+                                                            <div class="metric-card-progress">
+                                                                <div class="progress-bar-track small">
+                                                                    <div class={item.barFillClass} style={item.progressWidth}></div>
+                                                                </div>
+                                                                <span class="metric-card-target">Target: {item.formattedTarget}</span>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Ranked Table -->
+                                <template if:true={comp.isRankedTable}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body ranked-table-body">
+                                            <table class="ranked-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="rank-col">#</th>
+                                                        <th>Name</th>
+                                                        <template for:each={comp.columnHeaders} for:item="ch">
+                                                            <th key={ch.key} class="value-col">{ch.label}</th>
+                                                        </template>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template for:each={comp.processedItems} for:item="item">
+                                                        <tr key={item.key}>
+                                                            <td><div class={item.rankClass} style="width:26px;height:26px;font-size:11px;">{item.rank}</div></td>
+                                                            <td>
+                                                                <div class="ranked-table-name">{item.groupLabel}</div>
+                                                                <template if:true={item.hasSubtitle}>
+                                                                    <div class="ranked-table-subtitle">{item.subtitle}</div>
+                                                                </template>
+                                                            </td>
+                                                            <template for:each={item.columnsDisplay} for:item="cv">
+                                                                <td key={cv.key} class="value-col">{cv.value}</td>
+                                                            </template>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Achievement Cards -->
+                                <template if:true={comp.isAchievementCard}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <div class="achievement-cards-grid">
+                                                <template for:each={comp.processedItems} for:item="item">
+                                                    <div key={item.key} class="achievement-card-item">
+                                                        <div class="achievement-card-header">
+                                                            <div>
+                                                                <span class="achievement-card-title">{item.groupLabel}</span>
+                                                                <template if:true={item.hasBadge}>
+                                                                    <span class="achievement-card-type"> - {item.badgeText}</span>
+                                                                </template>
+                                                            </div>
+                                                            <span class={item.achievementClass} style={item.achievementStyle}>{item.achievementPct}%</span>
+                                                        </div>
+                                                        <div class="progress-bar-track">
+                                                            <div class={item.barFillClass} style={item.progressWidth}></div>
+                                                        </div>
+                                                        <div class="achievement-card-footer">
+                                                            <span class="achievement-card-value">Credit: {item.formattedPrimary}</span>
+                                                            <template if:true={item.hasTarget}>
+                                                                <span class="achievement-card-target">{item.formattedSecondary} accounts</span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Target vs Progress -->
+                                <template if:true={comp.isTargetProgress}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <template for:each={comp.processedItems} for:item="item">
+                                                <div key={item.key} class="target-progress-item">
+                                                    <div class="tp-info-row">
+                                                        <div class="tp-identity">
+                                                            <div class="avatar-circle">{item.initials}</div>
+                                                            <div>
+                                                                <div class="target-progress-name">{item.groupLabel}</div>
+                                                                <template if:true={item.hasSubtitle}>
+                                                                    <div class="target-progress-role">{item.subtitle}</div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                        <div class="target-progress-values">
+                                                            <span class={item.achievementClass} style={item.achievementStyle}>
+                                                                <span class="target-progress-pct">{item.achievementPct}%</span>
+                                                            </span>
+                                                            <template if:true={item.hasGap}>
+                                                                <span class="target-progress-gap">Gap: {item.gap}</span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                    <div class="progress-bar-track">
+                                                        <div class={item.barFillClass} style={item.progressWidth}></div>
+                                                    </div>
+                                                    <div class="target-progress-footer">
+                                                        <span class="target-progress-actual">Actual: {item.formattedPrimary}</span>
+                                                        <template if:true={item.hasTarget}>
+                                                            <span class="target-progress-target-val">Target: {item.formattedTarget}</span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- Status Cards -->
+                                <template if:true={comp.isStatusCard}>
+                                    <template if:false={comp.hasError}>
+                                        <div class="card-body widget-body" style={comp.barThicknessStyle}>
+                                            <div class="status-cards-grid">
+                                                <template for:each={comp.processedItems} for:item="item">
+                                                    <div key={item.key} class={item.statusBgClass}>
+                                                        <div class="status-card-header">
+                                                            <span class="status-card-name">{item.groupLabel}</span>
+                                                            <template if:true={item.severity}>
+                                                                <span class="status-card-severity">{item.severity}</span>
+                                                            </template>
+                                                        </div>
+                                                        <template if:true={item.hasMetrics}>
+                                                            <div class="status-card-metrics">
+                                                                <template for:each={item.metricsDisplay} for:item="m">
+                                                                    <div key={m.key} class="status-card-metric">
+                                                                        <span class="status-card-metric-value">{m.value}</span>
+                                                                        <span class="status-card-metric-label">{m.label}</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={item.textValue}>
+                                                            <div class="status-card-text">
+                                                                <span>Top Issue:</span>
+                                                                <span>{item.textValue}</span>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <!-- View Report Modal -->
+    <template if:true={showReportModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header report-modal-header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={closeReportModal}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-text-heading_medium slds-text-color_inverse">{reportModalTitle} — Report</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium report-modal-body">
+                    <template if:true={isReportLoading}>
+                        <div class="report-skeleton">
+                            <div class="skeleton-bar-header slds-m-bottom_medium">
+                                <div class="skeleton-pill"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                            <div class="skeleton-table">
+                                <div class="skeleton-row skeleton-row-header">
+                                    <div class="skeleton-cell"></div><div class="skeleton-cell"></div>
+                                    <div class="skeleton-cell"></div><div class="skeleton-cell"></div>
+                                </div>
+                                <div class="skeleton-row"><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div></div>
+                                <div class="skeleton-row"><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div></div>
+                                <div class="skeleton-row"><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div></div>
+                                <div class="skeleton-row"><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div><div class="skeleton-cell"></div></div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={isReportLoading}>
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                            <div><span class="slds-badge slds-badge_lightest">{reportTotalRecords} records</span></div>
+                            <div>
+                                <lightning-button label="Download Excel (CSV)" variant="brand"
+                                    icon-name="utility:download" onclick={handleDownloadExcel}></lightning-button>
+                            </div>
+                        </div>
+                        <template if:true={hasReportRows}>
+                            <div class="report-table-container">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped slds-table_fixed-layout report-table">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <template for:each={reportColumns} for:item="col">
+                                                <th key={col.fieldName} scope="col">
+                                                    <div class="slds-truncate" title={col.label}>{col.label}</div>
+                                                </th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={reportRows} for:item="row">
+                                            <tr key={row._key}>
+                                                <template for:each={row._cells} for:item="cell">
+                                                    <td key={cell.key}>
+                                                        <div class="slds-truncate" title={cell.value}>{cell.value}</div>
+                                                    </td>
+                                                </template>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                        <template if:false={hasReportRows}>
+                            <div class="slds-text-align_center slds-p-around_large slds-text-color_weak">No records found.</div>
+                        </template>
+                    </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Close" onclick={closeReportModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

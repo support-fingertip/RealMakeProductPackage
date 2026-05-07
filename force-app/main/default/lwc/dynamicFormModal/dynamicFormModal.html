@@ -1,0 +1,370 @@
+<template>
+    <!-- Backdrop overlay -->
+    <div class="modal-backdrop"></div>
+
+    <!-- Centered Modal -->
+    <div class="modal-container">
+        <!-- Header -->
+        <header class="form-header">
+            <div class="form-header-left">
+                <lightning-icon icon-name="standard:form" size="medium"></lightning-icon>
+                <h2 class="form-header-title">{modalTitle}</h2>
+            </div>
+        </header>
+
+        <!-- Body -->
+        <div class="form-body">
+            <div class="form-body-inner">
+                <!-- Skeleton Loading -->
+                <template if:true={isLoading}>
+                    <div class="skeleton-wrapper">
+                        <!-- Skeleton Section 1 -->
+                        <div class="skeleton-section">
+                            <div class="skeleton-section-title"></div>
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Skeleton Section 2 -->
+                        <div class="skeleton-section">
+                            <div class="skeleton-section-title skeleton-short"></div>
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_medium">
+                                    <div class="skeleton-label skeleton-short"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-p-bottom_medium">
+                                    <div class="skeleton-label"></div>
+                                    <div class="skeleton-textarea"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Form Content -->
+                <template if:false={isLoading}>
+                    <!-- Parent Record Sections -->
+                    <template for:each={renderedSections} for:item="section">
+                        <div key={section.id} class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-title">{section.label}</span>
+                            </div>
+                            <div class={section.gridClass}>
+                                <template for:each={section.fields} for:item="field">
+                                    <template if:true={field.isVisible}>
+                                        <div key={field.apiName} class={section.colClass}>
+                                            <template if:true={field.isTextField}>
+                                                <lightning-input label={field.displayLabel}
+                                                    value={field.value} data-field={field.apiName}
+                                                    data-scope="parent" onchange={handleFieldChange}
+                                                    required={field.displayRequired}
+                                                    pattern={field.pattern}
+                                                    message-when-pattern-mismatch={field.messageWhenPatternMismatch}
+                                                    max-length={field.maxLength}
+                                                    min-length={field.minLength}></lightning-input>
+                                            </template>
+                                            <template if:true={field.isTextArea}>
+                                                <lightning-textarea label={field.displayLabel}
+                                                    value={field.value} data-field={field.apiName}
+                                                    data-scope="parent" onchange={handleFieldChange}
+                                                    required={field.displayRequired}
+                                                    max-length={field.maxLength}></lightning-textarea>
+                                            </template>
+                                            <template if:true={field.isNumber}>
+                                                <lightning-input type="number"
+                                                    label={field.displayLabel} value={field.value}
+                                                    data-field={field.apiName} data-scope="parent"
+                                                    onchange={handleFieldChange}
+                                                    required={field.displayRequired}
+                                                    min={field.min}
+                                                    max={field.max}
+                                                    step={field.step}
+                                                    message-when-range-overflow={field.messageWhenRangeOverflow}
+                                                    message-when-range-underflow={field.messageWhenRangeUnderflow}></lightning-input>
+                                            </template>
+                                            <template if:true={field.isDate}>
+                                                <lightning-input type="date"
+                                                    label={field.displayLabel} value={field.value}
+                                                    data-field={field.apiName} data-scope="parent"
+                                                    onchange={handleFieldChange}
+                                                    required={field.displayRequired}
+                                                    min={field.min}
+                                                    max={field.max}></lightning-input>
+                                            </template>
+                                            <template if:true={field.isDateTime}>
+                                                <lightning-input type="datetime"
+                                                    label={field.displayLabel} value={field.value}
+                                                    data-field={field.apiName} data-scope="parent"
+                                                    onchange={handleFieldChange}
+                                                    required={field.displayRequired}
+                                                    min={field.min}
+                                                    max={field.max}></lightning-input>
+                                            </template>
+                                            <template if:true={field.isBoolean}>
+                                                <lightning-input type="toggle"
+                                                    label={field.displayLabel} checked={field.value}
+                                                    data-field={field.apiName} data-scope="parent"
+                                                    onchange={handleFieldChange}
+                                                    message-toggle-active="Yes"
+                                                    message-toggle-inactive="No"></lightning-input>
+                                            </template>
+                                            <template if:true={field.isPicklist}>
+                                                <lightning-combobox label={field.displayLabel}
+                                                    value={field.value} options={field.picklistOptions}
+                                                    data-field={field.apiName} data-scope="parent"
+                                                    onchange={handleFieldChange}
+                                                    required={field.displayRequired}></lightning-combobox>
+                                            </template>
+                                            <template if:true={field.isLookup}>
+                                                <div class="lookup-field">
+                                                    <label class="slds-form-element__label">
+                                                        <template if:true={field.displayRequired}>
+                                                            <abbr class="slds-required" title="required">*</abbr>
+                                                        </template>
+                                                        {field.displayLabel}
+                                                    </label>
+                                                    <template if:true={field.isLookupFilled}>
+                                                        <div class="lookup-pill">
+                                                            <lightning-icon icon-name="standard:record" size="x-small"></lightning-icon>
+                                                            <span class="lookup-pill-name">{field.lookupDisplayName}</span>
+                                                            <lightning-button-icon icon-name="utility:close"
+                                                                alternative-text="Clear" size="small"
+                                                                variant="bare" data-field={field.apiName}
+                                                                onclick={handleLookupClear}></lightning-button-icon>
+                                                        </div>
+                                                    </template>
+                                                    <template if:false={field.isLookupFilled}>
+                                                        <div class="lookup-search-wrapper">
+                                                            <lightning-input variant="label-hidden"
+                                                                placeholder="Search..."
+                                                                data-field={field.apiName}
+                                                                data-refobject={field.referenceObjectName}
+                                                                onchange={handleLookupSearch}
+                                                                autocomplete="off">
+                                                            </lightning-input>
+                                                            <template if:true={field.hasLookupResults}>
+                                                                <div class="lookup-dropdown">
+                                                                    <template for:each={field.lookupResults} for:item="rec">
+                                                                        <div key={rec.id} class="lookup-option"
+                                                                            data-field={field.apiName}
+                                                                            data-id={rec.id}
+                                                                            data-name={rec.name}
+                                                                            onclick={handleLookupSelect}>
+                                                                            <lightning-icon icon-name="standard:record" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                                            <span>{rec.name}</span>
+                                                                        </div>
+                                                                    </template>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Child Record Sections -->
+                    <template for:each={renderedChildSections} for:item="childSection">
+                        <div key={childSection.id} class="form-section child-form-section">
+                            <div class="form-section-header child-section-header">
+                                <span class="form-section-title">{childSection.sectionLabel}</span>
+                                <lightning-button label="Add Row" variant="neutral"
+                                    icon-name="utility:add" data-child-id={childSection.id}
+                                    onclick={handleAddChildRow}></lightning-button>
+                            </div>
+
+                            <template if:true={childSection.hasRows}>
+                                <div class="table-wrapper">
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" class="row-num-col">#</th>
+                                                <template for:each={childSection.fields} for:item="hField">
+                                                    <th key={hField.apiName} scope="col">{hField.label}</th>
+                                                </template>
+                                                <th scope="col" class="action-col">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={childSection.rows} for:item="row">
+                                                <tr key={row.tempId}>
+                                                    <td class="row-num-col">{row.rowNum}</td>
+                                                    <template for:each={row.cells} for:item="cell">
+                                                        <td key={cell.apiName}>
+                                                            <template if:true={cell.isTextField}>
+                                                                <lightning-input value={cell.value}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"
+                                                                    required={cell.isRequired}
+                                                                    pattern={cell.pattern}
+                                                                    message-when-pattern-mismatch={cell.messageWhenPatternMismatch}></lightning-input>
+                                                            </template>
+                                                            <template if:true={cell.isNumber}>
+                                                                <lightning-input type="number"
+                                                                    value={cell.value}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"
+                                                                    required={cell.isRequired}
+                                                                    min={cell.min}
+                                                                    max={cell.max}
+                                                                    step={cell.step}
+                                                                    message-when-range-overflow={cell.messageWhenRangeOverflow}
+                                                                    message-when-range-underflow={cell.messageWhenRangeUnderflow}></lightning-input>
+                                                            </template>
+                                                            <template if:true={cell.isDate}>
+                                                                <lightning-input type="date"
+                                                                    value={cell.value}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"
+                                                                    required={cell.isRequired}
+                                                                    min={cell.min}
+                                                                    max={cell.max}></lightning-input>
+                                                            </template>
+                                                            <template if:true={cell.isBoolean}>
+                                                                <lightning-input type="checkbox"
+                                                                    checked={cell.value}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"></lightning-input>
+                                                            </template>
+                                                            <template if:true={cell.isPicklist}>
+                                                                <lightning-combobox value={cell.value}
+                                                                    options={cell.picklistOptions}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"
+                                                                    required={cell.isRequired}></lightning-combobox>
+                                                            </template>
+                                                            <template if:true={cell.isOther}>
+                                                                <lightning-input value={cell.value}
+                                                                    data-child-id={childSection.id}
+                                                                    data-row-id={row.tempId}
+                                                                    data-field={cell.apiName}
+                                                                    onchange={handleChildFieldChange}
+                                                                    variant="label-hidden"
+                                                                    required={cell.isRequired}></lightning-input>
+                                                            </template>
+                                                        </td>
+                                                    </template>
+                                                    <td class="action-col">
+                                                        <lightning-button-icon icon-name="utility:delete"
+                                                            alternative-text="Delete Row"
+                                                            data-child-id={childSection.id}
+                                                            data-row-id={row.tempId}
+                                                            onclick={handleDeleteChildRow}
+                                                            variant="bare"
+                                                            size="medium"></lightning-button-icon>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+                            <template if:false={childSection.hasRows}>
+                                <div class="empty-child-state">
+                                    <lightning-icon icon-name="utility:table" size="small" class="slds-m-right_small"></lightning-icon>
+                                    <span>No rows added. Click "Add Row" to begin.</span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Document Upload Section -->
+                    <template if:true={hasDocumentUploadSlots}>
+                        <div class="form-section doc-upload-section">
+                            <div class="form-section-header">
+                                <span class="form-section-title">Document Upload</span>
+                            </div>
+                            <div class="doc-upload-grid">
+                                <template for:each={documentUploadSlots} for:item="slot">
+                                    <div key={slot.key} class="doc-slot">
+                                        <div class="doc-slot-header">
+                                            <div class="doc-slot-info">
+                                                <span class="doc-slot-category">{slot.categoryLabel}</span>
+                                                <span class="doc-slot-type">{slot.documentTypeLabel}</span>
+                                                <template if:true={slot.isRequired}>
+                                                    <span class="doc-required-badge">Required</span>
+                                                </template>
+                                            </div>
+                                            <template if:true={slot.isUploaded}>
+                                                <lightning-icon icon-name="utility:check" size="xx-small" class="doc-uploaded-icon"></lightning-icon>
+                                            </template>
+                                        </div>
+                                        <div class="doc-slot-body">
+                                            <template if:true={slot.isUploaded}>
+                                                <div class="doc-file-pill">
+                                                    <lightning-icon icon-name="doctype:attachment" size="xx-small"></lightning-icon>
+                                                    <span class="doc-file-name">{slot.fileName}</span>
+                                                    <lightning-button-icon icon-name="utility:close"
+                                                        alternative-text="Remove" size="small" variant="bare"
+                                                        data-key={slot.key}
+                                                        onclick={handleDocFileRemove}></lightning-button-icon>
+                                                </div>
+                                            </template>
+                                            <template if:false={slot.isUploaded}>
+                                                <lightning-file-upload
+                                                    label=""
+                                                    name={slot.key}
+                                                    record-id={contextRecordId}
+                                                    data-key={slot.key}
+                                                    onuploadfinished={handleDocFileUpload}
+                                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                                                </lightning-file-upload>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="form-footer">
+            <lightning-button label="Cancel" onclick={handleCancel} variant="neutral"
+                class="slds-m-right_small"></lightning-button>
+            <lightning-button label="Save" variant="brand" onclick={handleSave}
+                disabled={isLoading} icon-name="utility:save"></lightning-button>
+        </footer>
+    </div>
+</template>

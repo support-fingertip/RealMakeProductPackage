@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Type__c</fullName>
+    <label>Payment Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>On Booking</fullName>
+                <default>false</default>
+                <label>On Booking</label>
+            </value>
+            <value>
+                <fullName>On Agreement</fullName>
+                <default>false</default>
+                <label>On Agreement</label>
+            </value>
+            <value>
+                <fullName>On Foundation</fullName>
+                <default>false</default>
+                <label>On Foundation</label>
+            </value>
+            <value>
+                <fullName>On Plinth</fullName>
+                <default>false</default>
+                <label>On Plinth</label>
+            </value>
+            <value>
+                <fullName>On First Floor</fullName>
+                <default>false</default>
+                <label>On First Floor</label>
+            </value>
+            <value>
+                <fullName>On Second Floor</fullName>
+                <default>false</default>
+                <label>On Second Floor</label>
+            </value>
+            <value>
+                <fullName>On Roof Slab</fullName>
+                <default>false</default>
+                <label>On Roof Slab</label>
+            </value>
+            <value>
+                <fullName>On Plastering</fullName>
+                <default>false</default>
+                <label>On Plastering</label>
+            </value>
+            <value>
+                <fullName>On Finishing</fullName>
+                <default>false</default>
+                <label>On Finishing</label>
+            </value>
+            <value>
+                <fullName>On Possession</fullName>
+                <default>false</default>
+                <label>On Possession</label>
+            </value>
+            <value>
+                <fullName>On Registration</fullName>
+                <default>false</default>
+                <label>On Registration</label>
+            </value>
+            <value>
+                <fullName>Milestone Based</fullName>
+                <default>false</default>
+                <label>Milestone Based</label>
+            </value>
+            <value>
+                <fullName>Time Based</fullName>
+                <default>false</default>
+                <label>Time Based</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

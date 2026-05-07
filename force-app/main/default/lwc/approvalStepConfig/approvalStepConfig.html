@@ -1,0 +1,104 @@
+<template>
+    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+        <p class="slds-text-heading_small">
+            Approval Steps ({stepCount})
+        </p>
+        <lightning-button 
+            variant="neutral" 
+            label="Add Step" 
+            icon-name="utility:add"
+            onclick={handleAddStep}
+            disabled={isMaxSteps}>
+        </lightning-button>
+    </div>
+    
+    <template if:true={hasSteps}>
+        <template for:each={steps} for:item="step">
+            <div key={step.id} class="slds-box slds-m-bottom_small">
+                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                    <span class="slds-text-title_bold">Step {step.stepNumber}</span>
+                    <lightning-button-icon 
+                        icon-name="utility:delete" 
+                        variant="bare"
+                        alternative-text="Remove Step"
+                        onclick={handleRemoveStep}
+                        data-index={step.index}>
+                    </lightning-button-icon>
+                </div>
+                
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <!-- Step Name -->
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <lightning-input 
+                            label="Step Name" 
+                            value={step.stepName}
+                            onchange={handleStepNameChange}
+                            data-index={step.index}
+                            placeholder="e.g., Manager Approval">
+                        </lightning-input>
+                    </div>
+                    
+                    <!-- Approver Type Selection -->
+                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                        <lightning-combobox
+                            name={step.id}
+                            label="Approver Type"
+                            value={step.approverType}
+                            placeholder="Select approver type..."
+                            options={approverTypeOptions}
+                            onchange={handleApproverTypeChange}
+                            data-index={step.index}>
+                        </lightning-combobox>
+                    </div>
+                    
+                    <!-- Field Selection (shown when type is 'field') -->
+                    <template if:true={step.showFieldSelection}>
+                        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                            <lightning-combobox
+                                label="Approver Field"
+                                value={step.fieldPath}
+                                placeholder="Select approver field..."
+                                options={userLookupOptions}
+                                onchange={handleFieldPathChange}
+                                data-index={step.index}>
+                            </lightning-combobox>
+                        </div>
+                    </template>
+                    
+                    <!-- User Lookup (shown when type is 'user') -->
+                    <template if:true={step.showUserSelection}>
+                        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                            <label class="slds-form-element__label">Select User</label>
+                            <lightning-record-picker
+                                label="Select User"
+                                placeholder="Search for a user..."
+                                object-api-name="User"
+                                value={step.specificUserId}
+                                onchange={handleUserChange}
+                                data-index={step.index}
+                                variant="label-hidden">
+                            </lightning-record-picker>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Selection Summary -->
+                <template if:true={step.selectionSummary}>
+                    <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak">
+                        Selected: {step.selectionSummary}
+                    </div>
+                </template>
+            </div>
+        </template>
+    </template>
+    
+    <template if:false={hasSteps}>
+        <div class="slds-box slds-theme_shade slds-text-align_center">
+            <p>No steps configured.  Click "Add Step" to add approval steps.</p>
+        </div>
+    </template>
+    
+    <p class="slds-m-top_small slds-text-body_small slds-text-color_weak">
+        Maximum 6 steps allowed. Choose either a field path (dynamic) or a specific user (static) for each step.
+    </p>
+</template>

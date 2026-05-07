@@ -1,0 +1,864 @@
+<template>
+    <lightning-card title="GRE Walk-In Management" icon-name="standard:visit">
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             STEP 1: Search by Mobile Number
+             ═══════════════════════════════════════════════════════════ -->
+        <template if:true={showCheckForm}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-heading_small slds-m-bottom_medium step-header">
+                    Step 1: Customer Lookup
+                </div>
+                <p class="slds-text-body_regular slds-m-bottom_medium slds-text-color_weak">
+                    Enter the customer's mobile number to search for existing leads.
+                </p>
+
+                <div class="slds-grid slds-gutters slds-wrap slds-grid_align-center">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                        <div class="phone-input-container">
+                            <lightning-input
+                                label="Mobile Number"
+                                type="text"
+                                value={phone}
+                                onchange={handlePhoneChange}
+                                required
+                                maxlength="10"
+                                pattern="[0-9]{10}"
+                                placeholder="Enter 10-digit mobile number"
+                                message-when-value-missing="Mobile number is required"
+                                message-when-pattern-mismatch="Please enter a valid 10-digit mobile number"
+                                class="phone-number-input">
+                            </lightning-input>
+                            <template if:true={phone}>
+                                <button class="slds-button slds-button_icon phone-clear-btn"
+                                        title="Clear" onclick={handleClearPhone}>
+                                    <lightning-icon icon-name="utility:close" size="xx-small"
+                                                    alternative-text="Clear"></lightning-icon>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-top_medium slds-text-align_center">
+                    <lightning-button
+                        variant="brand"
+                        label="Search Lead"
+                        icon-name="utility:search"
+                        onclick={handleSearchLead}
+                        disabled={isCheckDisabled}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             STEP 1.5: Lead List (Search Results)
+             ═══════════════════════════════════════════════════════════ -->
+        <template if:true={showLeadList}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-heading_small slds-m-bottom_medium step-header">
+                    Step 2: Select Lead
+                </div>
+                <p class="slds-text-body_regular slds-m-bottom_medium slds-text-color_weak">
+                    The following leads match mobile number <strong>{phone}</strong>. Select a lead to proceed or create a new one.
+                </p>
+
+                <div class="lead-list-container">
+                    <lightning-datatable
+                        key-field="leadId"
+                        data={searchResults}
+                        columns={leadColumns}
+                        onrowaction={handleLeadRowAction}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </div>
+
+                <div class="slds-m-top_large slds-text-align_center">
+                    <lightning-button
+                        label="Back"
+                        icon-name="utility:back"
+                        onclick={handleBackToCheck}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             STEP 2A: New Lead Form (Scenario 1)
+             ═══════════════════════════════════════════════════════════ -->
+        <template if:true={showNewLeadForm}>
+            <div class="slds-p-around_medium">
+                <!-- Info Banner -->
+                <div class="slds-notify slds-notify_alert slds-alert_texture slds-theme_info slds-m-bottom_medium" role="alert">
+                    <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span>No matching lead selected. Please fill in customer details to create a new lead.</span>
+                </div>
+
+                <div class="slds-text-heading_small slds-m-bottom_medium step-header">
+                    Create New Lead
+                </div>
+
+                <!-- Customer Details -->
+                <div class="slds-section slds-is-open slds-m-bottom_small">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-label">Customer Information</span>
+                    </h3>
+                </div>
+
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-input
+                            label="First Name"
+                            value={firstName}
+                            onchange={handleFirstNameChange}
+                            required
+                            placeholder="Enter first name">
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-input
+                            label="Last Name"
+                            value={lastName}
+                            onchange={handleLastNameChange}
+                            placeholder="Enter last name">
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-input
+                            label="Phone"
+                            type="tel"
+                            value={phone}
+                            disabled>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-input
+                            label="Email"
+                            type="email"
+                            value={email}
+                            onchange={handleEmailChange}
+                            placeholder="Enter email">
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <!-- Project & Source -->
+                <div class="slds-section slds-is-open slds-m-top_medium slds-m-bottom_small">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-label">Project & Source</span>
+                    </h3>
+                </div>
+
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <label class="slds-form-element__label">
+                            <abbr class="slds-required" title="required">*</abbr> Project
+                        </label>
+                        <template if:true={hasSelectedProject}>
+                            <div class="project-pill-container">
+                                <lightning-pill
+                                    label={selectedProjectName}
+                                    onremove={handleClearProject}>
+                                    <lightning-icon icon-name="standard:account" size="x-small"></lightning-icon>
+                                </lightning-pill>
+                            </div>
+                        </template>
+                        <template if:false={hasSelectedProject}>
+                            <div class="project-lookup-container">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                                        <lightning-icon icon-name="utility:search" size="x-small"
+                                            class="project-search-icon"></lightning-icon>
+                                        <input type="text"
+                                            class="slds-input project-search-input"
+                                            placeholder="Search projects..."
+                                            value={projectSearchTerm}
+                                            onkeyup={handleProjectKeyup}
+                                            onfocus={handleProjectFocus}
+                                            onblur={handleProjectBlur}
+                                            autocomplete="off" />
+                                    </div>
+                                </div>
+                                <template if:true={showProjectDropdown}>
+                                    <div class="project-lookup-dropdown" role="listbox">
+                                        <ul class="project-lookup-list" role="presentation">
+                                            <template if:true={isProjectSearching}>
+                                                <li class="project-lookup-item project-lookup-loading">
+                                                    <lightning-spinner alternative-text="Searching..." size="small"></lightning-spinner>
+                                                    <span class="slds-m-left_small">Searching...</span>
+                                                </li>
+                                            </template>
+                                            <template if:false={isProjectSearching}>
+                                                <template if:true={hasProjectResults}>
+                                                    <template for:each={projectLookupResults} for:item="proj">
+                                                        <li key={proj.id}
+                                                            class="project-lookup-item"
+                                                            role="option"
+                                                            data-record-id={proj.id}
+                                                            data-record-name={proj.name}
+                                                            onmousedown={handleProjectSelect}>
+                                                            <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                                            <div>
+                                                                <span class="project-lookup-name">{proj.name}</span>
+                                                                <template if:true={proj.code}>
+                                                                    <span class="project-lookup-code"> ({proj.code})</span>
+                                                                </template>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={hasProjectResults}>
+                                                    <li class="project-lookup-item project-lookup-no-results">
+                                                        <span class="slds-text-color_weak">No projects found</span>
+                                                    </li>
+                                                </template>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-combobox
+                            label="Source"
+                            value={selectedSource}
+                            options={sourceOptions}
+                            onchange={handleSourceChange}
+                            disabled>
+                        </lightning-combobox>
+                    </div>
+                </div>
+
+                <!-- Duplicate Lead Warning -->
+                <template if:true={hasDuplicate}>
+                    <div class="slds-m-top_small slds-m-horizontal_x-small">
+                        <template if:true={duplicateIsActive}>
+                            <div class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_small duplicate-alert" role="alert">
+                                <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                                <span>{duplicateMessage}</span>
+                            </div>
+                        </template>
+                        <template if:false={duplicateIsActive}>
+                            <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small duplicate-alert" role="alert">
+                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                <span>{duplicateMessage}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Preferences -->
+                <div class="slds-section slds-is-open slds-m-top_medium slds-m-bottom_small">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-label">Preferences</span>
+                    </h3>
+                </div>
+
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                        <lightning-combobox
+                            label="BHK Type"
+                            value={bhkType}
+                            options={bhkOptions}
+                            onchange={handleBhkChange}
+                            placeholder="Select BHK type">
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                        <lightning-combobox
+                            label="Property Type"
+                            value={propertyType}
+                            options={propertyTypeOptions}
+                            onchange={handlePropertyChange}
+                            placeholder="Select property type">
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                        <lightning-combobox
+                            label="Budget Range"
+                            value={budgetRange}
+                            options={budgetOptions}
+                            onchange={handleBudgetChange}
+                            placeholder="Select budget range">
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-p-around_x-small">
+                        <lightning-textarea
+                            label="Remarks"
+                            value={remarks}
+                            onchange={handleRemarksChange}
+                            placeholder="Any additional notes..."
+                            max-length="5000">
+                        </lightning-textarea>
+                    </div>
+                </div>
+
+                <!-- Assignment -->
+                <div class="slds-section slds-is-open slds-m-top_medium slds-m-bottom_small">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-label">Assignment</span>
+                    </h3>
+                </div>
+
+                <div class="slds-grid slds-gutters slds-wrap slds-align_absolute-center">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                        <lightning-combobox
+                            label="Sales Executive"
+                            value={selectedExecutiveId}
+                            options={executiveOptions}
+                            onchange={handleExecutiveChange}
+                            placeholder="Select an executive"
+                            disabled={isExecutiveDisabled}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small slds-m-top_medium">
+                        <lightning-input
+                            type="checkbox"
+                            label="Use Round Robin Assignment"
+                            checked={useRoundRobin}
+                            onchange={handleRoundRobinChange}>
+                        </lightning-input>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            Automatically assign to the next available sales executive.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="slds-m-top_large slds-text-align_center">
+                    <lightning-button
+                        label="Back"
+                        icon-name="utility:back"
+                        onclick={handleBackToCheck}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="brand"
+                        label="Create Lead & Record Walk-In"
+                        icon-name="utility:add"
+                        onclick={handleCreateLead}
+                        disabled={isNewLeadDisabled}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             STEP 2B: Existing Lead – Site Visit Cards
+             ═══════════════════════════════════════════════════════════ -->
+        <template if:true={showExistingLead}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-heading_small slds-m-bottom_medium step-header">
+                    Existing Lead Found
+                </div>
+
+                <!-- Lead Info Card -->
+                <div class="slds-box slds-m-bottom_medium existing-lead-card">
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Lead Name</p>
+                            <p class="slds-text-body_regular field-value">{checkResult.leadName}</p>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Owner</p>
+                            <p class="slds-text-body_regular field-value">{checkResult.ownerName}</p>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Project</p>
+                            <p class="slds-text-body_regular field-value">{checkResult.projectName}</p>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Status</p>
+                            <p class="slds-text-body_regular field-value">{checkResult.leadStatus}</p>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Scenario</p>
+                            <template if:true={checkResult.scenario}>
+                                <lightning-badge
+                                    label={checkResult.scenario}
+                                    class={scenarioBadgeClass}>
+                                </lightning-badge>
+                            </template>
+                        </div>
+                        <template if:true={isPreSalesLead}>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                                <p class="slds-text-title_caps slds-m-bottom_xx-small">Bucket</p>
+                                <lightning-badge label="Pre-Sales" class="slds-badge_inverse"></lightning-badge>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Scenario Description -->
+                <div class="slds-notify slds-notify_alert slds-alert_texture slds-m-bottom_medium scenario-alert" role="alert">
+                    <lightning-icon
+                        icon-name="utility:info"
+                        size="x-small"
+                        class="slds-m-right_x-small">
+                    </lightning-icon>
+                    <span>{checkResult.message}</span>
+                </div>
+
+                <!-- ─── Create SV for Another Project (button at top) ──── -->
+                <template if:false={showNewSvForm}>
+                    <template if:true={crossProjectAllowed}>
+                        <div class="slds-m-bottom_medium">
+                            <lightning-button
+                                variant="brand-outline"
+                                label="Create Site Visit for Another Project"
+                                icon-name="utility:new"
+                                onclick={handleShowNewSvForm}>
+                            </lightning-button>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- ─── Site Visit Cards ──────────────────────────── -->
+                <div class="slds-section slds-is-open slds-m-bottom_small">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-label">Site Visits</span>
+                    </h3>
+                </div>
+
+                <template if:true={hasSiteVisitCards}>
+                    <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                        <template for:each={siteVisitCards} for:item="sv">
+                            <div key={sv.siteVisitId} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3 slds-p-around_x-small">
+                                <div class={sv.statusClass}
+                                     data-sv-id={sv.siteVisitId}
+                                     onclick={handleSvCardClick}>
+                                    <div class="sv-card-header">
+                                        <span class="sv-card-name">{sv.name}</span>
+                                        <span class={sv.badgeClass}>{sv.visitStatus}</span>
+                                    </div>
+                                    <div class="sv-card-body">
+                                        <div class="sv-card-field">
+                                            <lightning-icon icon-name="standard:account" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <span class="sv-card-field-label">Project:</span>
+                                            <span>{sv.projectName}</span>
+                                        </div>
+                                        <div class="sv-card-field">
+                                            <lightning-icon icon-name="utility:event" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <span class="sv-card-field-label">Scheduled:</span>
+                                            <span>{sv.formattedDate}</span>
+                                        </div>
+                                        <template if:true={sv.isCompleted}>
+                                            <div class="sv-card-field">
+                                                <lightning-icon icon-name="utility:check" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                <span class="sv-card-field-label">Completed:</span>
+                                                <span>{sv.formattedCompletedDate}</span>
+                                            </div>
+                                        </template>
+                                        <div class="sv-card-field">
+                                            <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <span class="sv-card-field-label">Owner:</span>
+                                            <span>{sv.ownerName}</span>
+                                        </div>
+                                    </div>
+                                    <template if:true={sv.canComplete}>
+                                        <div class="sv-card-action">
+                                            <lightning-icon icon-name="utility:check" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            Click to Check In
+                                        </div>
+                                    </template>
+                                    <template if:true={sv.canCheckout}>
+                                        <div class="sv-card-action sv-card-action-checkout"
+                                             data-sv-id={sv.siteVisitId}
+                                             onclick={handleSvCheckoutClick}>
+                                            <lightning-icon icon-name="utility:logout" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            Check Out
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasSiteVisitCards}>
+                    <div class="slds-m-bottom_medium slds-p-around_medium slds-text-align_center slds-text-color_weak empty-sv-box">
+                        No site visits found for this lead.
+                    </div>
+                </template>
+
+                <!-- ─── Check In Site Visit Form (inline) ─────────── -->
+                <template if:true={showCompleteModal}>
+                    <div class="slds-box slds-m-bottom_medium complete-sv-form">
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                            <div class="slds-text-heading_small">
+                                Check In - Site Visit
+                            </div>
+                            <lightning-badge label={selectedSiteVisit.name}></lightning-badge>
+                        </div>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                            Project: <strong>{selectedSiteVisit.projectName}</strong> | Current Owner: <strong>{selectedSiteVisit.ownerName}</strong>
+                        </p>
+
+                        <template if:true={isPreSalesLead}>
+                            <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small duplicate-alert" role="alert">
+                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                <span>This is a Pre-Sales lead. Changing owner will also transfer the lead to Sales bucket.</span>
+                            </div>
+                        </template>
+
+                        <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                <lightning-combobox
+                                    label="Owner / Assigned To"
+                                    value={svOwnerId}
+                                    options={executiveOptions}
+                                    onchange={handleSvOwnerChange}
+                                    placeholder="Select owner"
+                                    required>
+                                </lightning-combobox>
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                    This will update both the Site Visit owner and Lead owner.
+                                </p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                <lightning-combobox
+                                    label="Source Type"
+                                    value={greSourceType}
+                                    options={greSourceTypeOptions}
+                                    onchange={handleGreSourceTypeChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                            <template if:true={showChannelPartnerPicker}>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                    <lightning-record-picker
+                                        label="Channel Partner"
+                                        placeholder="Search for a channel partner..."
+                                        object-api-name="Channel_Partner__c"
+                                        onchange={handleGreChannelPartnerChange}
+                                        required>
+                                    </lightning-record-picker>
+                                </div>
+                            </template>
+                            <div class="slds-col slds-size_1-of-1 slds-p-around_x-small">
+                                <lightning-textarea
+                                    label="GRE Remarks"
+                                    value={greRemarks}
+                                    onchange={handleGreRemarksChange}
+                                    placeholder="Enter check-in remarks..."
+                                    max-length="1000">
+                                </lightning-textarea>
+                            </div>
+                        </div>
+
+                        <div class="slds-m-top_medium slds-text-align_right">
+                            <lightning-button
+                                label="Cancel"
+                                onclick={handleCancelComplete}
+                                class="slds-m-right_small">
+                            </lightning-button>
+                            <lightning-button
+                                variant="brand"
+                                label="Check In"
+                                icon-name="utility:check"
+                                onclick={handleConfirmComplete}
+                                disabled={isCompleteDisabled}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ─── Check Out Modal (inline) ─────────────────────── -->
+                <template if:true={showCheckoutModal}>
+                    <div class="slds-box slds-m-bottom_medium complete-sv-form">
+                        <div class="slds-text-heading_small slds-m-bottom_small">
+                            Check Out - Site Visit
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-p-around_x-small">
+                            <lightning-textarea
+                                label="Checkout Remarks (Feedback)"
+                                value={checkoutRemarks}
+                                onchange={handleCheckoutRemarksChange}
+                                placeholder="Enter checkout remarks / feedback..."
+                                max-length="5000">
+                            </lightning-textarea>
+                        </div>
+                        <div class="slds-m-top_medium slds-text-align_right">
+                            <lightning-button
+                                label="Cancel"
+                                onclick={handleCancelCheckout}
+                                class="slds-m-right_small">
+                            </lightning-button>
+                            <lightning-button
+                                variant="brand"
+                                label="Check Out"
+                                icon-name="utility:logout"
+                                onclick={handleConfirmCheckout}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+                <template if:true={showNewSvForm}>
+                    <div class="slds-box slds-m-bottom_medium new-sv-form">
+                        <div class="slds-text-heading_small slds-m-bottom_small">
+                            New Site Visit for Another Project
+                        </div>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                            Select a different project to create and complete a new site visit. Existing scheduled site visits for other projects will remain unchanged.
+                        </p>
+
+                        <template if:true={isPreSalesLead}>
+                            <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_small duplicate-alert" role="alert">
+                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                <span>This is a Pre-Sales lead. Selecting an owner will transfer the lead to Sales.</span>
+                            </div>
+                        </template>
+
+                        <div class="slds-grid slds-gutters slds-wrap">
+                            <!-- Project Lookup -->
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                <label class="slds-form-element__label">
+                                    <abbr class="slds-required" title="required">*</abbr> Project
+                                </label>
+                                <template if:true={hasNewSvSelectedProject}>
+                                    <div class="project-pill-container">
+                                        <lightning-pill
+                                            label={newSvProjectName}
+                                            onremove={handleClearNewSvProject}>
+                                            <lightning-icon icon-name="standard:account" size="x-small"></lightning-icon>
+                                        </lightning-pill>
+                                    </div>
+                                </template>
+                                <template if:false={hasNewSvSelectedProject}>
+                                    <div class="project-lookup-container">
+                                        <div class="slds-form-element">
+                                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                                                <lightning-icon icon-name="utility:search" size="x-small"
+                                                    class="project-search-icon"></lightning-icon>
+                                                <input type="text"
+                                                    class="slds-input project-search-input"
+                                                    placeholder="Search projects..."
+                                                    value={newSvProjectSearchTerm}
+                                                    onkeyup={handleNewSvProjectKeyup}
+                                                    onfocus={handleNewSvProjectFocus}
+                                                    onblur={handleNewSvProjectBlur}
+                                                    autocomplete="off" />
+                                            </div>
+                                        </div>
+                                        <template if:true={showNewSvProjectDropdown}>
+                                            <div class="project-lookup-dropdown" role="listbox">
+                                                <ul class="project-lookup-list" role="presentation">
+                                                    <template if:true={isNewSvProjectSearching}>
+                                                        <li class="project-lookup-item project-lookup-loading">
+                                                            <lightning-spinner alternative-text="Searching..." size="small"></lightning-spinner>
+                                                            <span class="slds-m-left_small">Searching...</span>
+                                                        </li>
+                                                    </template>
+                                                    <template if:false={isNewSvProjectSearching}>
+                                                        <template if:true={hasNewSvProjectResults}>
+                                                            <template for:each={newSvProjectLookupResults} for:item="proj">
+                                                                <li key={proj.id}
+                                                                    class="project-lookup-item"
+                                                                    role="option"
+                                                                    data-record-id={proj.id}
+                                                                    data-record-name={proj.name}
+                                                                    onmousedown={handleNewSvProjectSelect}>
+                                                                    <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                                                    <div>
+                                                                        <span class="project-lookup-name">{proj.name}</span>
+                                                                        <template if:true={proj.code}>
+                                                                            <span class="project-lookup-code"> ({proj.code})</span>
+                                                                        </template>
+                                                                    </div>
+                                                                </li>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasNewSvProjectResults}>
+                                                            <li class="project-lookup-item project-lookup-no-results">
+                                                                <span class="slds-text-color_weak">No projects found</span>
+                                                            </li>
+                                                        </template>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Owner -->
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                <lightning-combobox
+                                    label="Owner / Assigned To"
+                                    value={newSvOwnerId}
+                                    options={executiveOptions}
+                                    onchange={handleNewSvOwnerChange}
+                                    placeholder="Select owner"
+                                    required>
+                                </lightning-combobox>
+                            </div>
+
+                        </div>
+
+                        <div class="slds-m-top_medium slds-text-align_right">
+                            <lightning-button
+                                label="Cancel"
+                                onclick={handleCancelNewSv}
+                                class="slds-m-right_small">
+                            </lightning-button>
+                            <lightning-button
+                                variant="brand"
+                                label="Create & Complete Site Visit"
+                                icon-name="utility:add"
+                                onclick={handleCreateNewSv}
+                                disabled={isCreateSvDisabled}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ─── Walk-In Details Form (inline) ─────────────── -->
+                <template if:true={showWalkInForm}>
+                    <div class="slds-box slds-m-bottom_medium complete-sv-form">
+                        <div class="slds-text-heading_small slds-m-bottom_small">
+                            Walk-In Details
+                        </div>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                            Provide site visit details for this walk-in before processing.
+                        </p>
+                        <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                <lightning-combobox
+                                    label="Source Type"
+                                    value={greSourceType}
+                                    options={greSourceTypeOptions}
+                                    onchange={handleGreSourceTypeChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                            <template if:true={showChannelPartnerPicker}>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                    <lightning-record-picker
+                                        label="Channel Partner"
+                                        placeholder="Search for a channel partner..."
+                                        object-api-name="Channel_Partner__c"
+                                        onchange={handleGreChannelPartnerChange}
+                                        required>
+                                    </lightning-record-picker>
+                                </div>
+                            </template>
+                            <div class="slds-col slds-size_1-of-1 slds-p-around_x-small">
+                                <lightning-textarea
+                                    label="GRE Remarks"
+                                    value={greRemarks}
+                                    onchange={handleGreRemarksChange}
+                                    placeholder="Enter walk-in remarks..."
+                                    max-length="1000">
+                                </lightning-textarea>
+                            </div>
+                        </div>
+                        <div class="slds-m-top_medium slds-text-align_right">
+                            <lightning-button
+                                label="Cancel"
+                                onclick={handleCancelWalkIn}
+                                class="slds-m-right_small">
+                            </lightning-button>
+                            <lightning-button
+                                variant="brand"
+                                label="Confirm Walk-In"
+                                icon-name="utility:check"
+                                onclick={handleConfirmWalkIn}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Actions -->
+                <div class="slds-m-top_large slds-text-align_center">
+                    <lightning-button
+                        label="Back to List"
+                        icon-name="utility:back"
+                        onclick={handleBackToList}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="brand"
+                        label="Process Walk-In"
+                        icon-name="utility:check"
+                        onclick={handleProcessExisting}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             STEP 3: Result
+             ═══════════════════════════════════════════════════════════ -->
+        <template if:true={showResult}>
+            <div class="slds-p-around_medium slds-text-align_center">
+                <div class="slds-m-bottom_medium">
+                    <lightning-icon
+                        icon-name={resultIconName}
+                        size="large"
+                        variant={resultVariant}>
+                    </lightning-icon>
+                </div>
+
+                <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                    Walk-In Processed Successfully
+                </h2>
+
+                <p class="slds-text-body_regular slds-m-bottom_medium slds-text-color_weak">
+                    {processResult.message}
+                </p>
+
+                <!-- Result Details -->
+                <div class="slds-box slds-m-bottom_medium result-details">
+                    <div class="slds-grid slds-gutters slds-wrap slds-grid_align-center">
+                        <template if:true={processResult.leadId}>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                                <p class="slds-text-title_caps">Scenario</p>
+                                <lightning-badge label={processResult.scenario}></lightning-badge>
+                            </div>
+                        </template>
+                        <template if:true={processResult.enquirySourceId}>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                                <p class="slds-text-title_caps">Enquiry Source</p>
+                                <p class="slds-text-body_small">Created</p>
+                            </div>
+                        </template>
+                        <template if:true={processResult.siteVisitId}>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-around_x-small">
+                                <p class="slds-text-title_caps">Site Visit</p>
+                                <p class="slds-text-body_small">Completed</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="slds-m-top_large">
+                    <lightning-button
+                        label="New Walk-In"
+                        icon-name="utility:refresh"
+                        onclick={handleReset}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <template if:true={processResult.leadId}>
+                        <lightning-button
+                            variant="brand"
+                            label="View Lead"
+                            icon-name="utility:preview"
+                            onclick={handleViewLead}>
+                        </lightning-button>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+    </lightning-card>
+</template>

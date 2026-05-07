@@ -1,0 +1,3 @@
+<apex:page standardController="Booking__c">
+    Hello This Is VF Page
+</apex:page>

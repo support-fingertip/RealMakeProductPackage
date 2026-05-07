@@ -1,0 +1,185 @@
+<template>
+    <div class="matching-criteria-container">
+        <!-- Header -->
+        <div class="criteria-header">
+            <div class="header-left">
+                <h3 class="slds-text-heading_small">{label}</h3>
+                <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">{helpText}</p>
+            </div>
+            <button class="slds-button slds-button_neutral slds-button_small" onclick={handleAddCondition}>
+                <lightning-icon icon-name="utility:add" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                Add Condition
+            </button>
+        </div>
+
+        <!-- Match Logic -->
+        <template if:true={hasConditions}>
+            <div class="match-logic-row slds-m-top_small slds-m-bottom_small">
+                <lightning-combobox
+                    label="Match Logic"
+                    value={matchLogic}
+                    options={matchLogicOptions}
+                    variant="label-inline"
+                    onchange={handleMatchLogicChange}
+                    class="match-logic-combo">
+                </lightning-combobox>
+            </div>
+        </template>
+
+        <!-- Conditions List -->
+        <template if:true={hasConditions}>
+            <div class="conditions-list">
+                <template for:each={conditionDisplay} for:item="cond">
+                    <div key={cond._id} class="condition-item">
+                        <div class="condition-content">
+                            <span class={cond.typeBadgeClass}>{cond.typeBadge}</span>
+                            <span class="condition-description">{cond.description}</span>
+                        </div>
+                        <div class="condition-actions">
+                            <lightning-button-icon
+                                icon-name="utility:edit"
+                                alternative-text="Edit"
+                                variant="bare"
+                                size="small"
+                                data-index={cond._index}
+                                onclick={handleEditCondition}>
+                            </lightning-button-icon>
+                            <lightning-button-icon
+                                icon-name="utility:delete"
+                                alternative-text="Remove"
+                                variant="bare"
+                                size="small"
+                                data-index={cond._index}
+                                onclick={handleRemoveCondition}>
+                            </lightning-button-icon>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Empty State -->
+        <template if:false={hasConditions}>
+            <div class="empty-state slds-m-top_small">
+                <lightning-icon icon-name="utility:filterList" size="small" class="slds-m-right_small"></lightning-icon>
+                <span class="slds-text-color_weak">No conditions defined - this config applies to all records.</span>
+            </div>
+        </template>
+    </div>
+
+    <!-- Condition Modal -->
+    <template if:true={showConditionModal}>
+        <section role="dialog" class="slds-modal slds-fade-in-open slds-modal_small">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCancelCondition}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-text-heading_medium">
+                        {conditionModalTitle}
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <!-- Condition Type -->
+                    <lightning-combobox
+                        label="Condition Type"
+                        value={currentCondition.type}
+                        options={conditionTypeOptions}
+                        onchange={handleConditionTypeChange}
+                        class="slds-m-bottom_small">
+                    </lightning-combobox>
+
+                    <!-- Field Condition -->
+                    <template if:true={isFieldCondition}>
+                        <lightning-combobox
+                            label="Field"
+                            value={currentCondition.fieldPath}
+                            options={objectFields}
+                            placeholder={fieldPlaceholder}
+                            disabled={fieldDropdownDisabled}
+                            onchange={handleConditionFieldChange}
+                            class="slds-m-bottom_small">
+                        </lightning-combobox>
+
+                        <template if:true={isLoadingFields}>
+                            <div class="slds-m-bottom_small">
+                                <lightning-spinner alternative-text="Loading fields" size="small"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <lightning-combobox
+                            label="Operator"
+                            value={currentCondition.operator}
+                            options={fieldOperatorOptions}
+                            onchange={handleConditionOperatorChange}
+                            class="slds-m-bottom_small">
+                        </lightning-combobox>
+
+                        <template if:true={showValueInput}>
+                            <template if:true={hasPicklistValues}>
+                                <lightning-combobox
+                                    label="Value"
+                                    value={currentCondition.value}
+                                    options={picklistValues}
+                                    placeholder="Select a value..."
+                                    onchange={handleConditionValueChange}
+                                    class="slds-m-bottom_small">
+                                </lightning-combobox>
+                            </template>
+                            <template if:false={hasPicklistValues}>
+                                <lightning-input
+                                    label="Value"
+                                    value={currentCondition.value}
+                                    onchange={handleConditionValueChange}
+                                    class="slds-m-bottom_small">
+                                </lightning-input>
+                            </template>
+                        </template>
+                    </template>
+
+                    <!-- Profile / Role Condition -->
+                    <template if:true={isProfileOrRoleCondition}>
+                        <lightning-combobox
+                            label="Operator"
+                            value={currentCondition.operator}
+                            options={listOperatorOptions}
+                            onchange={handleConditionOperatorChange}
+                            class="slds-m-bottom_small">
+                        </lightning-combobox>
+
+                        <lightning-combobox
+                            label={selectValueLabel}
+                            value=""
+                            options={currentValueOptions}
+                            placeholder={selectValuePlaceholder}
+                            onchange={handleProfileRoleSelect}
+                            class="slds-m-bottom_small">
+                        </lightning-combobox>
+
+                        <!-- Selected Values Pills -->
+                        <template if:true={hasSelectedValues}>
+                            <div class="selected-values-container slds-m-top_x-small">
+                                <template for:each={selectedValuePills} for:item="pill">
+                                    <span key={pill.value} class="slds-pill slds-m-right_xx-small slds-m-bottom_xx-small">
+                                        <span class="slds-pill__label">{pill.label}</span>
+                                        <button class="slds-button slds-button_icon slds-pill__remove"
+                                                data-value={pill.value}
+                                                onclick={handleRemoveSelectedValue}>
+                                            <lightning-icon icon-name="utility:close" size="xx-small"></lightning-icon>
+                                        </button>
+                                    </span>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={handleCancelCondition}>Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={handleSaveCondition}>Save Condition</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

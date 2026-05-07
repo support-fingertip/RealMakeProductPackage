@@ -1,0 +1,404 @@
+<template>
+    <!-- Loading Spinner -->
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading..." size="large"></lightning-spinner>
+    </template>
+
+    <template if:false={isLoading}>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- LIST MODE                                                  -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <template if:true={isListMode}>
+            <div class="slds-page-header slds-page-header_record-home">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__figure">
+                                <lightning-icon icon-name="standard:service_territory_member" size="medium"></lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span>Round Robin</span>
+                                            <span class="slds-page-header__title slds-truncate" title="Configurations">Configurations</span>
+                                        </h1>
+                                    </div>
+                                </div>
+                                <p class="slds-page-header__name-meta">{configCount} configurations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-page-header__col-actions">
+                        <div class="slds-page-header__controls">
+                            <div class="slds-page-header__control">
+                                <lightning-button-group>
+                                    <lightning-button label="Refresh" icon-name="utility:refresh" onclick={handleRefreshList}></lightning-button>
+                                    <lightning-button variant="brand" label="New Configuration" icon-name="utility:add" onclick={handleNewConfig}></lightning-button>
+                                </lightning-button-group>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-p-around_medium">
+                <!-- Search -->
+                <div class="slds-m-bottom_medium" style="max-width: 400px;">
+                    <lightning-input
+                        type="search"
+                        label="Search Configurations"
+                        variant="label-hidden"
+                        placeholder="Search by name..."
+                        value={listSearchTerm}
+                        onchange={handleListSearch}>
+                    </lightning-input>
+                </div>
+
+                <!-- Datatable -->
+                <template if:true={hasConfigs}>
+                    <lightning-datatable
+                        key-field="id"
+                        data={filteredConfigs}
+                        columns={listColumns}
+                        onrowaction={handleRowAction}
+                        onsort={handleSort}
+                        sorted-by={sortedBy}
+                        sorted-direction={sortedDirection}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={hasConfigs}>
+                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-text-align_center">
+                        <lightning-icon icon-name="utility:setup" size="large" class="slds-icon-text-weak slds-m-bottom_medium"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-m-bottom_small">No Configurations Found</h3>
+                        <p class="slds-text-body_regular slds-text-color_weak">Get started by creating your first round robin configuration.</p>
+                        <lightning-button variant="brand" label="New Configuration" icon-name="utility:add"
+                                        onclick={handleNewConfig} class="slds-m-top_medium"></lightning-button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <template if:true={showDeleteModal}>
+                <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <h2 class="slds-text-heading_medium">Delete Configuration</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium">
+                            <p>Are you sure you want to delete <strong>{deleteTargetName}</strong>?</p>
+                            <p class="slds-text-color_weak slds-m-top_small">This will also delete all associated filters and member assignments. This action cannot be undone.</p>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <lightning-button label="Cancel" onclick={cancelDelete}></lightning-button>
+                            <lightning-button variant="destructive" label="Delete" onclick={confirmDelete} class="slds-m-left_x-small"></lightning-button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </template>
+        </template>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- FORM MODE (Create / Edit)                                  -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <template if:true={isFormMode}>
+            <!-- PAGE HEADER -->
+            <div class="slds-page-header slds-page-header_record-home">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__figure">
+                                <lightning-icon icon-name="standard:service_territory_member" size="medium"></lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span>Round Robin Configuration</span>
+                                            <span class="slds-page-header__title slds-truncate" title={formTitle}>{formTitle}</span>
+                                        </h1>
+                                    </div>
+                                </div>
+                                <p class="slds-page-header__name-meta">Configure dynamic filter criteria and team assignments.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-page-header__col-actions">
+                        <div class="slds-page-header__controls">
+                            <div class="slds-page-header__control">
+                                <lightning-button-group>
+                                    <lightning-button label="Back to List" icon-name="utility:back" onclick={handleBackToList}></lightning-button>
+                                    <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+                                    <lightning-button label="Validate" variant="neutral" onclick={handleValidate}
+                                                    icon-name="utility:check"></lightning-button>
+                                    <lightning-button variant="brand" label="Save Configuration" onclick={handleSave}
+                                                    icon-name="utility:save" disabled={isSaving}></lightning-button>
+                                </lightning-button-group>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Messages -->
+            <template if:true={showValidation}>
+                <div class="slds-m-around_medium">
+                    <template if:true={validationErrors.length}>
+                        <template for:each={validationErrors} for:item="error">
+                            <div key={error} class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_x-small">
+                                <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                                {error}
+                            </div>
+                        </template>
+                    </template>
+                    <template if:true={validationWarnings.length}>
+                        <template for:each={validationWarnings} for:item="warning">
+                            <div key={warning} class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning slds-m-bottom_x-small">
+                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                {warning}
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </template>
+
+            <!-- MAIN BODY -->
+            <div class="slds-p-around_medium main-container">
+                <div class="slds-grid slds-gutters slds-wrap">
+
+                    <!-- LEFT COLUMN: Basic Info + Dynamic Filters -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <!-- Basic Information Card -->
+                        <lightning-card title="Basic Information" icon-name="standard:account">
+                            <div class="slds-p-around_medium">
+                                <lightning-input
+                                    label="Configuration Name"
+                                    name="Name"
+                                    value={bucketData.Name}
+                                    onchange={handleBucketFieldChange}
+                                    required
+                                    class="slds-m-bottom_small">
+                                </lightning-input>
+
+                                <lightning-input
+                                    type="checkbox"
+                                    label="Active"
+                                    name="Is_Active__c"
+                                    checked={bucketData.Is_Active__c}
+                                    onchange={handleBucketFieldChange}>
+                                </lightning-input>
+                            </div>
+                        </lightning-card>
+
+                        <!-- Dynamic Field Selection -->
+                        <lightning-card title="Select Lead Fields" icon-name="utility:filterList" class="slds-m-top_medium">
+                            <div class="slds-p-around_medium">
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                                    Choose Lead fields for dynamic matching. Picklist fields show dropdowns. Lookup fields show a searchable type-ahead.
+                                    Priority weights are auto-populated from the Field Priority Setup.
+                                </p>
+                                <lightning-dual-listbox
+                                    label="Lead Fields"
+                                    source-label="Available Fields"
+                                    selected-label="Selected Fields"
+                                    options={leadFieldOptions}
+                                    value={selectedFieldApiNames}
+                                    onchange={handleFieldSelection}
+                                    size="6">
+                                </lightning-dual-listbox>
+                            </div>
+                        </lightning-card>
+
+                        <!-- Filter Values & Priority -->
+                        <template if:true={hasFilters}>
+                            <lightning-card title="Filter Values & Priority" icon-name="utility:sort" class="slds-m-top_medium">
+                                <div slot="actions">
+                                    <span class="slds-text-title_caps slds-m-right_x-small">Total Weight:</span>
+                                    <lightning-badge label={totalPriorityWeight}></lightning-badge>
+                                </div>
+                                <div class="slds-p-around_medium">
+                                    <template for:each={sortedFilters} for:item="filter">
+                                        <div key={filter.id} class="slds-box slds-m-bottom_small filter-row">
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-gutters">
+                                                <!-- Order Badge -->
+                                                <div class="slds-col slds-size_1-of-12 slds-text-align_center">
+                                                    <lightning-badge label={filter.preferenceOrder}></lightning-badge>
+                                                </div>
+
+                                                <!-- Field Label + Type -->
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <p class="slds-text-body_regular"><strong>{filter.fieldLabel}</strong></p>
+                                                    <p class="slds-text-body_small slds-text-color_weak">{filter.fieldType}</p>
+                                                </div>
+
+                                                <!-- Value Input -->
+                                                <div class="slds-col slds-size_4-of-12">
+                                                    <!-- Picklist -->
+                                                    <template if:true={filter.isPicklist}>
+                                                        <lightning-combobox
+                                                            label="Value"
+                                                            variant="label-hidden"
+                                                            value={filter.value}
+                                                            options={filter.picklistOptions}
+                                                            placeholder="Select a value"
+                                                            data-filter-id={filter.id}
+                                                            onchange={handleFilterValueChange}>
+                                                        </lightning-combobox>
+                                                    </template>
+
+                                                    <!-- Lookup / Reference -->
+                                                    <template if:true={filter.isReference}>
+                                                        <template if:true={filter.selectedLookupName}>
+                                                            <div class="lookup-pill-container">
+                                                                <lightning-pill
+                                                                    label={filter.selectedLookupName}
+                                                                    data-filter-id={filter.id}
+                                                                    onremove={handleClearLookup}>
+                                                                    <lightning-icon icon-name="standard:account" size="x-small"></lightning-icon>
+                                                                </lightning-pill>
+                                                            </div>
+                                                        </template>
+                                                        <template if:false={filter.selectedLookupName}>
+                                                            <div class="lookup-container">
+                                                                <lightning-input
+                                                                    variant="label-hidden"
+                                                                    label="Search"
+                                                                    type="search"
+                                                                    value={filter.lookupSearchTerm}
+                                                                    placeholder="Search records..."
+                                                                    data-filter-id={filter.id}
+                                                                    onchange={handleLookupSearch}
+                                                                    autocomplete="off">
+                                                                </lightning-input>
+                                                                <template if:true={filter.showLookupDropdown}>
+                                                                    <div class="lookup-dropdown" role="listbox">
+                                                                        <ul class="lookup-results-list" role="presentation">
+                                                                            <template for:each={filter.lookupResults} for:item="result">
+                                                                                <li key={result.id}
+                                                                                    class="lookup-result-item"
+                                                                                    role="option"
+                                                                                    data-filter-id={filter.id}
+                                                                                    data-record-id={result.id}
+                                                                                    data-record-name={result.name}
+                                                                                    onclick={handleLookupSelect}>
+                                                                                    <lightning-icon icon-name="standard:account" size="small" class="lookup-result-icon"></lightning-icon>
+                                                                                    <span class="lookup-result-name">{result.name}</span>
+                                                                                </li>
+                                                                            </template>
+                                                                        </ul>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+
+                                                    <!-- Text -->
+                                                    <template if:true={filter.isText}>
+                                                        <lightning-input
+                                                            label="Value"
+                                                            variant="label-hidden"
+                                                            value={filter.value}
+                                                            placeholder="Enter match value"
+                                                            data-filter-id={filter.id}
+                                                            onchange={handleFilterValueChange}>
+                                                        </lightning-input>
+                                                    </template>
+                                                </div>
+
+                                                <!-- Priority Weight Input (editable, saves universally) -->
+                                                <div class="slds-col slds-size_2-of-12">
+                                                    <lightning-input
+                                                        type="number"
+                                                        label="Priority Weight"
+                                                        variant="label-hidden"
+                                                        value={filter.fieldPriority}
+                                                        placeholder="Weight"
+                                                        min="0"
+                                                        data-filter-id={filter.id}
+                                                        onchange={handlePriorityChange}
+                                                        class="priority-input">
+                                                    </lightning-input>
+                                                </div>
+
+                                                <!-- Reorder / Remove Buttons -->
+                                                <div class="slds-col slds-size_3-of-12 slds-text-align_right">
+                                                    <lightning-button-icon icon-name="utility:arrowup" variant="bare"
+                                                        data-filter-id={filter.id} onclick={handleMoveUp}
+                                                        alternative-text="Move Up" class="slds-m-right_xx-small">
+                                                    </lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:arrowdown" variant="bare"
+                                                        data-filter-id={filter.id} onclick={handleMoveDown}
+                                                        alternative-text="Move Down" class="slds-m-right_xx-small">
+                                                    </lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:delete" variant="bare"
+                                                        data-filter-id={filter.id} onclick={handleRemoveFilter}
+                                                        alternative-text="Remove">
+                                                    </lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </lightning-card>
+                        </template>
+                    </div>
+
+                    <!-- RIGHT COLUMN: TEAM ASSIGNMENT -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <article class="slds-card h-full">
+                            <div class="slds-card__header slds-grid slds-theme_shade">
+                                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                    <div class="slds-media__figure">
+                                        <lightning-icon icon-name="utility:groups" size="small"></lightning-icon>
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <h2 class="slds-card__header-title">
+                                            <span class="slds-text-heading_small">Team Allocations</span>
+                                        </h2>
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="slds-card__body slds-card__body_inner">
+                                <div class="tab-container">
+                                    <lightning-tabset variant="vertical">
+                                        <template for:each={assignmentTabs} for:item="tab">
+                                            <lightning-tab key={tab.value} label={tab.label} value={tab.value} icon-name="standard:user" class="fade-in">
+                                                <div class="slds-box slds-theme_default slds-m-bottom_small" style="background-color: #f3f2f2; border: none;">
+                                                    <div class="slds-media slds-media_center">
+                                                        <div class="slds-media__figure">
+                                                            <lightning-icon icon-name="action:new_group_member" size="x-small"></lightning-icon>
+                                                        </div>
+                                                        <div class="slds-media__body">
+                                                            <p>Select users who will receive <strong>{tab.label}</strong> leads.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <lightning-dual-listbox
+                                                    name={tab.value}
+                                                    label="Member Assignment"
+                                                    source-label="Available Users"
+                                                    selected-label="Assigned Users"
+                                                    options={userOptions}
+                                                    value={tab.selectedIds}
+                                                    onchange={handleUserChange}
+                                                    size="8">
+                                                </lightning-dual-listbox>
+                                            </lightning-tab>
+                                        </template>
+                                    </lightning-tabset>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+    </template>
+</template>

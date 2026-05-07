@@ -1,0 +1,243 @@
+<template>
+    <!-- Email Notification Section -->
+    <div class="slds-box slds-m-bottom_small">
+        <lightning-input 
+            type="checkbox" 
+            label="Send Email Notification" 
+            checked={emailEnabled}
+            onchange={handleEmailToggle}>
+        </lightning-input>
+        
+        <template if:true={emailEnabled}>
+            <div class="slds-p-left_medium slds-m-top_small">
+                <lightning-combobox
+                    name="emailTemplate"
+                    label="Salesforce Email Template"
+                    value={emailTemplateName}
+                    placeholder="Select email template..."
+                    options={emailTemplates}
+                    onchange={handleEmailTemplateChange}
+                    class="slds-m-bottom_small">
+                </lightning-combobox>
+
+                <template if:true={hasEmailConfigTemplates}>
+                    <lightning-combobox
+                        name="emailConfigTemplate"
+                        label="Email Config Template"
+                        value={emailConfigTemplateId}
+                        placeholder="Select email config template..."
+                        options={emailConfigTemplates}
+                        onchange={handleEmailConfigTemplateChange}
+                        class="slds-m-bottom_small">
+                    </lightning-combobox>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                        Select an Email Config Template to use the email sender with this action.
+                    </p>
+                </template>
+                
+                <p class="slds-text-body_small slds-m-bottom_x-small">Recipients (User Fields)</p>
+                <div class="slds-grid slds-wrap">
+                    <template for:each={recipientOptions} for:item="option">
+                        <div key={option.value} class="slds-m-right_medium slds-m-bottom_x-small">
+                            <lightning-input 
+                                type="checkbox" 
+                                label={option.label}
+                                checked={option.selected}
+                                data-value={option.value}
+                                onchange={handleRecipientToggle}>
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+                
+                <lightning-input 
+                    label="Additional Emails (comma separated)" 
+                    value={additionalEmailsString}
+                    onchange={handleAdditionalEmailsChange}
+                    placeholder="email1@example.com, email2@example.com"
+                    class="slds-m-top_small">
+                </lightning-input>
+            </div>
+        </template>
+    </div>
+    
+    <!-- Bell Notification Section -->
+    <div class="slds-box slds-m-bottom_small">
+        <lightning-input 
+            type="checkbox" 
+            label="Send Bell Notification" 
+            checked={bellEnabled}
+            onchange={handleBellToggle}>
+        </lightning-input>
+        
+        <template if:true={bellEnabled}>
+            <div class="slds-p-left_medium slds-m-top_small">
+                
+                <!-- Merge Field Picker -->
+                <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_small">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">
+                        <lightning-icon icon-name="utility:merge_field" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        <strong>Insert Dynamic Field</strong>
+                    </p>
+                    <div class="slds-grid slds-grid_vertical-align-end slds-gutters">
+                        <div class="slds-col slds-size_6-of-12">
+                            <lightning-combobox
+                                name="mergeFieldPicker"
+                                label="Select Field to Insert"
+                                value={selectedMergeField}
+                                placeholder="Choose a field..."
+                                options={mergeFieldOptions}
+                                onchange={handleMergeFieldChange}
+                                variant="label-hidden">
+                            </lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_3-of-12">
+                            <lightning-button
+                                label="Insert in Title"
+                                variant="neutral"
+                                onclick={handleInsertInTitle}
+                                disabled={insertButtonDisabled}
+                                size="small">
+                            </lightning-button>
+                        </div>
+                        <div class="slds-col slds-size_3-of-12">
+                            <lightning-button
+                                label="Insert in Body"
+                                variant="neutral"
+                                onclick={handleInsertInBody}
+                                disabled={insertButtonDisabled}
+                                size="small">
+                            </lightning-button>
+                        </div>
+                    </div>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                        Use {FieldName} syntax.  Example: "Booking {Name} has been approved"
+                    </p>
+                </div>
+                
+                <!-- Notification Title -->
+                <lightning-input 
+                    label="Notification Title" 
+                    value={bellTitle}
+                    onchange={handleBellTitleChange}
+                    placeholder="e.g., Booking {Name} Approved"
+                    max-length="100"
+                    class="slds-m-bottom_small">
+                </lightning-input>
+                
+                <!-- Notification Body -->
+                <lightning-textarea 
+                    label="Notification Body" 
+                    value={bellBody}
+                    onchange={handleBellBodyChange}
+                    placeholder="e.g., Unit {Unit_Number__c} for customer {Customer_Name__c} has been approved."
+                    max-length="500"
+                    class="slds-m-bottom_small">
+                </lightning-textarea>
+                
+                <!-- Recipients -->
+                <p class="slds-text-body_small slds-m-bottom_x-small">Recipients (User Fields)</p>
+                <div class="slds-grid slds-wrap">
+                    <template for:each={bellRecipientOptions} for:item="option">
+                        <div key={option.value} class="slds-m-right_medium slds-m-bottom_x-small">
+                            <lightning-input 
+                                type="checkbox" 
+                                label={option.label}
+                                checked={option.selected}
+                                data-value={option.value}
+                                onchange={handleBellRecipientToggle}>
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+                
+                <p class="slds-m-top_small slds-text-body_small slds-text-color_weak">
+                    <lightning-icon icon-name="utility:notification" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                    Bell notifications appear in the Salesforce notification bell
+                </p>
+            </div>
+        </template>
+    </div>
+    
+    <!-- Field Update Section -->
+    <div class="slds-box slds-m-bottom_small">
+        <lightning-input 
+            type="checkbox" 
+            label="Update Fields" 
+            checked={fieldUpdateEnabled}
+            onchange={handleFieldUpdateToggle}>
+        </lightning-input>
+        
+        <template if:true={fieldUpdateEnabled}>
+            <div class="slds-p-left_medium slds-m-top_small">
+                <template if:true={hasFieldUpdates}>
+                    <template for:each={fieldUpdates} for:item="fieldUpdate">
+                        <div key={fieldUpdate.id} class="slds-grid slds-gutters slds-grid_vertical-align-end slds-m-bottom_small">
+                            <div class="slds-col slds-size_5-of-12">
+                                <lightning-input 
+                                    label="Field API Name" 
+                                    value={fieldUpdate.fieldName}
+                                    onchange={handleFieldNameChange}
+                                    data-index={fieldUpdate.index}
+                                    placeholder="e.g., Status__c">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_5-of-12">
+                                <lightning-input 
+                                    label="Value" 
+                                    value={fieldUpdate.value}
+                                    onchange={handleFieldValueChange}
+                                    data-index={fieldUpdate.index}
+                                    placeholder="e.g., Approved or $TODAY">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                <lightning-button-icon 
+                                    icon-name="utility:delete" 
+                                    variant="bare"
+                                    alternative-text="Remove"
+                                    onclick={handleRemoveFieldUpdate}
+                                    data-index={fieldUpdate.index}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+                
+                <lightning-button 
+                    variant="neutral" 
+                    label="Add Field Update" 
+                    icon-name="utility:add"
+                    onclick={handleAddFieldUpdate}
+                    size="small">
+                </lightning-button>
+                
+                <p class="slds-m-top_small slds-text-body_small slds-text-color_weak">
+                    Special values: $TODAY (current date), $NOW (current datetime), $USER_ID (current user)
+                </p>
+            </div>
+        </template>
+    </div>
+    
+    <!-- Chatter Post Section -->
+    <div class="slds-box">
+        <lightning-input 
+            type="checkbox" 
+            label="Post to Chatter" 
+            checked={chatterEnabled}
+            onchange={handleChatterToggle}>
+        </lightning-input>
+        
+        <template if:true={chatterEnabled}>
+            <div class="slds-p-left_medium slds-m-top_small">
+                <lightning-textarea 
+                    label="Chatter Message" 
+                    value={chatterMessage}
+                    onchange={handleChatterMessageChange}
+                    placeholder="Enter message to post on the record's Chatter feed..."
+                    max-length="1000">
+                </lightning-textarea>
+            </div>
+        </template>
+    </div>
+</template>

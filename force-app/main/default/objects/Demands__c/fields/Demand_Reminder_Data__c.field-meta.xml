@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Demand_Reminder_Data__c</fullName>
+    <description>JSON storing N-level reminder tracking data. Each level has: daysAfterDue, sentDate, sent (boolean). Supports unlimited reminder levels beyond the 4 hardcoded fields.</description>
+    <label>Demand Reminder Data</label>
+    <length>32768</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

@@ -1,0 +1,86 @@
+<template>
+    <!-- Loading Spinner -->
+    <template if:true={isLoading}>
+        <div class="slds-p-around_medium slds-text-align_center">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <div class="slds-p-around_medium">
+            <!-- Lead Info -->
+            <div class="lead-name">{leadName}</div>
+            <div class="slds-text-body_small slds-m-bottom_medium slds-text-color_weak">
+                Current Project: {currentProjectName}
+            </div>
+
+            <!-- Project Picker -->
+            <div class="form-field">
+                <lightning-record-picker
+                    label="Project"
+                    placeholder="Search for a project..."
+                    object-api-name="Project__c"
+                    value={selectedProjectId}
+                    onchange={handleProjectChange}
+                    disabled={isProjectPickerDisabled}
+                    required
+                    data-id="projectPicker">
+                </lightning-record-picker>
+            </div>
+
+            <!-- Scheduled Date -->
+            <div class="form-field">
+                <lightning-input
+                    type="datetime-local"
+                    name="scheduledDate"
+                    label="Scheduled Date"
+                    value={scheduledDate}
+                    min={minDateTime}
+                    onchange={handleDateChange}
+                    required>
+                </lightning-input>
+            </div>
+
+            <!-- Visit Type -->
+            <div class="form-field">
+                <lightning-combobox
+                    name="visitType"
+                    label="Mode Of Visit"
+                    value={visitType}
+                    options={visitTypeOptions}
+                    onchange={handleVisitTypeChange}
+                    required>
+                </lightning-combobox>
+            </div>
+
+            <!-- Need Pick Up Assistance -->
+            <div class="form-field">
+                <lightning-input
+                    type="checkbox"
+                    label="Need Pick Up Assistance"
+                    checked={needPickUp}
+                    onchange={handleNeedPickUpChange}>
+                </lightning-input>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="footer-actions">
+                <lightning-button
+                    label="Cancel"
+                    onclick={handleClose}>
+                </lightning-button>
+                <lightning-button
+                    label="Schedule Site Visit"
+                    variant="brand"
+                    onclick={handleSave}
+                    disabled={isSaveDisabled}>
+                </lightning-button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Submitting overlay -->
+    <template if:true={isSubmitting}>
+        <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+    </template>
+</template>

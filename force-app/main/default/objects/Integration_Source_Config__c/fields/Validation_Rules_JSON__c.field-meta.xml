@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Validation_Rules_JSON__c</fullName>
+    <description>JSON array of validation rules for API fields. Format: [{&quot;field&quot;:&quot;mobile&quot;,&quot;regex&quot;:&quot;[0-9]{10}&quot;,&quot;message&quot;:&quot;Must be 10 digits&quot;}]</description>
+    <label>Validation Rules JSON</label>
+    <length>131072</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

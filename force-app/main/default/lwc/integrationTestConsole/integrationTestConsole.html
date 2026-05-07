@@ -1,0 +1,197 @@
+<template>
+    <lightning-card title="Integration Test Console" icon-name="utility:debug">
+        <div class="slds-p-around_small">
+            <lightning-layout multiple-rows="true">
+                <!-- Input Panel -->
+                <lightning-layout-item size="12" medium-device-size="5" padding="around-small">
+                    <div class="slds-box slds-theme_default">
+                        <h3 class="slds-text-heading_small slds-m-bottom_small">Test Configuration</h3>
+
+                        <!-- Endpoint Selection -->
+                        <lightning-combobox
+                            label="Integration Endpoint"
+                            value={selectedEndpointId}
+                            options={endpointOptions}
+                            onchange={handleEndpointChange}
+                            placeholder="Select an endpoint to test"
+                            required
+                            class="slds-m-bottom_small"
+                        ></lightning-combobox>
+
+                        <!-- Endpoint Info (shown when selected) -->
+                        <template if:true={hasEndpointSelected}>
+                            <div class="slds-box slds-theme_shade slds-m-bottom_small slds-p-around_small">
+                                <dl class="slds-list_horizontal slds-wrap">
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Method:</dt>
+                                    <dd class="slds-item_detail slds-truncate">
+                                        <lightning-badge label={selectedEndpointInfo.HTTP_Method__c}></lightning-badge>
+                                    </dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">URL:</dt>
+                                    <dd class="slds-item_detail slds-truncate" title={selectedEndpointInfo.fullUrl}>
+                                        {selectedEndpointInfo.fullUrl}
+                                    </dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Content Type:</dt>
+                                    <dd class="slds-item_detail slds-truncate">
+                                        {selectedEndpointInfo.Content_Type__c}
+                                    </dd>
+                                </dl>
+                            </div>
+                        </template>
+
+                        <!-- Record ID -->
+                        <lightning-input
+                            label="Test Record ID (Optional)"
+                            value={testRecordId}
+                            onchange={handleRecordIdChange}
+                            placeholder="e.g., 001xx000003DGxxAAG"
+                            class="slds-m-bottom_small"
+                            pattern="[a-zA-Z0-9]{15,18}"
+                            message-when-pattern-mismatch="Please enter a valid Salesforce Record ID (15 or 18 characters)"
+                        ></lightning-input>
+
+                        <!-- Test Payload -->
+                        <div class="slds-form-element slds-m-bottom_small">
+                            <label class="slds-form-element__label" for="test-payload">
+                                <abbr class="slds-required" title="required">*</abbr>
+                                Test Payload (JSON)
+                            </label>
+                            <div class="slds-form-element__control">
+                                <lightning-textarea
+                                    value={testPayload}
+                                    onchange={handlePayloadChange}
+                                    onblur={handlePayloadValidation}
+                                    placeholder="Enter JSON payload"
+                                    max-length="131072"
+                                    class="json-editor"
+                                ></lightning-textarea>
+                            </div>
+                            <template if:true={payloadJsonError}>
+                                <div class="slds-text-color_error slds-text-body_small slds-m-top_xx-small">
+                                    {payloadJsonError}
+                                </div>
+                            </template>
+                            <div class="slds-grid slds-grid_align-spread slds-m-top_xx-small">
+                                <span class="slds-text-body_small slds-text-color_weak">Enter valid JSON</span>
+                                <lightning-button
+                                    label="Format JSON"
+                                    variant="base"
+                                    onclick={handleFormatPayload}
+                                    icon-name="utility:text_template"
+                                ></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- Execute Button -->
+                        <div class="slds-m-top_medium">
+                            <lightning-button
+                                variant="brand"
+                                label={executeButtonLabel}
+                                icon-name="utility:play"
+                                onclick={handleExecute}
+                                disabled={isExecuteDisabled}
+                                class="slds-m-right_small"
+                            ></lightning-button>
+                            <lightning-button
+                                label="Clear"
+                                icon-name="utility:clear"
+                                onclick={handleClear}
+                            ></lightning-button>
+                        </div>
+                    </div>
+                </lightning-layout-item>
+
+                <!-- Response Panel -->
+                <lightning-layout-item size="12" medium-device-size="7" padding="around-small">
+                    <div class="slds-box slds-theme_default" style="min-height: 300px;">
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                            <h3 class="slds-text-heading_small">Response</h3>
+                            <template if:true={hasResponse}>
+                                <span class="slds-text-body_small slds-text-color_weak">
+                                    Execution Time: {lastExecutionTime} ms
+                                </span>
+                            </template>
+                        </div>
+
+                        <!-- Loading State -->
+                        <template if:true={isExecuting}>
+                            <div class="loading-container">
+                                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <!-- No Response Yet -->
+                        <template if:true={showEmptyState}>
+                            <div class="slds-p-vertical_medium slds-align_absolute-center" style="min-height: 150px;">
+                                <div class="slds-text-align_center">
+                                    <lightning-icon icon-name="utility:debug" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                    <p class="slds-text-body_regular slds-text-color_weak">
+                                        Select an endpoint and click Execute to test.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Response Display -->
+                        <template if:true={hasResponse}>
+                            <!-- Status Badge -->
+                            <div class="slds-m-bottom_small">
+                                <lightning-badge
+                                    label={responseStatusLabel}
+                                    class={responseStatusClass}
+                                ></lightning-badge>
+                            </div>
+
+                            <!-- Response Tabs -->
+                            <lightning-tabset>
+                                <lightning-tab label="Body">
+                                    <div class="slds-p-around_x-small">
+                                        <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; word-wrap: break-word; max-height: 350px; overflow-y: auto;">
+                                            {formattedResponseBody}
+                                        </pre>
+                                    </div>
+                                </lightning-tab>
+                                <lightning-tab label="Headers">
+                                    <div class="slds-p-around_x-small">
+                                        <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; max-height: 350px; overflow-y: auto;">
+                                            {formattedResponseHeaders}
+                                        </pre>
+                                    </div>
+                                </lightning-tab>
+                                <lightning-tab label="Raw">
+                                    <div class="slds-p-around_x-small">
+                                        <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; word-wrap: break-word; max-height: 350px; overflow-y: auto;">
+                                            {rawResponse}
+                                        </pre>
+                                    </div>
+                                </lightning-tab>
+                            </lightning-tabset>
+                        </template>
+                    </div>
+
+                    <!-- Test History -->
+                    <template if:true={hasTestHistory}>
+                        <div class="slds-box slds-theme_default slds-m-top_small">
+                            <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                <h3 class="slds-text-heading_small">Recent Test History</h3>
+                                <lightning-button
+                                    label="Clear History"
+                                    variant="base"
+                                    onclick={handleClearHistory}
+                                    icon-name="utility:delete"
+                                ></lightning-button>
+                            </div>
+                            <lightning-datatable
+                                key-field="id"
+                                data={testHistory}
+                                columns={historyColumns}
+                                onrowaction={handleHistoryRowAction}
+                                hide-checkbox-column
+                                max-row-selection="0"
+                            ></lightning-datatable>
+                        </div>
+                    </template>
+                </lightning-layout-item>
+            </lightning-layout>
+        </div>
+    </lightning-card>
+</template>

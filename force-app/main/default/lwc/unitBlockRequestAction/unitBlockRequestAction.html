@@ -1,0 +1,120 @@
+<template>
+    <lightning-quick-action-panel header="Unit Block Request">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+        </template>
+
+        <div class="slds-p-around_medium">
+            <!-- Project -->
+            <div class="slds-m-bottom_small">
+                <lightning-combobox label="Project" value={projectId} options={projectOptions}
+                                    onchange={handleProjectChange} placeholder="Select project"></lightning-combobox>
+            </div>
+
+            <!-- Unit Lookup -->
+            <div class="slds-m-bottom_small">
+                <label class="slds-form-element__label">Unit <abbr class="slds-required" title="required">*</abbr></label>
+                <div class="user-lookup-container">
+                    <template if:true={unitName}>
+                        <div class="slds-pill_container">
+                            <span class="slds-pill">
+                                <span class="slds-pill__label">{unitName}</span>
+                                <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearUnit}>
+                                    <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                </button>
+                            </span>
+                        </div>
+                    </template>
+                    <template if:false={unitName}>
+                        <lightning-input type="text" placeholder="Search by Unit Name or Number" value={unitSearchTerm}
+                                         onchange={handleUnitSearch} onfocus={handleUnitFocus} onblur={handleUnitBlur}
+                                         variant="label-hidden"></lightning-input>
+                        <template if:true={showUnitDropdown}>
+                            <div class="lookup-dropdown" role="listbox">
+                                <template if:true={isUnitSearching}>
+                                    <div class="lookup-item lookup-loading">Searching...</div>
+                                </template>
+                                <template if:false={isUnitSearching}>
+                                    <template if:true={hasUnitResults}>
+                                        <template for:each={unitResults} for:item="unit">
+                                            <div key={unit.unitId} class="lookup-item" data-record-id={unit.unitId} data-record-name={unit.unitName} onmousedown={handleUnitSelect}>
+                                                <span class="lookup-name">{unit.unitName}</span>
+                                                <template if:true={unit.unitNumber}><span class="lookup-sub"> ({unit.unitNumber})</span></template>
+                                                <template if:true={unit.projectName}><span class="lookup-sub"> - {unit.projectName}</span></template>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasUnitResults}>
+                                        <div class="lookup-item lookup-no-results">No available units found</div>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Duration -->
+            <div class="slds-m-bottom_small">
+                <lightning-input type="number" label="Duration (Days)" value={blockDays}
+                                 onchange={handleBlockDaysChange} min="1" step="1" placeholder="Number of days"></lightning-input>
+            </div>
+
+            <!-- Reason -->
+            <div class="slds-m-bottom_small">
+                <lightning-textarea label="Reason" value={reason} onchange={handleReasonChange}
+                                    placeholder="Reason for block request" max-length="255" required></lightning-textarea>
+            </div>
+
+            <!-- Approver -->
+            <div class="slds-m-bottom_small">
+                <label class="slds-form-element__label">Approver <abbr class="slds-required" title="required">*</abbr></label>
+                <div class="user-lookup-container">
+                    <template if:true={approverName}>
+                        <div class="slds-pill_container">
+                            <span class="slds-pill">
+                                <span class="slds-pill__label">{approverName}</span>
+                                <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearApprover}>
+                                    <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                </button>
+                            </span>
+                        </div>
+                    </template>
+                    <template if:false={approverName}>
+                        <lightning-input type="text" placeholder="Search approver..." value={approverSearchTerm}
+                                         onchange={handleApproverSearch} onfocus={handleApproverFocus} onblur={handleApproverBlur}
+                                         variant="label-hidden"></lightning-input>
+                        <template if:true={showApproverDropdown}>
+                            <div class="lookup-dropdown" role="listbox">
+                                <template if:true={isApproverSearching}>
+                                    <div class="lookup-item lookup-loading">Searching...</div>
+                                </template>
+                                <template if:false={isApproverSearching}>
+                                    <template if:true={hasApproverResults}>
+                                        <template for:each={approverResults} for:item="user">
+                                            <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleApproverSelect}>
+                                                <span class="lookup-name">{user.Name}</span>
+                                                <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasApproverResults}>
+                                        <div class="lookup-item lookup-no-results">No users found</div>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+                <template if:true={defaultManagerName}>
+                    <span class="slds-text-body_small slds-text-color_weak">Default: {defaultManagerName}</span>
+                </template>
+            </div>
+        </div>
+
+        <div slot="footer">
+            <lightning-button label="Cancel" onclick={handleCancel} class="slds-m-right_small"></lightning-button>
+            <lightning-button label="Submit Request" variant="brand" onclick={handleSubmit} disabled={isSubmitDisabled}></lightning-button>
+        </div>
+    </lightning-quick-action-panel>
+</template>

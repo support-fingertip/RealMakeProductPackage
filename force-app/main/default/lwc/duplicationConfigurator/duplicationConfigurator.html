@@ -1,0 +1,431 @@
+<template>
+    <lightning-card title="Duplication Configuration" icon-name="standard:orchestrator">
+        <div class="slds-card__body slds-card__body_inner">
+            
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </template>
+
+            <!-- Step 1: Object Selection -->
+            <div class="slds-m-bottom_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">
+                    <span class="step-number">1</span> Select Primary Object
+                </h3>
+                <lightning-combobox
+                    name="object"
+                    label="Object"
+                    value={selectedObject}
+                    placeholder="Select an Object"
+                    options={objectOptions}
+                    onchange={handleObjectChange}
+                    class="slds-m-bottom_small"
+                ></lightning-combobox>
+            </div>
+
+            <!-- Existing Configurations -->
+            <template if:true={hasExistingConfigs}>
+                <div class="slds-m-bottom_medium slds-box slds-box_x-small slds-theme_shade">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <lightning-icon icon-name="utility:edit" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                        Existing Configurations
+                    </h3>
+                    <template if:true={isEditMode}>
+                        <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_small" role="alert" style="padding: 8px 12px; border-radius: 4px; background: #fffbea;">
+                            <span class="slds-text-body_small">Editing existing configuration. </span>
+                            <lightning-button label="Cancel Edit" variant="base" onclick={handleCancelEdit} class="slds-m-left_small"></lightning-button>
+                        </div>
+                    </template>
+                    <template for:each={existingConfigs} for:item="config">
+                        <div key={config.Id} class="slds-grid slds-grid_vertical-align-center slds-p-around_xx-small slds-border_bottom">
+                            <div class="slds-col slds-grow">
+                                <span class="slds-text-body_regular">{config.Name}</span>
+                                <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">{config.Description__c}</span>
+                            </div>
+                            <div class="slds-col slds-shrink">
+                                <lightning-button-icon
+                                    icon-name="utility:edit"
+                                    alternative-text="Edit"
+                                    data-id={config.Id}
+                                    onclick={handleEditConfig}
+                                    variant="border-filled"
+                                    size="small">
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Step 2: Expression Builder with Field Selection -->
+            <template if:true={showExpressionBuilder}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <span class="step-number">2</span> Define Duplication Logic (Expression Builder)
+                    </h3>
+                    
+                    <div class="slds-box slds-box_small slds-m-bottom_small expression-builder">
+                        <!-- Field Selector -->
+                        <div class="slds-m-bottom_medium">
+                            <lightning-combobox
+                                data-id="primaryFieldSelect"
+                                name="fieldSelect"
+                                label="Select Field to Add"
+                                placeholder="Choose a field..."
+                                options={fieldOptions}
+                                onchange={handleFieldSelect}
+                            ></lightning-combobox>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                Select a field from the dropdown to automatically add it to the expression below
+                            </p>
+                        </div>
+
+                        <!-- Expression Textarea -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_small">
+                            <div class="slds-col slds-size_1-of-1">
+                                <lightning-textarea
+                                    label="Duplication Logic Expression"
+                                    value={expressionValue}
+                                    onchange={handleExpressionChange}
+                                    placeholder="Build your expression: e.g., Mobile + Email OR Phone"
+                                    required
+                                    class={primaryExpressionClass}
+                                ></lightning-textarea>
+                                <template if:false={isPrimaryExpressionValid}>
+                                    <div class="slds-text-color_error slds-m-top_xx-small">
+                                        <lightning-icon icon-name="utility:error" size="x-small" variant="error"></lightning-icon>
+                                        Expression is incomplete - ends with an operator
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Operator Buttons -->
+                        <div class="slds-m-bottom_small">
+                            <p class="slds-text-body_small slds-m-bottom_xx-small">
+                                <strong>Quick Operators:</strong>
+                            </p>
+                            <lightning-button-group>
+                                <lightning-button 
+                                    label="Add AND (+)" 
+                                    onclick={addAndOperator}
+                                    variant="neutral"
+                                    icon-name="utility:add"
+                                ></lightning-button>
+                                <lightning-button 
+                                    label="Add OR" 
+                                    onclick={addOrOperator}
+                                    variant="neutral"
+                                    icon-name="utility:picklist_choice"
+                                ></lightning-button>
+                                <lightning-button 
+                                    label="Clear" 
+                                    onclick={clearExpression}
+                                    variant="destructive-text"
+                                    icon-name="utility:clear"
+                                ></lightning-button>
+                            </lightning-button-group>
+                        </div>
+
+                        <!-- Expression Preview -->
+                        <template if:true={hasExpression}>
+                            <div class={primaryPreviewClass}>
+                                <p class="slds-text-body_small">
+                                    <strong>Current Expression:</strong>
+                                </p>
+                                <p class="slds-text-title slds-m-top_xx-small">{expressionValue}</p>
+                            </div>
+                        </template>
+
+                        <!-- Help Text -->
+                        <div class="slds-m-top_small">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                <strong>Expression Examples:</strong><br/>
+                                • <code>Mobile + Email</code> - Both Mobile AND Email must match<br/>
+                                • <code>Mobile OR Email</code> - Either Mobile OR Email must match<br/>
+                                • <code>FirstName + LastName + Company</code> - All three fields must match<br/>
+                                • <code>Email OR Phone + LastName</code> - Complex logic combination
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 3: Related Object Selection -->
+            <template if:true={hasSelectedObject}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <span class="step-number">3</span> Select Related Object (Cross-Object Duplication Check)
+                    </h3>
+                    <div class="slds-box slds-box_small slds-theme_shade">
+                        <p class="slds-text-body_small slds-m-bottom_small">
+                            <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                            <em>If duplicate is not found in <strong>{selectedObject}</strong>, search in related object</em>
+                        </p>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_10-of-12">
+                                <lightning-combobox
+                                    data-id="relatedObjectSelect"
+                                    name="relatedObject"
+                                    label="Related Object"
+                                    value={selectedRelatedObject}
+                                    placeholder="Select a Related Object (Optional)"
+                                    options={relatedObjectOptions}
+                                    onchange={handleRelatedObjectChange}
+                                ></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                <div class="clear-button-container">
+                                    <lightning-button
+                                        label="Clear Selection"
+                                        onclick={clearRelatedObject}
+                                        variant="destructive-text"
+                                        icon-name="utility:close"
+                                        disabled={isClearRelatedObjectDisabled}
+                                        class="slds-m-top_medium"
+                                    ></lightning-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 4: Related Object Expression Builder -->
+            <template if:true={showRelatedExpressionBuilder}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <span class="step-number">4</span> Define Related Object Duplication Logic
+                    </h3>
+                    
+                    <div class="slds-box slds-box_small slds-m-bottom_small expression-builder related-expression">
+                        <!-- Related Field Selector -->
+                        <div class="slds-m-bottom_medium">
+                            <lightning-combobox
+                                data-id="relatedFieldSelect"
+                                name="relatedFieldSelect"
+                                label="Select Field to Add"
+                                placeholder="Choose a field..."
+                                options={relatedFieldOptions}
+                                onchange={handleRelatedFieldSelect}
+                            ></lightning-combobox>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                Select a field from the dropdown to automatically add it to the expression below
+                            </p>
+                        </div>
+
+                        <!-- Related Expression Textarea -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_small">
+                            <div class="slds-col slds-size_1-of-1">
+                                <lightning-textarea
+                                    label="Related Object Duplication Logic Expression"
+                                    value={relatedExpressionValue}
+                                    onchange={handleRelatedExpressionChange}
+                                    placeholder="Build your expression: e.g., Email + AccountId OR Phone"
+                                    required
+                                    class={relatedExpressionClass}
+                                ></lightning-textarea>
+                                <template if:false={isRelatedExpressionValid}>
+                                    <div class="slds-text-color_error slds-m-top_xx-small">
+                                        <lightning-icon icon-name="utility:error" size="x-small" variant="error"></lightning-icon>
+                                        Expression is incomplete - ends with an operator
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Related Operator Buttons -->
+                        <div class="slds-m-bottom_small">
+                            <p class="slds-text-body_small slds-m-bottom_xx-small">
+                                <strong>Quick Operators:</strong>
+                            </p>
+                            <lightning-button-group>
+                                <lightning-button 
+                                    label="Add AND (+)" 
+                                    onclick={addRelatedAndOperator}
+                                    variant="neutral"
+                                    icon-name="utility:add"
+                                ></lightning-button>
+                                <lightning-button 
+                                    label="Add OR" 
+                                    onclick={addRelatedOrOperator}
+                                    variant="neutral"
+                                    icon-name="utility:picklist_choice"
+                                ></lightning-button>
+                                <lightning-button 
+                                    label="Clear" 
+                                    onclick={clearRelatedExpression}
+                                    variant="destructive-text"
+                                    icon-name="utility:clear"
+                                ></lightning-button>
+                            </lightning-button-group>
+                        </div>
+
+                        <!-- Related Expression Preview -->
+                        <template if:true={hasRelatedExpression}>
+                            <div class={relatedPreviewClass}>
+                                <p class="slds-text-body_small">
+                                    <strong>Current Expression:</strong>
+                                </p>
+                                <p class="slds-text-title slds-m-top_xx-small">{relatedExpressionValue}</p>
+                            </div>
+                        </template>
+
+                        <!-- Help Text -->
+                        <div class="slds-m-top_small">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                <strong>Note:</strong> Define the duplication logic for the related object independently. 
+                                This can be different from the primary object logic.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 5: Field Mapping Section (NEW) -->
+            <template if:true={showFieldMappingSection}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">
+                        <span class="step-number">5</span> Map Additional Fields from Primary to Related Object
+                    </h3>
+                    
+                    <div class="slds-box slds-box_small field-mapping-section">
+                        <p class="slds-text-body_small slds-m-bottom_medium">
+                            <lightning-icon icon-name="utility:merge_field" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                            <em>Map fields from <strong>{selectedObject}</strong> to <strong>{selectedRelatedObject}</strong> or provide custom values</em>
+                        </p>
+
+                        <!-- Field Mapping Rows -->
+                        <template for:each={fieldMappings} for:item="mapping">
+                            <div key={mapping.id} class="mapping-row slds-box slds-box_x-small slds-m-bottom_small">
+                                <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                                    
+                                    <!-- Related Object Field (Target) -->
+                                    <div class="slds-col slds-size_3-of-12">
+                                        <lightning-combobox
+                                            data-id={mapping.id}
+                                            name="relatedField"
+                                            label="Related Object Field"
+                                            value={mapping.relatedField}
+                                            placeholder="Select field..."
+                                            options={relatedFieldOptions}
+                                            onchange={handleMappingRelatedFieldChange}
+                                            required
+                                        ></lightning-combobox>
+                                    </div>
+
+                                    <!-- Mapping Type -->
+                                    <div class="slds-col slds-size_3-of-12">
+                                        <lightning-combobox
+                                            data-id={mapping.id}
+                                            name="mappingType"
+                                            label="Mapping Type"
+                                            value={mapping.mappingType}
+                                            placeholder="Select type..."
+                                            options={mappingTypeOptions}
+                                            onchange={handleMappingTypeChange}
+                                            required
+                                        ></lightning-combobox>
+                                    </div>
+
+                                    <!-- Source Value (Conditional) -->
+                                    <div class="slds-col slds-size_5-of-12">
+                                        <!-- Show field dropdown if mapping from primary object -->
+                                        <template if:true={mapping.isFieldMapping}>
+                                            <lightning-combobox
+                                                data-id={mapping.id}
+                                                name="sourceField"
+                                                label="Primary Object Field"
+                                                value={mapping.sourceValue}
+                                                placeholder="Select field..."
+                                                options={fieldOptions}
+                                                onchange={handleMappingSourceValueChange}
+                                                required
+                                            ></lightning-combobox>
+                                        </template>
+
+                                        <!-- Show text input if manual value -->
+                                        <template if:true={mapping.isManualValue}>
+                                            <lightning-input
+                                                data-id={mapping.id}
+                                                name="manualValue"
+                                                label="Custom Value"
+                                                value={mapping.sourceValue}
+                                                placeholder="Enter custom value..."
+                                                onchange={handleMappingSourceValueChange}
+                                                required
+                                            ></lightning-input>
+                                        </template>
+
+                                        <!-- Show placeholder if no type selected -->
+                                        <template if:true={mapping.showPlaceholder}>
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label">Value</label>
+                                                <div class="slds-form-element__control">
+                                                    <div class="placeholder-text">
+                                                        Select mapping type first
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Delete Button -->
+                                    <div class="slds-col slds-size_1-of-12">
+                                        <lightning-button-icon
+                                            data-id={mapping.id}
+                                            icon-name="utility:delete"
+                                            variant="border-filled"
+                                            alternative-text="Delete mapping"
+                                            title="Delete this mapping"
+                                            onclick={handleDeleteMapping}
+                                            disabled={isSingleMapping}
+                                        ></lightning-button-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Add New Mapping Button -->
+                        <div class="slds-m-top_small">
+                            <lightning-button
+                                label="Add Field Mapping"
+                                onclick={handleAddMapping}
+                                variant="outline-brand"
+                                icon-name="utility:add"
+                            ></lightning-button>
+                        </div>
+
+                        <!-- Help Text -->
+                        <div class="slds-m-top_medium slds-p-top_small slds-border_top">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                <strong>Field Mapping Examples:</strong><br/>
+                                • Map <code>LeadSource</code> field from Lead to <code>Source__c</code> in Contact<br/>
+                                • Set custom value "Web Lead" for <code>Source__c</code> in Contact<br/>
+                                • Map <code>Company</code> from Lead to <code>AccountName</code> in Contact
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Save Button -->
+            <template if:true={hasSelectedObject}>
+                <div class="slds-m-top_large slds-border_top slds-p-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label="Save Configuration"
+                        title="Save Configuration"
+                        onclick={handleSave}
+                        icon-name="utility:save"
+                        class="slds-m-right_small"
+                    ></lightning-button>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+                        <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                        Review your configuration before saving. Expressions must not end with operators.
+                    </p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

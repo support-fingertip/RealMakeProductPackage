@@ -1,0 +1,115 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <lightning-layout multiple-rows="true">
+            <!-- Total Integrations -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         onclick={handleCardClick}
+                         data-metric="totalIntegrations"
+                         role="button"
+                         tabindex="0"
+                         onkeydown={handleCardKeydown}
+                         aria-label="Total Integrations metric card">
+                        <lightning-icon icon-name="utility:connected_apps" size="medium" class="slds-m-bottom_x-small"></lightning-icon>
+                        <p class="slds-text-heading_large slds-m-top_x-small">{totalIntegrations}</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Total Integrations</p>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+
+            <!-- Success Rate -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         onclick={handleCardClick}
+                         data-metric="successRate"
+                         role="button"
+                         tabindex="0"
+                         onkeydown={handleCardKeydown}
+                         aria-label="Success Rate metric card">
+                        <lightning-icon icon-name={successRateIcon} size="medium" class={successRateIconClass}></lightning-icon>
+                        <p class={successRateClass}>{formattedSuccessRate}%</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Success Rate</p>
+                        <div class="slds-m-top_x-small">
+                            <lightning-progress-bar
+                                value={successRate}
+                                size="small"
+                                variant={successRateVariant}
+                            ></lightning-progress-bar>
+                        </div>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+
+            <!-- Average Response Time -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         onclick={handleCardClick}
+                         data-metric="avgResponseTime"
+                         role="button"
+                         tabindex="0"
+                         onkeydown={handleCardKeydown}
+                         aria-label="Average Response Time metric card">
+                        <lightning-icon icon-name="utility:clock" size="medium" class={responseTimeIconClass}></lightning-icon>
+                        <p class={avgResponseTimeClass}>{formattedAvgResponseTime}</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Avg Response Time</p>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+
+            <!-- Active Errors -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         onclick={handleCardClick}
+                         data-metric="activeErrors"
+                         role="button"
+                         tabindex="0"
+                         onkeydown={handleCardKeydown}
+                         aria-label="Active Errors metric card">
+                        <lightning-icon icon-name="utility:error" size="medium" class={activeErrorsIconClass}></lightning-icon>
+                        <p class={activeErrorsClass}>{activeErrors}</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Active Errors</p>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+
+            <!-- Failed Last 24h -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         onclick={handleCardClick}
+                         data-metric="failedLast24h"
+                         role="button"
+                         tabindex="0"
+                         onkeydown={handleCardKeydown}
+                         aria-label="Failed in Last 24 Hours metric card">
+                        <lightning-icon icon-name="utility:warning" size="medium" class={failedIconClass}></lightning-icon>
+                        <p class={failedLast24hClass}>{failedLast24h}</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Failed (24h)</p>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+
+            <!-- System Health -->
+            <lightning-layout-item size="12" medium-device-size="4" large-device-size="2" padding="around-small">
+                <lightning-card class="metric-card">
+                    <div class="slds-p-around_x-small slds-text-align_center"
+                         aria-label="System Health metric card">
+                        <lightning-icon icon-name={healthIcon} size="medium" class={healthIconClass}></lightning-icon>
+                        <p class={healthTextClass}>{healthStatus}</p>
+                        <p class="slds-text-body_small slds-text-color_weak">System Health</p>
+                    </div>
+                </lightning-card>
+            </lightning-layout-item>
+        </lightning-layout>
+    </template>
+</template>

@@ -1,0 +1,336 @@
+<template>
+    <!-- Floating launcher (hidden in utility-bar mode) -->
+    <template lwc:if={showFloatingLauncher}>
+        <div class={chatBtnClass} onclick={toggleChat} title="Aria — AI Sales Assistant">
+            <template lwc:if={isChatOpen}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </template>
+            <template lwc:else>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </template>
+        </div>
+    </template>
+
+    <!-- Chat panel -->
+    <template lwc:if={isChatOpen}>
+        <div class={panelClass} role="dialog" aria-label="Aria AI Chat">
+
+            <!-- Header -->
+            <div class="aria-header">
+                <div class="aria-header-info">
+                    <div class="aria-avatar">A</div>
+                    <div>
+                        <h3 class="aria-header-title">{panelTitle}</h3>
+                        <p class="aria-header-status">
+                            <span class="status-dot"></span> {panelSubtitle}
+                        </p>
+                    </div>
+                </div>
+                <div class="aria-header-right">
+                    <select class="aria-lang-select" onchange={handleLanguageChange} title="Language">
+                        <template for:each={languageOptions} for:item="lang">
+                            <option key={lang.value} value={lang.value}>{lang.label}</option>
+                        </template>
+                    </select>
+                    <button class={ttsBtnClass} onclick={handleTtsToggle} title={ttsBtnTitle}>
+                        <template lwc:if={ttsEnabled}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </template>
+                        <template lwc:else>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M23 9l-6 6M17 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </template>
+                    </button>
+                    <template lwc:if={ttsEnabled}>
+                        <button class="aria-voice-picker-btn" onclick={handleGearClick} title="Choose voice">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </button>
+                    </template>
+                    <template lwc:if={showFloatingLauncher}>
+                        <button class="aria-close-btn" onclick={toggleChat} title="Close">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Voice-picker popover -->
+            <template lwc:if={isVoicePickerOpen}>
+                <div class="aria-voice-picker" onclick={handleVoicePickerInsideClick}>
+                    <div class="aria-voice-picker-header">
+                        <strong>Voice for {preferredLanguage}</strong>
+                        <button class="aria-mini-close" onclick={handleVoicePickerClose} title="Close">×</button>
+                    </div>
+                    <template lwc:if={voicePickerHasVoices}>
+                        <select class="aria-voice-picker-select"
+                                value={selectedVoiceName}
+                                onchange={handleVoiceSelect}>
+                            <option value="">Auto (female preferred)</option>
+                            <template for:each={voiceOptions} for:item="v">
+                                <option key={v.name} value={v.name}>{v.label}</option>
+                            </template>
+                        </select>
+                        <div class="aria-voice-picker-actions">
+                            <button class="aria-btn aria-btn--secondary"
+                                    onclick={handleVoiceTest}>
+                                Play test
+                            </button>
+                            <button class="aria-btn aria-btn--primary"
+                                    onclick={handleVoicePickerSave}>
+                                Save
+                            </button>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <p class="aria-voice-picker-empty">
+                            No voices installed for {preferredLanguage}. Install a {preferredLanguage} voice in your OS speech settings.
+                        </p>
+                        <div class="aria-voice-picker-actions">
+                            <button class="aria-btn aria-btn--secondary"
+                                    onclick={handleVoicePickerClose}>
+                                Close
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Message stream -->
+            <div class="aria-messages" lwc:ref="messageContainer">
+
+                <!-- Welcome action buttons (large cards) -->
+                <template lwc:if={showWelcomeActions}>
+                    <!-- Compact metrics row -->
+                    <template lwc:if={hasLeadMetrics}>
+                        <div class="aria-metrics-row">
+                            <button type="button" class="aria-metric" data-tile="lead_followups" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{leadMetrics.followups}</span>
+                                <span class="aria-metric-lbl">Follow-ups</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="lead_site_visits" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{leadMetrics.site_visits}</span>
+                                <span class="aria-metric-lbl">Site Visits</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="lead_cost_sheets" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{leadMetrics.cost_sheets}</span>
+                                <span class="aria-metric-lbl">Quotes</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="lead_bookings" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{leadMetrics.bookings}</span>
+                                <span class="aria-metric-lbl">Bookings</span>
+                            </button>
+                        </div>
+                    </template>
+                    <template lwc:elseif={hasWelcomeMetrics}>
+                        <div class="aria-metrics-row">
+                            <button type="button" class="aria-metric" data-tile="overdue_followups" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{welcomeMetrics.overdue_followups}</span>
+                                <span class="aria-metric-lbl">Overdue Follow-ups</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="visits_today" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{welcomeMetrics.site_visits_today}</span>
+                                <span class="aria-metric-lbl">Visits Today</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="new_leads" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{welcomeMetrics.new_leads_today}</span>
+                                <span class="aria-metric-lbl">New Leads</span>
+                            </button>
+                            <button type="button" class="aria-metric" data-tile="stale_leads" onclick={handleTileClick}>
+                                <span class="aria-metric-val">{welcomeMetrics.stale_leads_7d}</span>
+                                <span class="aria-metric-lbl">Stale 7d</span>
+                            </button>
+                        </div>
+                    </template>
+
+                    <div class="aria-welcome-actions">
+                        <p class="aria-welcome-prompt">What would you like to do?</p>
+                        <template for:each={welcomeActions} for:item="act">
+                            <button key={act.id}
+                                    class="aria-action-tile"
+                                    data-kind={act.kind}
+                                    onclick={handleActionButtonClick}>
+                                <span class="aria-action-tile-label">{act.label}</span>
+                                <span class="aria-action-tile-hint">{act.hint}</span>
+                            </button>
+                        </template>
+                    </div>
+                </template>
+
+                <template for:each={messages} for:item="msg">
+                    <div key={msg.id} class={msg.containerClass}>
+                        <template lwc:if={msg.isAction}>
+                            <div class="aria-action-card">
+                                <div class="aria-action-text">{msg.actionDetail}</div>
+                                <button class="aria-action-btn" data-id={msg.actionRecordId} onclick={handleOpenRecord}>
+                                    {msg.actionLabel}
+                                </button>
+                            </div>
+                        </template>
+                        <template lwc:elseif={msg.isHotLeadsList}>
+                            <div class="aria-action-card aria-hotleads-card">
+                                <div class="aria-hotleads-title">Leads to push to booking</div>
+                                <template for:each={msg.hotLeads} for:item="row">
+                                    <div key={row.rowId} class="aria-hotleads-row">
+                                        <div class="aria-hotleads-row-main">
+                                            <div class="aria-hotleads-row-title">{row.title}</div>
+                                            <div class="aria-hotleads-row-sub">{row.subtitle}</div>
+                                            <div class="aria-hotleads-row-next">Next: {row.nextAction}</div>
+                                            <template lwc:if={row.suggestion}>
+                                                <div class="aria-hotleads-row-hint">{row.suggestion}</div>
+                                            </template>
+                                        </div>
+                                        <button class="aria-action-btn" data-id={row.leadId} onclick={handleOpenRecord}>
+                                            Open
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template lwc:else>
+                            <template lwc:if={msg.isAi}>
+                                <div class="aria-avatar aria-avatar--small">A</div>
+                            </template>
+                            <div class={msg.bubbleClass}>
+                                <p class="aria-msg-text">{msg.displayedText}</p>
+                                <span class="aria-msg-time">{msg.timestamp}</span>
+                            </div>
+                            <!-- Quick-reply chips parsed from CHOICES: [...] -->
+                            <template lwc:if={msg.hasChips}>
+                                <div class="aria-reply-chips">
+                                    <template for:each={msg.chips} for:item="chip">
+                                        <button key={chip.id} class="aria-reply-chip"
+                                                data-text={chip.text}
+                                                onclick={handleChipClick}>
+                                            {chip.text}
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+
+                <template lwc:if={isTyping}>
+                    <div class="aria-msg-container aria-msg-container--ai">
+                        <div class="aria-avatar aria-avatar--small">A</div>
+                        <div class="aria-typing">
+                            <span class="aria-typing-dot"></span>
+                            <span class="aria-typing-dot"></span>
+                            <span class="aria-typing-dot"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Inline mini-form: schedule site visit -->
+            <template lwc:if={showSiteVisitForm}>
+                <div class="aria-mini-form">
+                    <div class="aria-mini-form-header">
+                        <strong>Schedule Site Visit</strong>
+                        <button class="aria-mini-close" onclick={handleSvCancel}>×</button>
+                    </div>
+                    <template lwc:if={svError}>
+                        <div class="aria-mini-error">{svError}</div>
+                    </template>
+                    <lightning-input type="datetime" label="Scheduled at"
+                        value={svScheduledAt} onchange={handleSvDateChange}>
+                    </lightning-input>
+                    <lightning-combobox label="Mode" value={svMode}
+                        options={visitModeOptions} onchange={handleSvModeChange}>
+                    </lightning-combobox>
+                    <div class="aria-mini-actions">
+                        <button class="aria-btn aria-btn--secondary" onclick={handleSvCancel} disabled={svIsSubmitting}>Cancel</button>
+                        <button class="aria-btn aria-btn--primary" onclick={handleSvSubmit} disabled={svIsSubmitting}>
+                            <template lwc:if={svIsSubmitting}>Saving…</template>
+                            <template lwc:else>Schedule</template>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Inline mini-form: schedule follow-up -->
+            <template lwc:if={showFollowupForm}>
+                <div class="aria-mini-form">
+                    <div class="aria-mini-form-header">
+                        <strong>Schedule Follow-up</strong>
+                        <button class="aria-mini-close" onclick={handleFuCancel}>×</button>
+                    </div>
+                    <template lwc:if={fuError}>
+                        <div class="aria-mini-error">{fuError}</div>
+                    </template>
+                    <lightning-input type="datetime" label="Due"
+                        value={fuDueAt} onchange={handleFuDateChange}>
+                    </lightning-input>
+                    <lightning-input type="text" label="Subject"
+                        value={fuSubject} onchange={handleFuSubjectChange}>
+                    </lightning-input>
+                    <lightning-textarea label="Notes"
+                        value={fuNotes} onchange={handleFuNotesChange}>
+                    </lightning-textarea>
+                    <div class="aria-mini-actions">
+                        <button class="aria-btn aria-btn--secondary" onclick={handleFuCancel} disabled={fuIsSubmitting}>Cancel</button>
+                        <button class="aria-btn aria-btn--primary" onclick={handleFuSubmit} disabled={fuIsSubmitting}>
+                            <template lwc:if={fuIsSubmitting}>Saving…</template>
+                            <template lwc:else>Schedule</template>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Input -->
+            <div class="aria-input-area">
+                <div class="aria-input-wrapper">
+                    <template lwc:if={isNotVoiceRecording}>
+                        <input
+                            type="text"
+                            class="aria-input"
+                            placeholder="Type a message for Aria..."
+                            value={userInput}
+                            onchange={handleInputChange}
+                            onkeypress={handleKeyPress}
+                            disabled={isTyping}
+                            lwc:ref="chatInput"
+                        />
+                    </template>
+                    <c-aria-voice-input
+                        preferred-language={preferredLanguage}
+                        disabled={isTyping}
+                        ontranscribed={handleTranscribed}
+                        onvoiceerror={handleVoiceError}
+                        onstatechange={handleVoiceStateChange}>
+                    </c-aria-voice-input>
+                    <template lwc:if={isNotVoiceRecording}>
+                        <button class={sendBtnClass} onclick={handleSendMessage} disabled={isSendDisabled} title="Send">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </template>
+                </div>
+                <p class="aria-disclaimer">Aria uses live project and lead data from this org. Powered by Gemini.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Lead capture form modal -->
+    <template lwc:if={showLeadForm}>
+        <c-aria-lead-capture-form
+            onleadcreated={handleLeadFormCreated}
+            oncancel={handleLeadFormCancel}>
+        </c-aria-lead-capture-form>
+    </template>
+</template>

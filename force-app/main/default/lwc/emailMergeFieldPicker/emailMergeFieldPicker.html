@@ -1,0 +1,123 @@
+<template>
+    <lightning-button
+        label={buttonLabel}
+        variant={buttonVariant}
+        icon-name="utility:merge_field"
+        disabled={disabled}
+        onclick={handleOpenModal}>
+    </lightning-button>
+    
+    <!-- Modal -->
+    <template if:true={showModal}>
+        <section class="slds-modal slds-fade-in-open slds-modal_medium" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        class="slds-modal__close"
+                        alternative-text="Close"
+                        onclick={handleCloseModal}>
+                    </lightning-button-icon>
+                    <h2 class="slds-modal__title">
+                        <lightning-icon icon-name="utility:merge_field" size="small" class="slds-m-right_small"></lightning-icon>
+                        {modalTitle}
+                    </h2>
+                </header>
+                
+                <div class="slds-modal__content">
+                    <!-- Search -->
+                    <div class="slds-p-around_medium slds-border_bottom">
+                        <lightning-input
+                            type="search"
+                            placeholder="Search fields..."
+                            value={searchTerm}
+                            onchange={handleSearchChange}>
+                        </lightning-input>
+                    </div>
+                    
+                    <!-- Loading Spinner -->
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <!-- Fields -->
+                    <template if:false={isLoading}>
+                        <template if:true={hasFields}>
+                            <div class="field-list">
+                                <template for:each={groupedFields} for:item="group">
+                                    <div key={group.name} class="field-group">
+                                        <!-- Group Header -->
+                                        <div class="group-header slds-p-horizontal_medium slds-p-vertical_x-small"
+                                             data-group={group.name}
+                                             onclick={handleToggleGroup}>
+                                            <template if:true={group.isExpanded}>
+<lightning-icon
+                                            icon-name="utility:chevrondown"
+                                            size="x-small"
+                                            class="slds-m-right_small">
+                                        </lightning-icon>
+</template>
+<template if:false={group.isExpanded}>
+    <lightning-icon
+                                                icon-name="utility:chevronright"
+                                                size="x-small"
+                                                class="slds-m-right_small">
+                                            </lightning-icon>
+</template>
+                                           
+                                            <span class="group-name">{group.name}</span>
+                                            <span class="slds-badge slds-m-left_x-small">{group.fields.length}</span>
+                                        </div>
+                                        
+                                        <!-- Group Fields -->
+                                        <template if:true={group.isExpanded}>
+                                            <ul class="slds-has-dividers_bottom-space">
+                                                <template for:each={group.fields} for:item="field">
+                                                    <li key={field.value} 
+                                                        class="field-item slds-p-horizontal_medium slds-p-vertical_x-small"
+                                                        data-mergefield={field.mergeField}
+                                                        data-label={field.label}
+                                                        onclick={handleFieldSelect}>
+                                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                                            <div class="slds-col slds-grow">
+                                                                <span class="field-label">{field.label}</span>
+                                                                <span class="merge-field-value">{field.mergeField}</span>
+                                                            </div>
+                                                            <lightning-button-icon
+                                                                icon-name="utility:copy"
+                                                                variant="bare"
+                                                                size="small"
+                                                                alternative-text="Copy"
+                                                                title="Copy to clipboard"
+                                                                data-mergefield={field.mergeField}
+                                                                onclick={handleCopyField}>
+                                                            </lightning-button-icon>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- No Results -->
+                        <template if:false={hasFields}>
+                            <div class="slds-p-around_large slds-text-align_center">
+                                <p class="slds-text-color_weak">No fields found matching your search.</p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+                
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCloseModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

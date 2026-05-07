@@ -1,0 +1,30 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.slds-border_bottom {
+    border-bottom: 1px solid #dddbda;
+}
+
+.slds-border_top {
+    border-top: 1px solid #dddbda;
+}
+
+.compact-table th,
+.compact-table td {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.action-col {
+    width: 80px;
+    text-align: center;
+}
+
+.step-content {
+    min-height: 250px;
+}

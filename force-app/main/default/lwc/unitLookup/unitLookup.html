@@ -1,0 +1,30 @@
+<!--
+Reusable Unit lookup filtered by selected Project.
+Emits 'unitselect' with detail { unitId, unitName } on selection.
+-->
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <div class="slds-form-element">
+        <label class="slds-form-element__label" for="unitLookup">{label}</label>
+        <div class="slds-form-element__control">
+            <lightning-combobox
+                name="unitLookup"
+                data-id="unitCombobox"
+                placeholder="Select a Unit"
+                value={value}
+                options={options}
+                onchange={handleChange}
+                required={required}
+                disabled={disabled}>
+            </lightning-combobox>
+        </div>
+        <template if:true={helpText}>
+            <div class="slds-form-element__help">{helpText}</div>
+        </template>
+    </div>
+</template>

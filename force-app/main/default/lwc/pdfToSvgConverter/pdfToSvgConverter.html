@@ -1,0 +1,81 @@
+<template>
+    <lightning-card title="PDF to SVG Converter" icon-name="utility:file">
+
+        <!-- Upload Area -->
+        <div class="slds-p-around_medium">
+            <div class={uploadZoneClass}
+                 ondragover={handleDragOver}
+                 ondragleave={handleDragLeave}
+                 ondrop={handleDrop}>
+                <template if:false={pdfLoaded}>
+                    <div class="slds-text-align_center">
+                        <lightning-icon icon-name="utility:upload" size="large" class="slds-m-bottom_small"></lightning-icon>
+                        <p class="slds-text-heading_small slds-m-bottom_x-small">Drop a PDF file here or click to browse</p>
+                        <p class="slds-text-body_small slds-text-color_weak">Supported format: .pdf (max 10MB recommended)</p>
+                        <input type="file" accept=".pdf" class="file-input" onchange={handleFileSelect} />
+                    </div>
+                </template>
+                <template if:true={pdfLoaded}>
+                    <div class="slds-text-align_center">
+                        <lightning-icon icon-name="utility:check" size="small" variant="success"></lightning-icon>
+                        <span class="slds-m-left_x-small slds-text-body_regular">{fileName}</span>
+                        <span class="slds-text-body_small slds-text-color_weak slds-m-left_x-small">({totalPages} pages)</span>
+                        <lightning-button label="Change File" variant="base" onclick={handleChangeFile} class="slds-m-left_medium"></lightning-button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium slds-text-align_center">
+                <lightning-spinner alternative-text="Converting..." size="medium"></lightning-spinner>
+                <p class="slds-m-top_small slds-text-body_regular">{loadingMessage}</p>
+            </div>
+        </template>
+
+        <!-- Error Display -->
+        <template if:true={errorMessage}>
+            <div class="slds-p-around_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <span class="slds-assistive-text">error</span>
+                    <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                    <h2 class="slds-text-heading_small">{errorMessage}</h2>
+                </div>
+            </div>
+        </template>
+
+        <!-- SVG Preview & Controls -->
+        <template if:true={showPreview}>
+            <!-- Page Navigation -->
+            <div class="slds-p-horizontal_medium slds-p-bottom_small">
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                    <div>
+                        <lightning-button-group>
+                            <lightning-button label="Previous" icon-name="utility:chevronleft"
+                                             disabled={isPrevDisabled} onclick={handlePrevPage}></lightning-button>
+                            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right"
+                                             disabled={isNextDisabled} onclick={handleNextPage}></lightning-button>
+                        </lightning-button-group>
+                        <span class="slds-m-left_medium slds-text-body_regular page-indicator">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                    </div>
+                    <div>
+                        <lightning-button label="Download This Page" icon-name="utility:download"
+                                         variant="neutral" onclick={handleDownloadCurrentPage}
+                                         class="slds-m-right_x-small"></lightning-button>
+                        <lightning-button label="Download All Pages" icon-name="utility:download"
+                                         variant="brand" onclick={handleDownloadAllPages}></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SVG Preview Container -->
+            <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                <div class="svg-preview-container" data-id="svg-preview" lwc:dom="manual"></div>
+            </div>
+        </template>
+
+    </lightning-card>
+</template>

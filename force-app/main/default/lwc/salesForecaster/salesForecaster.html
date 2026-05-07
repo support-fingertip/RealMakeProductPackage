@@ -1,0 +1,835 @@
+<template>
+    <div class="forecaster-root">
+
+        <!-- HEADER -->
+        <header class="hero-header">
+            <div class="hero-bg-overlay"></div>
+            <div class="hero-geo geo-1"></div>
+            <div class="hero-geo geo-2"></div>
+            <div class="hero-content">
+                <p class="hero-eyebrow">Analytics &amp; Forecasting</p>
+                <h1 class="hero-title">Sales Forecaster</h1>
+                <p class="hero-sub">Predict leads, site visits, and bookings with data-driven insights</p>
+            </div>
+            <div class="header-actions">
+               <!-- <button class="action-btn action-btn--outline" onclick={handleExportCSV} title="Export CSV">
+                    <lightning-icon icon-name="utility:download" size="xx-small" class="btn-icon"></lightning-icon>
+                    CSV
+                </button> -->
+                <button class="action-btn action-btn--outline" onclick={handleExportPDF} title="Export PDF">
+                    <lightning-icon icon-name="utility:pdf_ext" size="xx-small" class="btn-icon"></lightning-icon>
+                    PDF
+                </button>
+                <button class="action-btn action-btn--ghost" onclick={handleRefresh} title="Refresh">
+                    <lightning-icon icon-name="utility:refresh" size="xx-small" class="btn-icon-light"></lightning-icon>
+                </button>
+            </div>
+        </header>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar">
+            <div class="filter-fields">
+                <lightning-combobox label="Project" value={selectedProjectId}
+                    options={projectOptions} onchange={handleProjectChange}
+                    placeholder="All Projects" class="filter-combo">
+                </lightning-combobox>
+                <lightning-combobox label="Source" value={selectedSource}
+                    options={sourceOptions} onchange={handleSourceChange}
+                    placeholder="All Sources" class="filter-combo">
+                </lightning-combobox>
+                <lightning-combobox label="Owner" value={selectedOwnerId}
+                    options={ownerOptions} onchange={handleOwnerChange}
+                    placeholder="All Owners" class="filter-combo">
+                </lightning-combobox>
+                <lightning-input type="date" label="Start Date" value={filterStartDate}
+                    onchange={handleStartDateChange} class="filter-date">
+                </lightning-input>
+                <lightning-input type="date" label="End Date" value={filterEndDate}
+                    onchange={handleEndDateChange} class="filter-date">
+                </lightning-input>
+            </div>
+            <div class="filter-actions">
+                <button class="filter-btn filter-btn--primary" onclick={handleApplyFilter}>Apply</button>
+                <button class="filter-btn filter-btn--ghost" onclick={handleClearFilter}>Clear</button>
+            </div>
+        </div>
+
+        <!-- VIEW TABS -->
+        <nav class="view-tabs">
+            <button class={dashboardTabClass} data-view="dashboard" onclick={handleViewChange}>
+                <lightning-icon icon-name="utility:chart" size="xx-small" class="vtab-icon"></lightning-icon>
+                Dashboard
+            </button>
+            <button class={reverseTabClass} data-view="reverse" onclick={handleViewChange}>
+                <lightning-icon icon-name="utility:undo" size="xx-small" class="vtab-icon"></lightning-icon>
+                Reverse Forecast
+            </button>
+            <button class={forwardTabClass} data-view="forward" onclick={handleViewChange}>
+                <lightning-icon icon-name="utility:trending" size="xx-small" class="vtab-icon"></lightning-icon>
+                Forward Forecast
+            </button>
+        </nav>
+
+        <!-- LOADING -->
+        <template lwc:if={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <!-- DASHBOARD VIEW -->
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <template lwc:if={isDashboardView}>
+            <template lwc:if={dashboardData}>
+                <div class="dashboard-body">
+
+                    <!-- Summary Cards -->
+                    <div class="summary-cards">
+                        <template for:each={summaryCards} for:item="card">
+                            <div key={card.key} class="summary-card" title={card.helpText}>
+                                <div class="summary-card__icon">
+                                    <lightning-icon icon-name={card.icon} size="small"></lightning-icon>
+                                </div>
+                                <div class="summary-card__info">
+                                    <span class="summary-card__value">{card.value}</span>
+                                    <span class="summary-card__label">{card.label}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Sales Funnel Chart -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Sales Funnel</h3>
+                            <span class="section-help" title="Shows how many leads progress through each stage of the sales process. A wider funnel at the top and narrower at the bottom is normal.">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                What is this?
+                            </span>
+                        </div>
+                        <div class="chart-container chart-container--funnel">
+                            <canvas class="funnel-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Stage-to-Stage Conversion + Drop-Off Row -->
+                    <template lwc:if={hasConversionDetails}>
+                        <div class="two-col-row">
+                            <!-- Conversion Rates Chart -->
+                            <div class="section-card">
+                                <div class="section-header-row">
+                                    <h3 class="section-title">Stage Conversion Rates</h3>
+                                    <span class="section-help" title="Shows the percentage of leads that successfully move from one stage to the next. Higher percentages indicate better performance at that transition.">
+                                        <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                        What is this?
+                                    </span>
+                                </div>
+                                <div class="chart-container chart-container--conversion">
+                                    <canvas class="conversion-chart"></canvas>
+                                </div>
+                                <!-- Conversion Details Table -->
+                                <div class="conversion-cards">
+                                    <template for:each={conversionDetails} for:item="conv">
+                                        <div key={conv.label} class="conversion-card">
+                                            <span class="conversion-card__label">{conv.label}</span>
+                                            <div class="conversion-card__stats">
+                                                <span class={conv.rateClass}>{conv.formattedRate}</span>
+                                                <span class="conversion-card__dropoff">{conv.formattedDropOff} drop-off</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Drop-Off Analysis Chart -->
+                            <div class="section-card">
+                                <div class="section-header-row">
+                                    <h3 class="section-title">Drop-Off Analysis</h3>
+                                    <span class="section-help" title="Visualizes how many leads drop off at each stage vs. how many convert. Red bars show lost opportunities, green bars show successful conversions.">
+                                        <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                        What is this?
+                                    </span>
+                                </div>
+                                <div class="chart-container chart-container--dropoff">
+                                    <canvas class="dropoff-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Historical Monthly Trend -->
+                    <template lwc:if={hasMonthlyTrend}>
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Monthly Trend (Last 6 Months)</h3>
+                                <span class="section-help" title="Shows the actual historical volume of leads, site visits, and bookings over the past 6 months. Use this to identify seasonal patterns and growth trends.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <div class="chart-container chart-container--trend">
+                                <canvas class="historical-trend-chart"></canvas>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Key Metrics Row -->
+                    <div class="three-col-row">
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Avg Booking Value</span>
+                            <span class="metric-value-lg">{avgBookingValue}</span>
+                            <span class="metric-sub">per booking</span>
+                        </div>
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Lead Velocity Rate</span>
+                            <span class={leadVelocityDashboardClass}>{leadVelocityDashboard}</span>
+                            <span class="metric-sub">month-over-month growth</span>
+                        </div>
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Avg Sales Cycle</span>
+                            <span class="metric-value-lg">{avgSalesCycleDashboard}</span>
+                            <span class="metric-sub">lead to booking</span>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Health + Health Radar -->
+                    <div class="two-col-row">
+                        <!-- Pipeline Health -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Pipeline Health</h3>
+                                <span class="section-help" title="A composite score (0-100) measuring the overall health of your sales pipeline. Grades: A (90+) = Excellent, B (80+) = Good, C (70+) = Average, D (60+) = Below Average, F = Poor.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <template lwc:if={healthData}>
+                                <div class="health-header">
+                                    <div class={healthData.gradeClass}>{healthData.healthGrade}</div>
+                                    <div class="health-score-label">Score: {healthData.healthScore}/100</div>
+                                </div>
+                                <div class="health-components">
+                                    <template for:each={healthData.components} for:item="comp">
+                                        <div key={comp.name} class="health-row">
+                                            <span class="health-dot" style={comp.dotStyle}></span>
+                                            <span class="health-name">{comp.name}</span>
+                                            <span class="health-status">{comp.status}</span>
+                                            <div class="health-bar-track">
+                                                <div class="health-bar-fill" style={comp.barStyle}></div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Health Radar Chart -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Health Score Breakdown</h3>
+                                <span class="section-help" title="Radar chart showing your pipeline's strength across 5 key dimensions. Larger coverage area = healthier pipeline. Each point represents a score out of 100.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <div class="chart-container chart-container--radar">
+                                <canvas class="health-radar-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Source Breakdown + Source Performance Row -->
+                    <div class="two-col-row">
+                        <!-- Source Distribution (Doughnut) -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Lead Source Distribution</h3>
+                                <span class="section-help" title="Shows where your leads are coming from. The chart displays the proportion of leads from each source (e.g., Digital, Walk-in, Referral). Hover for conversion rates.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <template lwc:if={hasSources}>
+                                <div class="chart-container chart-container--source">
+                                    <canvas class="source-chart"></canvas>
+                                </div>
+                            </template>
+                            <template lwc:else>
+                                <div class="empty-section">No source data available.</div>
+                            </template>
+                        </div>
+
+                        <!-- Source Performance (Bar) -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Source Performance</h3>
+                                <span class="section-help" title="Compares leads vs bookings for each source to show which lead sources are performing best. Taller green bars indicate higher converting sources.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <template lwc:if={hasSources}>
+                                <div class="chart-container chart-container--revenue-source">
+                                    <canvas class="revenue-source-chart"></canvas>
+                                </div>
+                            </template>
+                            <template lwc:else>
+                                <div class="empty-section">No source data available.</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Source Detail Table -->
+                    <template lwc:if={hasSources}>
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Source Details</h3>
+                                <span class="section-help" title="Detailed breakdown of each lead source showing leads generated, site visits, bookings, conversion rate, and revenue contribution.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Source</th>
+                                            <th>Leads</th>
+                                            <th>Site Visits</th>
+                                            <th>Bookings</th>
+                                            <th>Conversion %</th>
+                                            <th>Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={sourceData} for:item="src">
+                                            <tr key={src.source}>
+                                                <td class="td-name">{src.source}</td>
+                                                <td>{src.leadCount}</td>
+                                                <td>{src.svCount}</td>
+                                                <td>{src.bookingCount}</td>
+                                                <td><span class="conv-badge">{src.conversionRate}%</span></td>
+                                                <td>{src.formattedRevenue}</td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Campaign ROI Table -->
+                    <template lwc:if={hasCampaigns}>
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Campaign ROI</h3>
+                                <span class="section-help" title="Return on Investment for each marketing campaign. Shows spend, leads generated, bookings, revenue, and ROI percentage. Green ROI = profitable, Red ROI = loss.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Campaign</th>
+                                            <th>Spend</th>
+                                            <th>Leads</th>
+                                            <th>Bookings</th>
+                                            <th>Revenue</th>
+                                            <th>ROI</th>
+                                            <th>Cost/Lead</th>
+                                            <th>Cost/Booking</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={campaignData} for:item="camp">
+                                            <tr key={camp.campaignId}>
+                                                <td class="td-name">{camp.campaignName}</td>
+                                                <td>{camp.formattedSpend}</td>
+                                                <td>{camp.leads}</td>
+                                                <td>{camp.bookings}</td>
+                                                <td>{camp.formattedRevenue}</td>
+                                                <td class={camp.roiClass}>{camp.roi}%</td>
+                                                <td>{camp.costPerLead}</td>
+                                                <td>{camp.costPerBooking}</td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </template>
+        </template>
+
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <!-- REVERSE FORECAST VIEW -->
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <template lwc:if={isReverseView}>
+            <div class="view-body">
+
+                <!-- How It Works -->
+                <div class="info-banner">
+                    <lightning-icon icon-name="utility:info" size="xx-small" class="info-banner-icon"></lightning-icon>
+                    <div class="info-banner-text">
+                        <strong>How Reverse Forecast Works:</strong> Select a target stage (e.g., Booked) and enter your desired count. The system calculates how many leads you need at each earlier stage based on your historical conversion rates.
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header-row">
+                        <h3 class="section-title">Reverse Forecast Calculator</h3>
+                        <span class="section-help" title="Select your target stage and desired count, optionally set a timeline in days. The calculator works backwards from your goal to show how many leads you need at each earlier stage.">
+                            <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                            What is this?
+                        </span>
+                    </div>
+                    <p class="section-desc">Set your goal and see the upstream requirements to achieve it.</p>
+                    <div class="reverse-inputs">
+                        <div class="reverse-input-group">
+                            <lightning-combobox label="Target Stage" value={reverseTargetStage}
+                                options={stageOptions} onchange={handleTargetStageChange}
+                                class="reverse-combo"
+                                title="The final stage you want to reach (e.g., Booked). The system will calculate requirements for all stages leading up to this.">
+                            </lightning-combobox>
+                        </div>
+                        <div class="reverse-input-group">
+                            <lightning-input type="number" label="Target Count" value={reverseTargetCount}
+                                onchange={handleTargetCountChange} min="1" class="reverse-input"
+                                title="How many deals/leads you want at the target stage. Example: Enter 10 if you want 10 bookings.">
+                            </lightning-input>
+                        </div>
+                        <div class="reverse-input-group reverse-input-group--days">
+                            <lightning-input type="number" label="Timeline (Days)" value={reverseTimelineDays}
+                                onchange={handleTimelineDaysChange} min="1" class="reverse-input"
+                                disabled={reverseShowAllTimeline}
+                                placeholder="e.g. 30"
+                                title="Enter the number of days you have to achieve your target. The system will calculate daily requirements for each stage. Leave empty or toggle 'Show All' for total counts without a timeline.">
+                            </lightning-input>
+                        </div>
+                        <div class="reverse-input-group reverse-input-group--toggle">
+                            <label class="reverse-toggle-label" title="Toggle ON to see total counts without any timeline breakdown. Toggle OFF and enter days to see daily/periodic requirements.">
+                                <input type="checkbox" checked={reverseShowAllTimeline} onchange={handleShowAllTimelineChange} class="reverse-toggle-checkbox" />
+                                <span class="reverse-toggle-switch"></span>
+                                <span class="reverse-toggle-text">All</span>
+                            </label>
+                        </div>
+                        <button class="action-btn action-btn--primary reverse-btn" onclick={handleCalculateReverse}
+                            title="Click to calculate the number of leads/activities needed at each earlier stage to reach your target.">
+                            Calculate Requirements
+                        </button>
+                    </div>
+                </div>
+
+                <template lwc:if={reverseResult}>
+                    <!-- Insight Banner -->
+                    <template lwc:if={reverseInsight}>
+                        <div class="insight-banner" title="This insight summarizes the key takeaway from your reverse forecast calculation.">
+                            <lightning-icon icon-name="utility:light_bulb" size="xx-small" class="insight-icon"></lightning-icon>
+                            <span class="insight-text">{reverseInsight}</span>
+                        </div>
+                    </template>
+
+                    <!-- Daily Breakdown (shown when timeline days is set) -->
+                    <template lwc:if={showDailyBreakdown}>
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Daily Requirements ({reverseTimelineDays}-Day Plan)</h3>
+                                <span class="section-help" title="Based on your timeline, this shows how many leads/activities you need PER DAY at each stage to hit your target within the specified number of days.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <p class="section-desc">Daily targets at each stage to achieve your goal within {reverseTimelineDays} days.</p>
+                            <div class="daily-breakdown-grid">
+                                <template for:each={dailyBreakdownStages} for:item="dStage">
+                                    <div key={dStage.stageKey} class="daily-card" style={dStage.borderStyle}
+                                        title={dStage.tooltipText}>
+                                        <div class="daily-card-stage" style={dStage.colorStyle}>{dStage.stageLabel}</div>
+                                        <div class="daily-card-daily">{dStage.dailyCount}<span class="daily-card-unit">/day</span></div>
+                                        <div class="daily-card-total">{dStage.totalCount} total</div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Timeline Visualization (Compact Horizontal) -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Stage-by-Stage Timeline</h3>
+                            <span class="section-help" title="Shows the step-by-step journey from Lead to your target stage. Each card displays the number of leads needed, conversion rate, expected drop-offs, and estimated duration at that stage.">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                What is this?
+                            </span>
+                        </div>
+                        <p class="section-desc">Visual timeline showing the journey from Lead to your target.</p>
+                        <div class="reverse-timeline-horizontal">
+                            <template for:each={reverseTimelineStages} for:item="tStage">
+                                <div key={tStage.stageKey} class="timeline-h-item">
+                                    <div class="timeline-h-node" style={tStage.nodeStyle}
+                                        title={tStage.nodeTooltip}>
+                                        <span class="timeline-h-node-number">{tStage.stepNumber}</span>
+                                    </div>
+                                    <div class="timeline-h-card" style={tStage.cardBorderStyle}
+                                        title={tStage.cardTooltip}>
+                                        <div class="timeline-h-card-stage" style={tStage.stageColorStyle}>{tStage.stageLabel}</div>
+                                        <div class="timeline-h-card-count">{tStage.formattedCount}</div>
+                                        <div class="timeline-h-card-meta">
+                                            <span class="timeline-h-meta-item">{tStage.conversionRateDisplay}</span>
+                                            <template lwc:if={tStage.dropOff}>
+                                                <span class="timeline-h-meta-item timeline-h-meta-loss">{tStage.dropOff}</span>
+                                            </template>
+                                            <span class="timeline-h-meta-item">{tStage.estimatedDuration}</span>
+                                        </div>
+                                    </div>
+                                    <template lwc:if={tStage.hasConnector}>
+                                        <div class="timeline-h-connector">
+                                            <div class="timeline-h-connector-line"></div>
+                                            <div class="timeline-h-connector-arrow"></div>
+                                            <div class="timeline-h-connector-label">{tStage.conversionLabel}</div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="timeline-summary"
+                            title="Summary metrics for the entire pipeline from Lead to your target stage.">
+                            <div class="timeline-summary-item" title="Total estimated time to convert a lead through all stages to your target.">
+                                <span class="timeline-summary-label">Total Estimated Timeline</span>
+                                <span class="timeline-summary-value">{totalEstimatedWeeks}</span>
+                            </div>
+                            <div class="timeline-summary-item" title="The percentage of initial leads that make it all the way to your target stage.">
+                                <span class="timeline-summary-label">Overall Conversion</span>
+                                <span class="timeline-summary-value">{overallConversionRate}</span>
+                            </div>
+                            <div class="timeline-summary-item" title="Total number of leads lost across all stages before reaching the target.">
+                                <span class="timeline-summary-label">Total Drop-off</span>
+                                <span class="timeline-summary-value timeline-detail-value--loss">{totalDropOff}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reverse Forecast Chart -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Required at Each Stage</h3>
+                            <span class="section-help" title="Bar chart showing the total number of leads/activities you need at each funnel stage. The longest bar represents the highest count (usually leads at the top of funnel).">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                What is this?
+                            </span>
+                        </div>
+                        <p class="section-desc">Number of leads/activities needed at each funnel stage to reach your target.</p>
+                        <div class="chart-container chart-container--reverse">
+                            <canvas class="reverse-chart"></canvas>
+                        </div>
+                        <div class="reverse-stages">
+                            <template for:each={reverseStages} for:item="stage">
+                                <div key={stage.stageKey} class="reverse-stage-row">
+                                    <div class="reverse-stage-label">{stage.stageLabel}</div>
+                                    <div class="reverse-stage-bar-track">
+                                        <div class="reverse-stage-bar" style={stage.barStyle}></div>
+                                    </div>
+                                    <div class="reverse-stage-count">{stage.formattedCount}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Additional Charts Row -->
+                    <div class="two-col-row">
+                        <!-- Conversion Rate Waterfall Chart -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Conversion Waterfall</h3>
+                                <span class="section-help" title="Shows the conversion rate between each consecutive stage. Higher bars mean more leads successfully move to the next stage. Low bars indicate bottlenecks in your pipeline.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <p class="section-desc">Stage-to-stage conversion rates showing funnel efficiency.</p>
+                            <div class="chart-container chart-container--medium">
+                                <canvas class="reverse-waterfall-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Drop-off Analysis Chart -->
+                        <div class="section-card">
+                            <div class="section-header-row">
+                                <h3 class="section-title">Drop-off Distribution</h3>
+                                <span class="section-help" title="Pie/doughnut chart showing where leads are lost across stages. Larger slices indicate stages with more drop-offs — focus improvement efforts there.">
+                                    <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                    What is this?
+                                </span>
+                            </div>
+                            <p class="section-desc">Where leads are lost across the funnel stages.</p>
+                            <div class="chart-container chart-container--medium">
+                                <canvas class="reverse-dropoff-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Effort Multiplier Chart -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Effort Multiplier Analysis</h3>
+                            <span class="section-help" title="Shows how many times more leads you need at each earlier stage compared to your target. For example, 5.0x means you need 5 times more leads at that stage than your final target count.">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                What is this?
+                            </span>
+                        </div>
+                        <p class="section-desc">Shows how many times more effort is needed at each upstream stage relative to your target.</p>
+                        <div class="chart-container chart-container--reverse">
+                            <canvas class="reverse-multiplier-chart"></canvas>
+                        </div>
+                        <!-- Stage Multiplier Cards -->
+                        <div class="multiplier-cards">
+                            <template for:each={reverseMultipliers} for:item="mult">
+                                <div key={mult.stageKey} class="multiplier-card" style={mult.borderStyle}>
+                                    <div class="multiplier-card-stage">{mult.stageLabel}</div>
+                                    <div class="multiplier-card-value" style={mult.colorStyle}>{mult.multiplierDisplay}</div>
+                                    <div class="multiplier-card-desc">{mult.description}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <!-- FORWARD FORECAST VIEW -->
+        <!-- ═════════════════════════════════════════════════════════ -->
+        <template lwc:if={isForwardView}>
+            <div class="view-body">
+
+                <!-- How It Works -->
+                <div class="info-banner">
+                    <lightning-icon icon-name="utility:info" size="xx-small" class="info-banner-icon"></lightning-icon>
+                    <div class="info-banner-text">
+                        <strong>How Forward Forecast Works:</strong> Predicts future lead volumes, site visits, and bookings using a Weighted Moving Average (recent months weighted more) combined with seasonal patterns from your historical data.
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3 class="section-title">Forward Forecast Generator</h3>
+                    <p class="section-desc">Select a time period or specific month to generate predictions for your pipeline.</p>
+
+                    <div class="forecast-type-selector slds-m-bottom_small">
+                        <lightning-radio-group
+                            label="Forecast Type"
+                            options={forecastTypeOptions}
+                            value={forecastType}
+                            type="button"
+                            onchange={handleForecastTypeChange}>
+                        </lightning-radio-group>
+                    </div>
+
+                    <div class="forward-inputs">
+                        <template lwc:if={isDurationForecast}>
+                            <lightning-combobox label="Forecast Period" value={forwardMonths}
+                                options={forecastMonthOptions} onchange={handleForwardMonthsChange}
+                                class="forward-combo">
+                            </lightning-combobox>
+                        </template>
+                        <template lwc:if={isSpecificMonthForecast}>
+                            <lightning-combobox label="Year" value={specificYear}
+                                options={yearOptions} onchange={handleSpecificYearChange}
+                                placeholder="Select Year" class="forward-combo">
+                            </lightning-combobox>
+                            <lightning-combobox label="Month" value={specificMonth}
+                                options={monthOptions} onchange={handleSpecificMonthChange}
+                                placeholder="Select Month" class="forward-combo">
+                            </lightning-combobox>
+                        </template>
+                        <template lwc:if={isDateRangeForecast}>
+                            <!-- Empty: handled in section below -->
+                        </template>
+                        <template lwc:if={isDurationForecast}>
+                            <button class="action-btn action-btn--primary forward-btn" onclick={handleGenerateForward}>
+                                Generate Forecast
+                            </button>
+                        </template>
+                        <template lwc:if={isSpecificMonthForecast}>
+                            <button class="action-btn action-btn--primary forward-btn" onclick={handleGenerateForward}>
+                                Generate Forecast
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Date Range Inputs -->
+                    <template lwc:if={isDateRangeForecast}>
+                        <div class="date-range-section">
+                            <div class="date-range-group">
+                                <h4 class="date-range-label">
+                                    <lightning-icon icon-name="utility:clock" size="xx-small" class="date-range-icon"></lightning-icon>
+                                    Historical Period
+                                </h4>
+                                <p class="date-range-desc">Select the date range of historical data to base the forecast on.</p>
+                                <div class="date-range-fields">
+                                    <lightning-combobox label="Start Year" value={histStartYear}
+                                        options={historicYearOptions} onchange={handleHistStartYearChange}
+                                        placeholder="Year" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="Start Month" value={histStartMonth}
+                                        options={monthOptions} onchange={handleHistStartMonthChange}
+                                        placeholder="Month" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="End Year" value={histEndYear}
+                                        options={historicYearOptions} onchange={handleHistEndYearChange}
+                                        placeholder="Year" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="End Month" value={histEndMonth}
+                                        options={monthOptions} onchange={handleHistEndMonthChange}
+                                        placeholder="Month" class="forward-combo">
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="date-range-group">
+                                <h4 class="date-range-label">
+                                    <lightning-icon icon-name="utility:trending" size="xx-small" class="date-range-icon"></lightning-icon>
+                                    Future Forecast Period
+                                </h4>
+                                <p class="date-range-desc">Select the date range for which to project future predictions.</p>
+                                <div class="date-range-fields">
+                                    <lightning-combobox label="Start Year" value={futureStartYear}
+                                        options={futureYearOptions} onchange={handleFutureStartYearChange}
+                                        placeholder="Year" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="Start Month" value={futureStartMonth}
+                                        options={monthOptions} onchange={handleFutureStartMonthChange}
+                                        placeholder="Month" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="End Year" value={futureEndYear}
+                                        options={futureYearOptions} onchange={handleFutureEndYearChange}
+                                        placeholder="Year" class="forward-combo">
+                                    </lightning-combobox>
+                                    <lightning-combobox label="End Month" value={futureEndMonth}
+                                        options={monthOptions} onchange={handleFutureEndMonthChange}
+                                        placeholder="Month" class="forward-combo">
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <button class="action-btn action-btn--primary forward-btn slds-m-top_small" onclick={handleGenerateForward}>
+                                Generate Forecast
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <template lwc:if={forwardResult}>
+                    <!-- Summary Cards -->
+                    <div class="three-col-row">
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Total Predicted Leads</span>
+                            <span class="metric-value-lg">{forwardTotalLeads}</span>
+                            <span class="metric-sub">across all months</span>
+                        </div>
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Total Predicted Bookings</span>
+                            <span class="metric-value-lg">{forwardTotalBookings}</span>
+                            <span class="metric-sub">across all months</span>
+                        </div>
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Total Predicted Revenue</span>
+                            <span class="metric-value-lg">{forwardTotalRevenue}</span>
+                            <span class="metric-sub">across all months</span>
+                        </div>
+                    </div>
+
+                    <!-- Trend Chart -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Trend Projection</h3>
+                            <span class="section-help" title="Line chart showing predicted volumes for leads, site visits, and bookings over the selected forecast period. The predictions use weighted recent data and seasonal adjustments.">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="help-icon"></lightning-icon>
+                                What is this?
+                            </span>
+                        </div>
+                        <div class="chart-container chart-container--trend">
+                            <canvas class="trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Projections Table -->
+                    <div class="section-card">
+                        <h3 class="section-title">Monthly Projections</h3>
+                        <p class="section-desc">Detailed month-by-month breakdown of predicted volumes and revenue.</p>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Leads</th>
+                                        <th>Site Visits</th>
+                                        <th>Bookings</th>
+                                        <th>Revenue</th>
+                                        <th>Seasonality</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={forwardForecasts} for:item="mf">
+                                        <tr key={mf.periodLabel}>
+                                            <td class="td-name">{mf.periodLabel}</td>
+                                            <td>{mf.predictedLeads}</td>
+                                            <td>{mf.predictedSiteVisits}</td>
+                                            <td>{mf.predictedBookings}</td>
+                                            <td>{mf.formattedRevenue}</td>
+                                            <td>{mf.seasonalityIndex}</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Velocity & Cycle Cards -->
+                    <div class="two-col-row">
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Lead Velocity Rate</span>
+                            <span class={velocityClass}>{forwardVelocity}</span>
+                            <span class="metric-sub">month-over-month growth</span>
+                        </div>
+                        <div class="section-card metric-card">
+                            <span class="metric-label">Avg Sales Cycle</span>
+                            <span class="metric-value-lg">{forwardSalesCycle}</span>
+                            <span class="metric-sub">lead to booking</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Insights Section -->
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">AI-Powered Insights</h3>
+                            <button class="action-btn action-btn--primary" onclick={handleGetAiInsight}>
+                                <lightning-icon icon-name="utility:magicwand" size="xx-small" class="btn-icon-light"></lightning-icon>
+                                Get AI Analysis
+                            </button>
+                        </div>
+                        <p class="section-desc">Get AI-generated analysis and recommendations based on your forecast data.</p>
+                        <template lwc:if={isAiLoading}>
+                            <div class="ai-loading">
+                                <lightning-spinner size="small" alternative-text="Generating insights..."></lightning-spinner>
+                                <span class="ai-loading-text">Analyzing your forecast data...</span>
+                            </div>
+                        </template>
+                        <template lwc:if={aiInsight}>
+                            <div class="ai-insight-box">
+                                <lightning-icon icon-name="utility:magicwand" size="small" class="ai-insight-icon"></lightning-icon>
+                                <div class="ai-insight-content">{aiInsight}</div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- AI Chatbot -->
+        <c-ai-chat-bot dashboard-context={dashboardContextJson}></c-ai-chat-bot>
+
+    </div>
+</template>

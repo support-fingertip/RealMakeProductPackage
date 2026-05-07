@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Snags_Resolved__c</fullName>
+    <formula>AND(
+    NOT(ISBLANK(Snags_Found_Count__c)),
+    Snags_Found_Count__c &gt; 0,
+    Snags_Resolved_Count__c = Snags_Found_Count__c
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>All Snags Resolved</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

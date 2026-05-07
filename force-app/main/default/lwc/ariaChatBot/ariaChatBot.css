@@ -1,0 +1,645 @@
+/* ═════════════════════════════════════════════════════════════════
+   Aria — AI Sales Assistant chat panel
+   ═════════════════════════════════════════════════════════════════ */
+
+:host {
+    font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Floating launcher ------------------------------------------------ */
+.aria-floating-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6d28d9 0%, #0ea5e9 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 24px rgba(109, 40, 217, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    z-index: 9999;
+}
+.aria-floating-btn:hover { transform: scale(1.07); }
+.aria-floating-btn--active {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    box-shadow: 0 6px 24px rgba(239, 68, 68, 0.35);
+}
+
+/* Panel ------------------------------------------------------------ */
+.aria-panel {
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    width: 440px;
+    height: min(780px, calc(100vh - 140px));
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9998;
+    animation: aria-slide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes aria-slide {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Utility-bar mode: panel fills the popup instead of floating. */
+.aria-panel--utility {
+    /* relative (not static) so the voice-picker popover's absolute
+       positioning still anchors to the panel, not the utility popup. */
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+}
+
+/* Header ----------------------------------------------------------- */
+.aria-header {
+    background: linear-gradient(135deg, #312e81 0%, #6d28d9 50%, #0ea5e9 100%);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.aria-header-info { display: flex; align-items: center; gap: 10px; }
+.aria-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+}
+.aria-avatar--small {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6d28d9, #0ea5e9);
+    border: none;
+    flex-shrink: 0;
+}
+.aria-header-title {
+    color: #fff;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+.aria-header-status {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 11px;
+    margin: 2px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.status-dot {
+    width: 7px; height: 7px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: aria-pulse 2s ease-in-out infinite;
+}
+@keyframes aria-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.aria-close-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 10px;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.aria-close-btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+.aria-tts-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+    border: none;
+    border-radius: 10px;
+    width: 32px; height: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.aria-tts-btn:hover { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.aria-tts-btn--on {
+    background: rgba(255, 255, 255, 0.95);
+    color: #6d28d9;
+}
+.aria-tts-btn--on:hover { background: #ffffff; color: #6d28d9; }
+
+.aria-voice-picker-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+    border: none;
+    border-radius: 10px;
+    width: 32px; height: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.aria-voice-picker-btn:hover { background: rgba(255, 255, 255, 0.22); color: #fff; }
+
+.aria-voice-picker {
+    position: absolute;
+    top: 62px;
+    right: 14px;
+    width: 290px;
+    max-width: calc(100% - 28px);
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+    border: 1px solid #e5e7eb;
+    padding: 12px 12px 10px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.aria-voice-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #4c1d95;
+    font-size: 13px;
+}
+
+.aria-voice-picker-select {
+    width: 100%;
+    padding: 7px 8px;
+    font-size: 12.5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font-family: inherit;
+    outline: none;
+}
+.aria-voice-picker-select:focus { border-color: #6d28d9; }
+
+.aria-voice-picker-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.aria-voice-picker-empty {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.aria-header-right { display: flex; align-items: center; gap: 6px; }
+
+.aria-lang-select {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 3px 6px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+}
+.aria-lang-select option { color: #1e293b; background: #fff; }
+
+/* Message stream --------------------------------------------------- */
+.aria-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: linear-gradient(180deg, #faf5ff 0%, #f1f5f9 100%);
+}
+.aria-messages::-webkit-scrollbar { width: 4px; }
+.aria-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+
+.aria-msg-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    animation: aria-fadein 0.25s ease;
+}
+.aria-msg-container--user { justify-content: flex-end; }
+.aria-msg-container--action { justify-content: flex-start; padding-left: 36px; }
+@keyframes aria-fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.aria-msg-bubble {
+    max-width: 78%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    position: relative;
+}
+.aria-msg-bubble--ai {
+    background: #ffffff;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+.aria-msg-bubble--user {
+    background: linear-gradient(135deg, #6d28d9, #0ea5e9);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.aria-msg-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.aria-msg-time {
+    display: block;
+    font-size: 10.5px;
+    margin-top: 4px;
+    opacity: 0.65;
+}
+
+/* Action card ------------------------------------------------------ */
+.aria-action-card {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 85%;
+}
+.aria-action-text {
+    flex: 1;
+    font-size: 12.5px;
+    color: #78350f;
+    font-weight: 500;
+}
+.aria-action-btn {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.aria-action-btn:hover { background: #6d28d9; }
+
+/* Hot leads list card --------------------------------------------- */
+.aria-hotleads-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+.aria-hotleads-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #78350f;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.aria-hotleads-row {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.aria-hotleads-row-main { flex: 1; min-width: 0; }
+.aria-hotleads-row-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+}
+.aria-hotleads-row-sub {
+    font-size: 11.5px;
+    color: #6b7280;
+    margin-top: 1px;
+}
+.aria-hotleads-row-next {
+    font-size: 11.5px;
+    color: #7c3aed;
+    font-weight: 600;
+    margin-top: 3px;
+    text-transform: capitalize;
+}
+.aria-hotleads-row-hint {
+    font-size: 11.5px;
+    color: #4b5563;
+    margin-top: 2px;
+}
+
+/* Typing indicator ------------------------------------------------- */
+.aria-typing {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 4px;
+}
+.aria-typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+    animation: aria-typing-bounce 1.3s ease-in-out infinite;
+}
+.aria-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.aria-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aria-typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30%          { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Starter chips ---------------------------------------------------- */
+.aria-starters {
+    padding: 8px 12px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #faf5ff;
+}
+.aria-starter-chip {
+    background: #ffffff;
+    border: 1px solid #e9d5ff;
+    color: #6d28d9;
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.aria-starter-chip:hover {
+    background: #f3e8ff;
+    transform: translateY(-1px);
+}
+
+/* Input area ------------------------------------------------------- */
+.aria-input-area {
+    padding: 10px 12px 12px;
+    background: #faf5ff;
+    border-top: 1px solid #e9d5ff;
+    flex-shrink: 0;
+}
+.aria-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 4px 4px 4px 14px;
+}
+.aria-input-wrapper:focus-within {
+    border-color: #6d28d9;
+    box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.15);
+}
+.aria-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 8px 0;
+    font-size: 13.5px;
+    color: #1e293b;
+    font-family: inherit;
+}
+.aria-input:disabled { color: #94a3b8; cursor: not-allowed; }
+.aria-send-btn {
+    background: #cbd5e1;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.aria-send-btn--active {
+    background: linear-gradient(135deg, #6d28d9, #0ea5e9);
+    cursor: pointer;
+}
+.aria-send-btn--active:hover { transform: scale(1.05); }
+
+.aria-disclaimer {
+    margin: 8px 6px 0;
+    font-size: 10.5px;
+    color: #64748b;
+    text-align: center;
+}
+
+/* Welcome metrics row --------------------------------------------- */
+.aria-metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 8px 4px 4px;
+    animation: aria-fadein 0.25s ease;
+}
+.aria-metric {
+    background: #ffffff;
+    border: 1px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s;
+    font-family: inherit;
+}
+.aria-metric:hover {
+    background: #faf5ff;
+    border-color: #c4b5fd;
+    transform: translateY(-1px);
+}
+.aria-metric:active {
+    transform: translateY(0);
+}
+.aria-metric-val {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4c1d95;
+    line-height: 1;
+}
+.aria-metric-lbl {
+    font-size: 9.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Quick-reply chips ----------------------------------------------- */
+.aria-reply-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+    padding-left: 36px;
+}
+.aria-reply-chip {
+    background: #ffffff;
+    border: 1px solid #c4b5fd;
+    color: #5b21b6;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.aria-reply-chip:hover {
+    background: #f3e8ff;
+    transform: translateY(-1px);
+}
+
+/* Welcome action tiles -------------------------------------------- */
+.aria-welcome-actions {
+    padding: 6px 4px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: aria-fadein 0.25s ease;
+}
+.aria-welcome-prompt {
+    margin: 4px 4px 6px;
+    font-size: 12.5px;
+    color: #475569;
+    font-weight: 600;
+}
+.aria-action-tile {
+    background: #ffffff;
+    border: 1px solid #e9d5ff;
+    border-left: 3px solid #6d28d9;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: all 0.18s;
+    font-family: inherit;
+}
+.aria-action-tile:hover {
+    background: #f5f3ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(109, 40, 217, 0.12);
+}
+.aria-action-tile-label {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #4c1d95;
+}
+.aria-action-tile-hint {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+/* Inline mini-form (site visit / follow-up) ------------------------ */
+.aria-mini-form {
+    background: #faf5ff;
+    border-top: 1px solid #e9d5ff;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: aria-fadein 0.2s ease;
+}
+.aria-mini-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #4c1d95;
+    font-size: 13px;
+}
+.aria-mini-close {
+    background: transparent;
+    border: none;
+    color: #475569;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.aria-mini-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #dc2626;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+.aria-mini-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* Buttons (shared with mini-form) ---------------------------------- */
+.aria-btn {
+    border: none;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+}
+.aria-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.aria-btn--secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.aria-btn--secondary:hover:not(:disabled) { background: #f1f5f9; }
+.aria-btn--primary {
+    background: linear-gradient(135deg, #6d28d9, #0ea5e9);
+    color: #fff;
+}
+.aria-btn--primary:hover:not(:disabled) { transform: translateY(-1px); }

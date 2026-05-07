@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Level_2_Days__c</fullName>
+    <defaultValue>5</defaultValue>
+    <description>Days overdue to trigger Level 2 escalation (e.g., notify department manager)</description>
+    <externalId>false</externalId>
+    <label>Level 2 - Days Overdue</label>
+    <precision>4</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

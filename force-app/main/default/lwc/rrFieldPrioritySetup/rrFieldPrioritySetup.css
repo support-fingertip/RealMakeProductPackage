@@ -1,0 +1,13 @@
+.add-form {
+    border-left: 3px solid #04844b;
+    background-color: #f4faf7;
+}
+
+.slds-table th {
+    background-color: #f3f3f3;
+    font-weight: 600;
+}
+
+.slds-table tbody tr:hover {
+    background-color: #f9f9f9;
+}

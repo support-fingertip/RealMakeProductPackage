@@ -1,0 +1,1010 @@
+<template>
+    <div class="designer-container">
+
+        <!-- LOADING -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ==================== LIST VIEW ==================== -->
+        <template if:true={isListView}>
+            <div class="list-header">
+                <span class="list-title">
+                    <lightning-icon icon-name="standard:document" size="small"></lightning-icon>
+                    Document Templates
+                </span>
+                <lightning-button label="New Template" variant="brand" icon-name="utility:add"
+                    onclick={handleNewTemplate}></lightning-button>
+            </div>
+
+            <template if:true={hasTemplates}>
+                <div class="template-grid">
+                    <template for:each={templates} for:item="tmpl">
+                        <div key={tmpl.id} class="tpl-card">
+                            <div class="tpl-card-top">
+                                <div class="tpl-card-info">
+                                    <div class="tpl-card-icon">
+                                        <lightning-icon icon-name="doctype:pdf" size="xx-small" variant="inverse"></lightning-icon>
+                                    </div>
+                                    <div>
+                                        <div class="tpl-card-name">{tmpl.name}</div>
+                                        <div class="tpl-card-obj">{tmpl.objectApiName}</div>
+                                    </div>
+                                </div>
+                                <template if:true={tmpl.isActive}>
+                                    <span class="badge-on">Active</span>
+                                </template>
+                                <template if:false={tmpl.isActive}>
+                                    <span class="badge-off">Inactive</span>
+                                </template>
+                            </div>
+                            <div class="tpl-card-body">
+                                <template if:true={tmpl.description}>
+                                    <div>{tmpl.description}</div>
+                                </template>
+                                <div class="meta">Created by {tmpl.createdByName}</div>
+                                <div class="actions">
+                                    <lightning-button-icon icon-name="utility:edit" alternative-text="Edit"
+                                        data-id={tmpl.id} onclick={handleEditTemplate} variant="border-filled"
+                                        size="small" class="slds-m-right_xx-small"></lightning-button-icon>
+                                    <lightning-button-icon icon-name="utility:copy" alternative-text="Clone"
+                                        data-id={tmpl.id} onclick={handleCloneTemplate} variant="border-filled"
+                                        size="small" class="slds-m-right_xx-small"></lightning-button-icon>
+                                    <lightning-button-icon icon-name="utility:delete" alternative-text="Delete"
+                                        data-id={tmpl.id} onclick={handleDeleteTemplate} variant="border-filled"
+                                        size="small"></lightning-button-icon>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasTemplates}>
+                <div class="empty-state">
+                    <lightning-icon icon-name="standard:document" size="large"></lightning-icon>
+                    <h3>No Document Templates Yet</h3>
+                    <p>Create your first template for agreements, invoices, and more.</p>
+                </div>
+            </template>
+        </template>
+
+        <!-- ==================== EDITOR VIEW ==================== -->
+        <template if:true={isEditorView}>
+
+            <!-- Toolbar -->
+            <div class="editor-toolbar">
+                <lightning-button label="Back" icon-name="utility:back" onclick={handleBackToList} variant="base"></lightning-button>
+                <span class="editor-toolbar-title">{editorTitle}</span>
+                <lightning-button label="Save Template" variant="brand" icon-name="utility:save"
+                    onclick={handleSaveTemplate}></lightning-button>
+            </div>
+
+            <!-- Split: Config Left | Preview Right -->
+            <div class="editor-split">
+
+                <!-- LEFT: Configuration Panel -->
+                <div class="config-panel">
+
+                    <!-- 1. Basic Info -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="basic" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">1</span>
+                                <span class="config-label">Basic Info</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={basicChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.basic}>
+                            <div class="config-body">
+                                <div class="config-field">
+                                    <lightning-input label="Template Name" value={templateData.name}
+                                        data-field="name" onchange={handleFieldChange} required></lightning-input>
+                                </div>
+                                <div class="config-field">
+                                    <lightning-combobox label="Object" value={templateData.objectApiName}
+                                        options={objectOptions} data-field="objectApiName"
+                                        onchange={handleFieldChange} required></lightning-combobox>
+                                </div>
+                                <div class="config-field">
+                                    <lightning-textarea label="Description" value={templateData.description}
+                                        data-field="description" onchange={handleFieldChange}
+                                        max-length="255"></lightning-textarea>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-combobox label="Page Size" value={templateData.pageSize}
+                                        options={pageSizeOptions} data-field="pageSize"
+                                        onchange={handleFieldChange}></lightning-combobox>
+                                    <lightning-combobox label="Orientation" value={templateData.pageOrientation}
+                                        options={orientationOptions} data-field="pageOrientation"
+                                        onchange={handleFieldChange}></lightning-combobox>
+                                </div>
+                                <div class="config-field">
+                                    <lightning-input label="File Name Pattern" value={templateData.fileNamePattern}
+                                        data-field="fileNamePattern" onchange={handleFieldChange}
+                                        placeholder="e.g. Demand_{!Name}.pdf"></lightning-input>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-input type="checkbox" label="Active" checked={templateData.isActive}
+                                        data-field="isActive" onchange={handleFieldChange}></lightning-input>
+                                    <lightning-combobox label="Available In" value={templateData.displayContext}
+                                        options={displayContextOptions} data-field="displayContext"
+                                        onchange={handleFieldChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox label="Action Binding" value={templateData.actionBinding}
+                                        options={actionBindingOptions} data-field="actionBinding"
+                                        onchange={handleFieldChange}
+                                        field-level-help="Bind this document to a specific action. Only bound documents show in that action context (e.g. Demand Raiser).">
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 2. Page Styling -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="styling" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">2</span>
+                                <span class="config-label">Page Styling</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={stylingChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.styling}>
+                            <div class="config-body">
+                                <div class="config-field">
+                                    <lightning-combobox label="Font" value={styleConfig.fontFamily}
+                                        options={fontFamilyOptions} data-field="fontFamily"
+                                        onchange={handleStyleChange}></lightning-combobox>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-combobox label="Font Size" value={styleConfig.fontSize}
+                                        options={baseFontSizeOptions} data-field="fontSize"
+                                        onchange={handleStyleChange}></lightning-combobox>
+                                    <lightning-input label="Text Color" value={styleConfig.primaryColor}
+                                        data-field="primaryColor" onchange={handleStyleChange}></lightning-input>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-input type="number" label="Top (mm)" value={styleConfig.marginTop}
+                                        data-field="marginTop" onchange={handleStyleChange} min="0" max="50"></lightning-input>
+                                    <lightning-input type="number" label="Right (mm)" value={styleConfig.marginRight}
+                                        data-field="marginRight" onchange={handleStyleChange} min="0" max="50"></lightning-input>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-input type="number" label="Bottom (mm)" value={styleConfig.marginBottom}
+                                        data-field="marginBottom" onchange={handleStyleChange} min="0" max="50"></lightning-input>
+                                    <lightning-input type="number" label="Left (mm)" value={styleConfig.marginLeft}
+                                        data-field="marginLeft" onchange={handleStyleChange} min="0" max="50"></lightning-input>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 3. Header -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="header" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">3</span>
+                                <span class="config-label">Header</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={headerChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.header}>
+                            <div class="config-body">
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">Configure Left, Center, and Right areas of the header.</p>
+
+                                <!-- LEFT COLUMN -->
+                                <div class="header-col-config">
+                                    <div class="header-col-title">Left</div>
+                                    <lightning-combobox label="Type" value={headerLeft.type}
+                                        options={headerColumnTypeOptions} data-col="left" data-field="type"
+                                        onchange={handleHeaderColChange}
+                                        class="slds-m-bottom_xx-small"></lightning-combobox>
+                                    <template if:true={isHeaderLeftText}>
+                                        <lightning-input-rich-text value={headerLeft.content}
+                                            label="Content" data-col="left"
+                                            onchange={handleHeaderColRichText}
+                                            placeholder="Text, merge fields..."
+                                            formats={richTextFormats}></lightning-input-rich-text>
+                                        <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                            data-target="headerLeft" onclick={handleOpenMergeFieldPicker}
+                                            variant="base" size="small"></lightning-button>
+                                    </template>
+                                    <template if:true={isHeaderLeftImage}>
+                                        <lightning-input label="Image URL" value={headerLeft.logoUrl}
+                                            data-col="left" data-field="logoUrl"
+                                            onchange={handleHeaderColChange}
+                                            placeholder="https://..."></lightning-input>
+                                        <div class="logo-row">
+                                            <span class="slds-text-body_small slds-text-color_weak">or</span>
+                                            <label class="upload-btn">
+                                                <lightning-icon icon-name="utility:upload" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                Upload
+                                                <input type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml"
+                                                    data-col="left" onchange={handleHeaderLogoUpload} class="slds-hide" />
+                                            </label>
+                                            <template if:true={isUploadingLogo}>
+                                                <lightning-spinner alternative-text="Uploading" size="small"></lightning-spinner>
+                                            </template>
+                                        </div>
+                                        <template if:true={headerLeft.logoUrl}>
+                                            <img src={headerLeft.logoUrl} alt="Logo" class="logo-thumb" />
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- CENTER COLUMN -->
+                                <div class="header-col-config">
+                                    <div class="header-col-title">Center</div>
+                                    <lightning-combobox label="Type" value={headerCenter.type}
+                                        options={headerColumnTypeOptions} data-col="center" data-field="type"
+                                        onchange={handleHeaderColChange}
+                                        class="slds-m-bottom_xx-small"></lightning-combobox>
+                                    <template if:true={isHeaderCenterText}>
+                                        <lightning-input-rich-text value={headerCenter.content}
+                                            label="Content" data-col="center"
+                                            onchange={handleHeaderColRichText}
+                                            placeholder="Company name, address..."
+                                            formats={richTextFormats}></lightning-input-rich-text>
+                                        <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                            data-target="headerCenter" onclick={handleOpenMergeFieldPicker}
+                                            variant="base" size="small"></lightning-button>
+                                    </template>
+                                    <template if:true={isHeaderCenterImage}>
+                                        <lightning-input label="Image URL" value={headerCenter.logoUrl}
+                                            data-col="center" data-field="logoUrl"
+                                            onchange={handleHeaderColChange}
+                                            placeholder="https://..."></lightning-input>
+                                        <div class="logo-row">
+                                            <span class="slds-text-body_small slds-text-color_weak">or</span>
+                                            <label class="upload-btn">
+                                                <lightning-icon icon-name="utility:upload" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                Upload
+                                                <input type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml"
+                                                    data-col="center" onchange={handleHeaderLogoUpload} class="slds-hide" />
+                                            </label>
+                                            <template if:true={isUploadingLogo}>
+                                                <lightning-spinner alternative-text="Uploading" size="small"></lightning-spinner>
+                                            </template>
+                                        </div>
+                                        <template if:true={headerCenter.logoUrl}>
+                                            <img src={headerCenter.logoUrl} alt="Logo" class="logo-thumb" />
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- RIGHT COLUMN -->
+                                <div class="header-col-config">
+                                    <div class="header-col-title">Right</div>
+                                    <lightning-combobox label="Type" value={headerRight.type}
+                                        options={headerColumnTypeOptions} data-col="right" data-field="type"
+                                        onchange={handleHeaderColChange}
+                                        class="slds-m-bottom_xx-small"></lightning-combobox>
+                                    <template if:true={isHeaderRightText}>
+                                        <lightning-input-rich-text value={headerRight.content}
+                                            label="Content" data-col="right"
+                                            onchange={handleHeaderColRichText}
+                                            placeholder="Date, reference #..."
+                                            formats={richTextFormats}></lightning-input-rich-text>
+                                        <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                            data-target="headerRight" onclick={handleOpenMergeFieldPicker}
+                                            variant="base" size="small"></lightning-button>
+                                    </template>
+                                    <template if:true={isHeaderRightImage}>
+                                        <lightning-input label="Image URL" value={headerRight.logoUrl}
+                                            data-col="right" data-field="logoUrl"
+                                            onchange={handleHeaderColChange}
+                                            placeholder="https://..."></lightning-input>
+                                        <div class="logo-row">
+                                            <span class="slds-text-body_small slds-text-color_weak">or</span>
+                                            <label class="upload-btn">
+                                                <lightning-icon icon-name="utility:upload" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                Upload
+                                                <input type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml"
+                                                    data-col="right" onchange={handleHeaderLogoUpload} class="slds-hide" />
+                                            </label>
+                                            <template if:true={isUploadingLogo}>
+                                                <lightning-spinner alternative-text="Uploading" size="small"></lightning-spinner>
+                                            </template>
+                                        </div>
+                                        <template if:true={headerRight.logoUrl}>
+                                            <img src={headerRight.logoUrl} alt="Logo" class="logo-thumb" />
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- Global header styling -->
+                                <div class="config-row slds-m-top_small">
+                                    <lightning-combobox label="Font Size" value={headerConfig.fontSize}
+                                        options={sectionFontSizeOptions} data-field="fontSize"
+                                        onchange={handleHeaderChange}></lightning-combobox>
+                                    <lightning-input label="Color" value={headerConfig.textColor}
+                                        data-field="textColor" onchange={handleHeaderChange}></lightning-input>
+                                    <lightning-input type="checkbox" label="Bold" checked={headerConfig.bold}
+                                        data-field="bold" onchange={handleHeaderChange}></lightning-input>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 4. Document Sections -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="sections" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">4</span>
+                                <span class="config-label">Sections ({sectionCount})</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={sectionsChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.sections}>
+                            <div class="config-body">
+                                <!-- Quick Add -->
+                                <div class="quick-add-bar">
+                                    <div class="qa-btn" data-type="content" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:richtextbulletedlist" size="xx-small"></lightning-icon> Text
+                                    </div>
+                                    <div class="qa-btn" data-type="heading" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:bold" size="xx-small"></lightning-icon> Heading
+                                    </div>
+                                    <div class="qa-btn" data-type="fieldGrid" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:layout" size="xx-small"></lightning-icon> Fields
+                                    </div>
+                                    <div class="qa-btn" data-type="table" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:table" size="xx-small"></lightning-icon> Table
+                                    </div>
+                                    <div class="qa-btn qa-btn-merge" data-target="quickInsert" onclick={handleOpenMergeFieldPicker}>
+                                        <lightning-icon icon-name="utility:merge_field" size="xx-small"></lightning-icon> Merge Field
+                                    </div>
+                                    <div class="qa-btn" data-type="separator" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:dash" size="xx-small"></lightning-icon> Line
+                                    </div>
+                                    <div class="qa-btn" data-type="pageBreak" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:jump_to_right" size="xx-small"></lightning-icon> Page Break
+                                    </div>
+                                    <div class="qa-btn" data-type="image" onclick={handleQuickAddSection}>
+                                        <lightning-icon icon-name="utility:image" size="xx-small"></lightning-icon> Image
+                                    </div>
+                                </div>
+
+                                <!-- Section List -->
+                                <template if:true={hasSections}>
+                                    <template for:each={sectionListItems} for:item="sec">
+                                        <div key={sec._key} class="sec-item">
+                                            <div class={sec._badgeClass}>
+                                                <lightning-icon icon-name={sec._icon} size="xx-small"></lightning-icon>
+                                            </div>
+                                            <div class="sec-text">
+                                                <strong>{sec._label}</strong>
+                                                <span>{sec._summary}</span>
+                                            </div>
+                                            <div class="sec-actions">
+                                                <template if:false={sec._isFirst}>
+                                                    <lightning-button-icon icon-name="utility:up" alternative-text="Up"
+                                                        data-index={sec._index} onclick={handleMoveSectionUp}
+                                                        size="small" variant="bare"></lightning-button-icon>
+                                                </template>
+                                                <template if:false={sec._isLast}>
+                                                    <lightning-button-icon icon-name="utility:down" alternative-text="Down"
+                                                        data-index={sec._index} onclick={handleMoveSectionDown}
+                                                        size="small" variant="bare"></lightning-button-icon>
+                                                </template>
+                                                <lightning-button-icon icon-name="utility:edit" alternative-text="Edit"
+                                                    data-index={sec._index} onclick={handleEditSection}
+                                                    size="small" variant="bare"></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:delete" alternative-text="Delete"
+                                                    data-index={sec._index} onclick={handleDeleteSection}
+                                                    size="small" variant="bare"></lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:false={hasSections}>
+                                    <div class="sec-empty">Click a button above to add sections</div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 5. Footer -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="footer" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">5</span>
+                                <span class="config-label">Footer</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={footerChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.footer}>
+                            <div class="config-body">
+                                <div class="config-field">
+                                    <lightning-input-rich-text value={footerConfig.content}
+                                        label="Footer Content"
+                                        onchange={handleRichTextFooterChange}
+                                        placeholder="System generated document"
+                                        formats={richTextFormats}></lightning-input-rich-text>
+                                    <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                        data-target="footer" onclick={handleOpenMergeFieldPicker}
+                                        variant="base" size="small" class="slds-m-top_xx-small"></lightning-button>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-input type="checkbox" label="Page Numbers"
+                                        checked={footerConfig.showPageNumbers} data-field="showPageNumbers"
+                                        onchange={handleFooterChange}></lightning-input>
+                                    <lightning-combobox label="Position" value={footerConfig.pageNumberPosition}
+                                        options={pageNumberPositionOptions} data-field="pageNumberPosition"
+                                        onchange={handleFooterChange}></lightning-combobox>
+                                </div>
+                                <div class="config-row">
+                                    <lightning-combobox label="Font Size" value={footerConfig.fontSize}
+                                        options={sectionFontSizeOptions} data-field="fontSize"
+                                        onchange={handleFooterChange}></lightning-combobox>
+                                    <lightning-input label="Color" value={footerConfig.textColor}
+                                        data-field="textColor" onchange={handleFooterChange}></lightning-input>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 6. Matching Criteria -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="matching" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">6</span>
+                                <span class="config-label">Matching Criteria</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={matchingChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.matching}>
+                            <div class="config-body">
+                                <c-config-matching-criteria
+                                    object-api-name={templateData.objectApiName}
+                                    criteria-json={templateData.matchingCriteria}
+                                    label="Record Matching Criteria"
+                                    help-text="Define conditions to control when this document template applies to specific records (e.g., by project type, unit type). If no conditions are set, this template applies to all records."
+                                    oncriteriachange={handleMatchingCriteriaChange}>
+                                </c-config-matching-criteria>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 7. Visibility Conditions -->
+                    <div class="config-section">
+                        <div class="config-header" data-panel="visibility" onclick={handleTogglePanel}>
+                            <div class="config-header-left">
+                                <span class="config-num">7</span>
+                                <span class="config-label">Visibility Rules</span>
+                            </div>
+                            <lightning-icon icon-name="utility:chevrondown" size="xx-small"
+                                class={visibilityChevron}></lightning-icon>
+                        </div>
+                        <template if:true={panels.visibility}>
+                            <div class="config-body">
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                                    Control when this template appears on record pages. Leave empty to always show.
+                                </p>
+                                <div class="config-field">
+                                    <lightning-combobox label="Logic" value={visibilityConditions.logic}
+                                        options={visibilityLogicOptions}
+                                        onchange={handleVisibilityLogicChange}></lightning-combobox>
+                                </div>
+
+                                <template if:true={hasVisibilityRules}>
+                                    <template for:each={visibilityRulesWithKey} for:item="rule">
+                                        <div key={rule._key} class="vis-rule">
+                                            <div class="config-row">
+                                                <lightning-combobox label="Type" value={rule.type}
+                                                    options={conditionTypeOptions}
+                                                    data-index={rule._index} data-prop="type"
+                                                    onchange={handleVisibilityRuleChange}></lightning-combobox>
+                                                <lightning-combobox label="Operator" value={rule.operator}
+                                                    options={conditionOperatorOptions}
+                                                    data-index={rule._index} data-prop="operator"
+                                                    onchange={handleVisibilityRuleChange}></lightning-combobox>
+                                            </div>
+                                            <template if:true={rule._isFieldType}>
+                                                <div class="config-field">
+                                                    <lightning-combobox label="Field" value={rule.field}
+                                                        options={fieldOptionsForCondition}
+                                                        data-index={rule._index} data-prop="field"
+                                                        onchange={handleVisibilityRuleChange}></lightning-combobox>
+                                                </div>
+                                            </template>
+                                            <template if:true={rule._showValueInput}>
+                                                <div class="config-field">
+                                                    <template if:true={rule._hasPicklist}>
+                                                        <lightning-combobox label="Value" value={rule.value}
+                                                            options={rule._picklistOptions}
+                                                            data-index={rule._index} data-prop="value"
+                                                            onchange={handleVisibilityRuleChange}></lightning-combobox>
+                                                    </template>
+                                                    <template if:false={rule._hasPicklist}>
+                                                        <lightning-input label="Value" value={rule.value}
+                                                            data-index={rule._index} data-prop="value"
+                                                            onchange={handleVisibilityRuleChange}
+                                                            placeholder={rule._valuePlaceholder}></lightning-input>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <lightning-button-icon icon-name="utility:delete"
+                                                alternative-text="Remove" data-index={rule._index}
+                                                onclick={handleRemoveVisibilityRule}
+                                                variant="bare" size="small"></lightning-button-icon>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <lightning-button label="Add Condition" icon-name="utility:add"
+                                    size="small" onclick={handleAddVisibilityRule}
+                                    class="slds-m-top_x-small"></lightning-button>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Page Preview -->
+                <div class="preview-panel">
+                    <template for:each={previewPages} for:item="page">
+                        <div key={page._key} class={pageCanvasClass}>
+                            <span class="page-label">{page._label}</span>
+
+                            <!-- Header (only on first page) -->
+                            <template if:true={page._isFirst}>
+                                <div class="preview-header" data-panel="header" onclick={handleTogglePanelAndScroll}>
+                                    <template if:true={hasHeaderContent}>
+                                        <div class="preview-header-row">
+                                            <div class="preview-header-col preview-header-left">
+                                                <template if:true={isHeaderLeftImage}>
+                                                    <img src={headerLeft.logoUrl} alt="Logo" class="preview-logo" />
+                                                </template>
+                                                <template if:true={isHeaderLeftText}>
+                                                    <lightning-formatted-rich-text value={headerLeft.content}></lightning-formatted-rich-text>
+                                                </template>
+                                            </div>
+                                            <div class="preview-header-col preview-header-center">
+                                                <template if:true={isHeaderCenterImage}>
+                                                    <img src={headerCenter.logoUrl} alt="Logo" class="preview-logo" />
+                                                </template>
+                                                <template if:true={isHeaderCenterText}>
+                                                    <lightning-formatted-rich-text value={headerCenter.content}></lightning-formatted-rich-text>
+                                                </template>
+                                            </div>
+                                            <div class="preview-header-col preview-header-right">
+                                                <template if:true={isHeaderRightImage}>
+                                                    <img src={headerRight.logoUrl} alt="Logo" class="preview-logo" />
+                                                </template>
+                                                <template if:true={isHeaderRightText}>
+                                                    <lightning-formatted-rich-text value={headerRight.content}></lightning-formatted-rich-text>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template if:false={hasHeaderContent}>
+                                        <div class="preview-header-empty">Click to configure header</div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Sections for this page -->
+                            <template for:each={page._sections} for:item="sec">
+                                <div key={sec._key} class="preview-section" data-index={sec._index} onclick={handleEditSection}>
+                                    <span class={sec._labelClass}>{sec._label}</span>
+
+                                    <!-- Content -->
+                                    <template if:true={sec._isContent}>
+                                        <template if:true={sec.content}>
+                                            <div class="pv-content">
+                                                <lightning-formatted-rich-text value={sec.content}></lightning-formatted-rich-text>
+                                            </div>
+                                        </template>
+                                        <template if:false={sec.content}>
+                                            <div class="pv-content-empty">Rich text content...</div>
+                                        </template>
+                                    </template>
+
+                                    <!-- Heading -->
+                                    <template if:true={sec._isHeading}>
+                                        <div class={sec._headingClass} style={sec._headingStyle}>{sec._headingText}</div>
+                                    </template>
+
+                                    <!-- Field Grid -->
+                                    <template if:true={sec._isFieldGrid}>
+                                        <table class="pv-field-grid">
+                                            <template for:each={sec._gridPreview} for:item="row">
+                                                <tr key={row._key}>
+                                                    <template for:each={row._cells} for:item="cell">
+                                                        <td key={cell._key} class={cell._class}>{cell._text}</td>
+                                                    </template>
+                                                </tr>
+                                            </template>
+                                        </table>
+                                    </template>
+
+                                    <!-- Table -->
+                                    <template if:true={sec._isTable}>
+                                        <template if:true={sec.title}>
+                                            <div style="font-weight:600;font-size:12px;margin-bottom:4px;">{sec.title}</div>
+                                        </template>
+                                        <table class="pv-table">
+                                            <thead>
+                                                <tr>
+                                                    <template if:true={sec.showRowNumbers}>
+                                                        <th style="width:30px;text-align:center;">#</th>
+                                                    </template>
+                                                    <template for:each={sec._tableColumns} for:item="col">
+                                                        <th key={col._key}>{col.label}</th>
+                                                    </template>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <template if:true={sec.showRowNumbers}>
+                                                        <td style="text-align:center;">1</td>
+                                                    </template>
+                                                    <template for:each={sec._tableColumns} for:item="col">
+                                                        <td key={col._key}>Sample data</td>
+                                                    </template>
+                                                </tr>
+                                                <tr>
+                                                    <template if:true={sec.showRowNumbers}>
+                                                        <td style="text-align:center;">2</td>
+                                                    </template>
+                                                    <template for:each={sec._tableColumns} for:item="col">
+                                                        <td key={col._key}>Sample data</td>
+                                                    </template>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </template>
+
+                                    <!-- Separator -->
+                                    <template if:true={sec._isSeparator}>
+                                        <hr class="pv-separator" style={sec._separatorStyle} />
+                                    </template>
+
+                                    <!-- Page Break -->
+                                    <template if:true={sec._isPageBreak}>
+                                        <div class="pv-page-break">-- PAGE BREAK --</div>
+                                    </template>
+
+                                    <!-- Image -->
+                                    <template if:true={sec._isImage}>
+                                        <div class="pv-image" style={sec._imageAlign}>
+                                            <template if:true={sec.imageUrl}>
+                                                <img src={sec.imageUrl} alt={sec.imageCaption}
+                                                    style={sec._imageStyle} />
+                                            </template>
+                                            <template if:false={sec.imageUrl}>
+                                                <div class="pv-image-placeholder">Image</div>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                </div>
+                            </template>
+
+                            <!-- Footer (on every page) -->
+                            <div class="preview-footer" data-panel="footer" onclick={handleTogglePanelAndScroll}>
+                                <template if:true={footerConfig.content}>
+                                    <lightning-formatted-rich-text value={footerConfig.content}></lightning-formatted-rich-text>
+                                </template>
+                                <template if:true={footerConfig.showPageNumbers}>
+                                    <div style={previewPageNumAlign}>Page {page._pageNum} of {previewPageCount}</div>
+                                </template>
+                                <template if:false={hasFooterContent}>
+                                    <div class="preview-footer-empty">Footer</div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- ==================== SECTION EDITOR MODAL ==================== -->
+        <template if:true={showSectionModal}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container modal-wide">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCancelSection}>
+                            <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title">
+                            <template if:true={isEditingExistingSection}>Edit Section</template>
+                            <template if:false={isEditingExistingSection}>Add Section</template>
+                        </h2>
+                    </header>
+                    <div class="slds-modal__content modal-body">
+
+                        <lightning-combobox label="Section Type" value={editingSection.type}
+                            options={sectionTypeOptions} data-field="type"
+                            onchange={handleSectionFieldChange} class="slds-m-bottom_small"></lightning-combobox>
+
+                        <!-- CONTENT -->
+                        <template if:true={isContentSection}>
+                            <div class="config-field">
+                                <lightning-input-rich-text value={editingSection.content}
+                                    label="Content"
+                                    onchange={handleRichTextChange}
+                                    placeholder="Enter content..."
+                                    formats={richTextFormats}></lightning-input-rich-text>
+                                <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                    data-target="sectionContent" onclick={handleOpenMergeFieldPicker}
+                                    variant="base" size="small"></lightning-button>
+                            </div>
+                            <div class="config-row">
+                                <lightning-combobox label="Align" value={editingSection.textAlign}
+                                    options={textAlignOptions} data-field="textAlign"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                                <lightning-input label="Background" value={editingSection.backgroundColor}
+                                    data-field="backgroundColor" onchange={handleSectionFieldChange}
+                                    placeholder="transparent"></lightning-input>
+                            </div>
+                            <div class="config-row">
+                                <lightning-combobox label="Font Size" value={editingSection.fontSize}
+                                    options={sectionFontSizeOptions} data-field="fontSize"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                                <lightning-input label="Color" value={editingSection.textColor}
+                                    data-field="textColor" onchange={handleSectionFieldChange}></lightning-input>
+                            </div>
+                            <lightning-input type="checkbox" label="Bold" checked={editingSection.bold}
+                                data-field="bold" onchange={handleSectionFieldChange}></lightning-input>
+                        </template>
+
+                        <!-- HEADING -->
+                        <template if:true={isHeadingSection}>
+                            <div class="config-field">
+                                <lightning-input label="Heading Text" value={editingSection.content}
+                                    data-field="content" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-button label="Insert Field" icon-name="utility:merge_field"
+                                    data-target="sectionContent" onclick={handleOpenMergeFieldPicker}
+                                    variant="base" size="small"></lightning-button>
+                            </div>
+                            <div class="config-row">
+                                <lightning-combobox label="Level" value={editingSection.level}
+                                    options={headingLevelOptions} data-field="level"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                                <lightning-combobox label="Align" value={editingSection.textAlign}
+                                    options={textAlignOptions} data-field="textAlign"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                                <lightning-input label="Color" value={editingSection.textColor}
+                                    data-field="textColor" onchange={handleSectionFieldChange}></lightning-input>
+                            </div>
+                        </template>
+
+                        <!-- FIELD GRID -->
+                        <template if:true={isFieldGridSection}>
+                            <div class="config-field">
+                                <lightning-input type="number" label="Columns" value={editingSection.gridColumns}
+                                    data-field="gridColumns" onchange={handleSectionFieldChange}
+                                    min="1" max="4"></lightning-input>
+                            </div>
+                            <div class="slds-grid slds-grid_align-spread slds-m-vertical_small">
+                                <strong class="slds-text-body_small">Fields (Main Object)</strong>
+                                <lightning-button label="Add" icon-name="utility:add" size="small"
+                                    onclick={handleAddFieldGridItem}></lightning-button>
+                            </div>
+                            <template if:true={hasFieldGridFields}>
+                                <template for:each={fieldGridFields} for:item="fg">
+                                    <div key={fg._id} class="col-row">
+                                        <lightning-input label="Label" value={fg.label}
+                                            data-item-id={fg._id} data-prop="label"
+                                            onchange={handleFieldGridItemChange}></lightning-input>
+                                        <lightning-combobox label="Field" value={fg.field}
+                                            options={fieldOptionsForGridAll} data-item-id={fg._id}
+                                            data-prop="field" onchange={handleFieldGridItemChange}></lightning-combobox>
+                                        <lightning-button-icon icon-name="utility:delete"
+                                            data-item-id={fg._id} onclick={handleRemoveFieldGridItem}
+                                            size="small" variant="bare"></lightning-button-icon>
+                                    </div>
+                                </template>
+                            </template>
+                            <!-- Parent / Lookup Fields -->
+                            <template if:true={hasLookupFields}>
+                                <div class="slds-m-top_small">
+                                    <lightning-combobox label="Add Parent Fields via Lookup"
+                                        value={fieldGridLookupField}
+                                        options={lookupFieldOptions}
+                                        onchange={handleFieldGridLookupChange}></lightning-combobox>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- TABLE -->
+                        <template if:true={isTableSection}>
+                            <div class="config-row">
+                                <lightning-input label="Title" value={editingSection.title}
+                                    data-field="title" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-combobox label="Child Object"
+                                    value={editingSection.selectedRelationship}
+                                    options={childRelationshipOptions}
+                                    data-field="selectedRelationship"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                            </div>
+                            <div class="config-row">
+                                <lightning-input label="Order By" value={editingSection.orderBy}
+                                    data-field="orderBy" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-input type="number" label="Max Rows" value={editingSection.maxRows}
+                                    data-field="maxRows" onchange={handleSectionFieldChange}
+                                    min="1" max="500"></lightning-input>
+                            </div>
+                            <div class="config-row">
+                                <lightning-input type="checkbox" label="Row Numbers"
+                                    checked={editingSection.showRowNumbers}
+                                    data-field="showRowNumbers" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-input type="checkbox" label="Alternating Rows"
+                                    checked={editingSection.alternateRowColors}
+                                    data-field="alternateRowColors" onchange={handleSectionFieldChange}></lightning-input>
+                            </div>
+                            <div class="config-row">
+                                <lightning-input label="Header BG" value={editingSection.headerBackground}
+                                    data-field="headerBackground" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-input label="Header Color" value={editingSection.headerColor}
+                                    data-field="headerColor" onchange={handleSectionFieldChange}></lightning-input>
+                                <lightning-input label="Border" value={editingSection.borderColor}
+                                    data-field="borderColor" onchange={handleSectionFieldChange}></lightning-input>
+                            </div>
+                            <div class="slds-grid slds-grid_align-spread slds-m-vertical_small">
+                                <strong class="slds-text-body_small">Columns</strong>
+                                <lightning-button label="Add" icon-name="utility:add" size="small"
+                                    onclick={handleAddColumn}></lightning-button>
+                            </div>
+                            <template if:true={hasTableColumns}>
+                                <template for:each={tableColumns} for:item="col">
+                                    <div key={col._id} class="col-row">
+                                        <lightning-input label="Label" value={col.label}
+                                            data-item-id={col._id} data-prop="label"
+                                            onchange={handleColumnChange}></lightning-input>
+                                        <lightning-combobox label="Field" value={col.field}
+                                            options={childFieldOptionsForCombobox}
+                                            data-item-id={col._id} data-prop="field"
+                                            onchange={handleColumnChange}></lightning-combobox>
+                                        <lightning-button-icon icon-name="utility:delete"
+                                            data-item-id={col._id} onclick={handleRemoveColumn}
+                                            size="small" variant="bare"></lightning-button-icon>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+
+                        <!-- SEPARATOR -->
+                        <template if:true={isSeparatorSection}>
+                            <lightning-combobox label="Line Style" value={editingSection.style}
+                                options={separatorStyleOptions} data-field="style"
+                                onchange={handleSectionFieldChange}></lightning-combobox>
+                        </template>
+
+                        <!-- PAGE BREAK -->
+                        <template if:true={isPageBreakSection}>
+                            <div class="slds-box slds-theme_shade slds-text-align_center slds-p-around_medium">
+                                <lightning-icon icon-name="utility:jump_to_right" size="small"></lightning-icon>
+                                <p class="slds-m-top_x-small"><strong>Page Break</strong></p>
+                                <p class="slds-text-body_small slds-text-color_weak">
+                                    Forces content after this point to start on a new page.
+                                </p>
+                            </div>
+                        </template>
+
+                        <!-- IMAGE -->
+                        <template if:true={isImageSection}>
+                            <div class="config-field">
+                                <lightning-input label="Image URL" value={editingSection.imageUrl}
+                                    data-field="imageUrl" onchange={handleSectionFieldChange}></lightning-input>
+                                <div class="logo-row">
+                                    <label class="upload-btn">
+                                        <lightning-icon icon-name="utility:upload" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        Upload
+                                        <input type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml"
+                                            onchange={handleSectionImageUpload} class="slds-hide" />
+                                    </label>
+                                </div>
+                                <template if:true={editingSectionImageUrl}>
+                                    <img src={editingSectionImageUrl} alt="Preview" class="logo-thumb" />
+                                </template>
+                            </div>
+                            <div class="config-row">
+                                <lightning-combobox label="Align" value={editingSection.textAlign}
+                                    options={textAlignOptions} data-field="textAlign"
+                                    onchange={handleSectionFieldChange}></lightning-combobox>
+                                <lightning-input label="Max Width" value={editingSection.imageMaxWidth}
+                                    data-field="imageMaxWidth" onchange={handleSectionFieldChange}
+                                    placeholder="100%"></lightning-input>
+                            </div>
+                            <div class="config-field">
+                                <lightning-input label="Caption" value={editingSection.imageCaption}
+                                    data-field="imageCaption" onchange={handleSectionFieldChange}></lightning-input>
+                            </div>
+                        </template>
+
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={handleCancelSection}></lightning-button>
+                        <lightning-button label="Save Section" variant="brand" onclick={handleSaveSection}
+                            class="slds-m-left_x-small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- ==================== MERGE FIELD PICKER ==================== -->
+        <template if:true={showMergeFieldPicker}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container modal-narrow">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCloseMergeFieldPicker}>
+                            <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title">Insert Merge Field</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <div class="mf-search">
+                            <lightning-input type="search" variant="label-hidden"
+                                placeholder="Search fields..."
+                                value={mergeFieldSearchTerm} onchange={handleMergeFieldSearch}></lightning-input>
+                        </div>
+                        <div class="mf-tokens">
+                            <template for:each={specialTokens} for:item="tok">
+                                <span key={tok.label} class="mf-token" data-value={tok.value}
+                                    onclick={handleInsertMergeField}>{tok.label}</span>
+                            </template>
+                        </div>
+                        <div class="mf-list">
+                            <template if:true={hasFilteredMergeFields}>
+                                <template for:each={filteredMergeFieldList} for:item="mf">
+                                    <div key={mf.value} class="mf-row" data-value={mf.value}
+                                         onclick={handleInsertMergeField}>
+                                        <div>
+                                            <span class="mf-label">{mf.label}</span>
+                                            <span class="mf-type">{mf.type}</span>
+                                        </div>
+                                        <span class="mf-val">{mf.value}</span>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasFilteredMergeFields}>
+                                <p class="slds-text-color_weak slds-text-align_center slds-p-around_medium">
+                                    <template if:true={mergeFieldSearchTerm}>No matching fields.</template>
+                                    <template if:false={mergeFieldSearchTerm}>Select an object first.</template>
+                                </p>
+                            </template>
+                        </div>
+                        <template if:true={hasLookupFields}>
+                            <div class="mf-parent-section">
+                                <div class="mf-parent-header">Parent Fields</div>
+                                <lightning-combobox label="Lookup" value={selectedLookupField}
+                                    options={lookupFieldOptions} onchange={handleLoadParentFields}
+                                    class="slds-m-bottom_x-small"></lightning-combobox>
+                                <template if:true={hasParentFields}>
+                                    <template for:each={parentMergeFieldList} for:item="pf">
+                                        <div key={pf.value} class="mf-row" data-value={pf.value}
+                                             onclick={handleInsertMergeField}>
+                                            <span class="mf-label">{pf.label}</span>
+                                            <span class="mf-val">{pf.value}</span>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Close" onclick={handleCloseMergeFieldPicker}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </div>
+</template>

@@ -1,0 +1,67 @@
+<template>
+    <div class="card">
+        <!-- Card Header: Title + Status -->
+        <div class="card-header">
+            <a href="javascript:void(0)" onclick={handleNavigate} class="card-title">{cardTitle}</a>
+            <div class="card-header-actions">
+                <template lwc:if={showCallIcon}>
+                    <button class="call-icon-btn" onclick={handleCallClick} title="Call">
+                        <lightning-icon icon-name="utility:call" size="xx-small" class="call-icon"></lightning-icon>
+                    </button>
+                </template>
+                <template lwc:if={hasStatus}>
+                    <span class={statusBadgeClass}>{record.currentStatus}</span>
+                </template>
+            </div>
+        </div>
+
+        <!-- Card Body: Fields -->
+        <div class="card-body">
+            <template for:each={displayFields} for:item="field">
+                <div key={field.key} class="field-row">
+                    <span class="field-label">{field.label}</span>
+                    <template lwc:if={field.isBadge}>
+                        <span class={field.computedBadgeClass}>{field.value}</span>
+                    </template>
+                    <template lwc:if={field.isPhone}>
+                        <span class="field-value">
+                            <lightning-formatted-phone value={field.value}></lightning-formatted-phone>
+                        </span>
+                    </template>
+                    <template lwc:if={field.isEmail}>
+                        <span class="field-value">
+                            <lightning-formatted-email value={field.value}></lightning-formatted-email>
+                        </span>
+                    </template>
+                    <template lwc:if={field.isDateTime}>
+                        <span class="field-value">
+                            <lightning-formatted-date-time
+                                value={field.value}
+                                year="numeric" month="short" day="2-digit"
+                                hour="2-digit" minute="2-digit">
+                            </lightning-formatted-date-time>
+                        </span>
+                    </template>
+                    <template lwc:if={field.isText}>
+                        <span class="field-value">{field.value}</span>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- Card Footer: Actions -->
+        <template lwc:if={hasTransitions}>
+            <div class="card-footer">
+                <template for:each={availableTransitions} for:item="transition">
+                    <button
+                        key={transition.to}
+                        class={transition.btnClass}
+                        data-index={transition.index}
+                        onclick={handleTransitionClick}>
+                        {transition.label}
+                    </button>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

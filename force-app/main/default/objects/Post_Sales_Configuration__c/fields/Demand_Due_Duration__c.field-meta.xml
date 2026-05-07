@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Demand_Due_Duration__c</fullName>
+    <description>Demand config: Number of days from demand creation date to due date. Same as Due_Date_Offset_Days but specific to demand type config.</description>
+    <externalId>false</externalId>
+    <label>Demand Due Duration</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

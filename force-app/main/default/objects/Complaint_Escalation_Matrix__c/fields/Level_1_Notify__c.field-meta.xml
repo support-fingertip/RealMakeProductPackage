@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Level_1_Notify__c</fullName>
+    <defaultValue>&quot;Assigned To&quot;</defaultValue>
+    <description>Who to notify at Level 1. Options: Assigned To, Owner, Project Head, Custom User</description>
+    <label>Level 1 - Notify</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Assigned To</fullName>
+                <default>true</default>
+                <label>Assigned To</label>
+            </value>
+            <value>
+                <fullName>Owner</fullName>
+                <default>false</default>
+                <label>Owner</label>
+            </value>
+            <value>
+                <fullName>Project Head</fullName>
+                <default>false</default>
+                <label>Project Head</label>
+            </value>
+            <value>
+                <fullName>Custom User</fullName>
+                <default>false</default>
+                <label>Custom User</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

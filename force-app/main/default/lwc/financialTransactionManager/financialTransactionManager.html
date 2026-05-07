@@ -1,0 +1,833 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <div class="transaction-manager">
+        <!-- Compact Header -->
+        <header class="header-compact">
+            <div class="header-inner">
+                <div class="header-brand">
+                    <div class="brand-icon">
+                        <lightning-icon icon-name="standard:disease_definition_criteria" size="medium"></lightning-icon>
+                    </div>
+                    <div class="brand-text">
+                        <h1>Financial Transaction Manager</h1>
+                        <p>Manage receipts, credits, debits & refunds</p>
+                    </div>
+                </div>
+                <div class="header-booking-info">
+                    <button class="back-to-booking" onclick={handleGoToBooking}>
+                        <lightning-icon icon-name="utility:back" size="xx-small"></lightning-icon>
+                        <span>Go to Booking</span>
+                    </button>
+                    <div class="booking-chip">
+                        <lightning-icon icon-name="standard:home" size="x-small"></lightning-icon>
+                        <span class="booking-details">
+                            <strong>{bookingSummary.bookingName}</strong>
+                            <span class="separator">•</span>
+                            <span>{bookingSummary.projectName}</span>
+                            <span class="separator">•</span>
+                            <span>Unit: {bookingSummary.unitNumber}</span>
+                        </span>
+                    </div>
+                    <button class="summary-toggle" onclick={toggleSummary}>
+                        <lightning-icon icon-name={summaryToggleIcon} size="x-small"></lightning-icon>
+                        <span>{summaryToggleText}</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Collapsible Financial Summary -->
+        <template if:true={showSummary}>
+            <div class="financial-summary">
+                <div class="summary-grid">
+                    <!-- Agreement Value Card -->
+                    <div class="summary-card agreement-card">
+                        <div class="card-header">
+                            <lightning-icon icon-name="utility:contract" size="x-small"></lightning-icon>
+                            <span>Agreement Value</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric-row">
+                                <span class="metric-label">Original Value</span>
+                                <span class="metric-value">{formattedOriginalValue}</span>
+                            </div>
+                            <div class="metric-row credit">
+                                <span class="metric-label">
+                                    <lightning-icon icon-name="utility:dash" size="xx-small"></lightning-icon>
+                                    Credit Notes
+                                </span>
+                                <span class="metric-value">{formattedCreditNotes}</span>
+                            </div>
+                            <div class="metric-row debit">
+                                <span class="metric-label">
+                                    <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon>
+                                    Debit Notes
+                                </span>
+                                <span class="metric-value">{formattedDebitNotes}</span>
+                            </div>
+                            <div class="metric-row total">
+                                <span class="metric-label">Net Agreement</span>
+                                <span class="metric-value highlight">{formattedNetAgreement}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status Card -->
+                    <div class="summary-card payment-card">
+                        <div class="card-header">
+                            <lightning-icon icon-name="utility:money" size="x-small"></lightning-icon>
+                            <span>Payment Status</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric-row">
+                                <span class="metric-label">Total Demanded</span>
+                                <span class="metric-value purple">{formattedTotalDemanded}</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Total Received</span>
+                                <span class="metric-value blue">{formattedTotalReceived}</span>
+                            </div>
+                            <div class="advance-highlight">
+                                <div class="advance-icon">
+                                    <lightning-icon icon-name="utility:trending" size="small"></lightning-icon>
+                                </div>
+                                <div class="advance-info">
+                                    <span class="advance-label">Advance Available</span>
+                                    <span class="advance-value">{formattedAdvanceAvailable}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Outstanding Card -->
+                    <div class="summary-card outstanding-card">
+                        <div class="card-header">
+                            <lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon>
+                            <span>Outstanding</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric-row warning">
+                                <span class="metric-label">Pending Demands</span>
+                                <span class="metric-value">{formattedPendingDemands}</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Future Milestones</span>
+                                <span class="metric-value">{formattedFutureMilestones}</span>
+                            </div>
+                            <div class="balance-display">
+                                <span class="balance-label">Current Balance</span>
+                                <span class={balanceValueClass}>{formattedCurrentBalance}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Transaction Type Selector -->
+        <div class="transaction-selector">
+            <div class="selector-container">
+                <button class={receiptButtonClass} onclick={handleTransactionTypeChange} data-type="receipt">
+                    <div class="selector-icon receipt-icon">
+                        <lightning-icon icon-name="utility:money" size="small"></lightning-icon>
+                    </div>
+                    <div class="selector-text">
+                        <span class="selector-title">Receipt</span>
+                        <span class="selector-desc">Record payment</span>
+                    </div>
+                </button>
+                <button class={creditButtonClass} onclick={handleTransactionTypeChange} data-type="credit">
+                    <div class="selector-icon credit-icon">
+                        <lightning-icon icon-name="utility:back" size="small"></lightning-icon>
+                    </div>
+                    <div class="selector-text">
+                        <span class="selector-title">Credit Note</span>
+                        <span class="selector-desc">Reduce dues</span>
+                    </div>
+                </button>
+                <button class={debitButtonClass} onclick={handleTransactionTypeChange} data-type="debit">
+                    <div class="selector-icon debit-icon">
+                        <lightning-icon icon-name="utility:forward" size="small"></lightning-icon>
+                    </div>
+                    <div class="selector-text">
+                        <span class="selector-title">Debit Note</span>
+                        <span class="selector-desc">Add charges</span>
+                    </div>
+                </button>
+                <button class={refundButtonClass} onclick={handleTransactionTypeChange} data-type="refund">
+                    <div class="selector-icon refund-icon">
+                        <lightning-icon icon-name="utility:undo" size="small"></lightning-icon>
+                    </div>
+                    <div class="selector-text">
+                        <span class="selector-title">Refund</span>
+                        <span class="selector-desc">Return payment</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area - Split Panel -->
+        <div class="main-content">
+            <!-- Left Panel - Data Entry -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <lightning-icon icon-name={activeTransactionIcon} size="small"></lightning-icon>
+                        <span>{activeTransactionTitle}</span>
+                    </h2>
+                    <span class="panel-badge">{activeTransactionBadge}</span>
+                </div>
+
+                <!-- Info Alert -->
+                <div class={infoAlertClass}>
+                    <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                    <p>{activeTransactionInfo}</p>
+                </div>
+
+                <!-- Available Credits & Advances (for Receipt) -->
+                <template if:true={isReceiptTab}>
+                    <template if:true={hasAvailableCreditsOrAdvances}>
+                        <div class="available-section">
+                            <h3 class="section-title">Available for Adjustment</h3>
+                            <div class="available-grid">
+                                <template if:true={hasAvailableCredits}>
+                                    <div class="available-card credits">
+                                        <div class="available-header">
+                                            <span class="available-title">Credit Notes</span>
+                                            <span class="available-count">{availableCredits.length}</span>
+                                        </div>
+                                        <div class="available-list">
+                                            <template for:each={availableCredits} for:item="credit">
+                                                <div key={credit.creditNoteId} class="available-item">
+                                                    <div class="item-info">
+                                                        <span class="item-number">{credit.creditNoteNumber}</span>
+                                                        <span class="item-type">{credit.creditType}</span>
+                                                    </div>
+                                                    <span class="item-amount">{credit.formattedAmount}</span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template if:true={hasAvailableAdvances}>
+                                    <div class="available-card advances">
+                                        <div class="available-header">
+                                            <span class="available-title">Advances</span>
+                                            <span class="available-count">{availableAdvances.length}</span>
+                                        </div>
+                                        <div class="available-list">
+                                            <template for:each={availableAdvances} for:item="advance">
+                                                <div key={advance.advanceId} class="available-item">
+                                                    <div class="item-info">
+                                                        <span class="item-number">{advance.advanceNumber}</span>
+                                                        <span class="item-type">From:  {advance.sourceReceiptNumber}</span>
+                                                    </div>
+                                                    <span class="item-amount">{advance.formattedAmount}</span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Dynamic Form Based on Transaction Type -->
+                <div class="form-container">
+                    <!-- Receipt Form -->
+                    <template if:true={isReceiptTab}>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Receipt Date</label>
+                                    <lightning-input
+                                        type="date"
+                                        value={receiptDate}
+                                        onchange={handleReceiptDateChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-input>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Receipt Type</label>
+                                    <lightning-combobox
+                                        value={receiptType}
+                                        placeholder="Choose..."
+                                        options={receiptTypeOptions}
+                                        onchange={handleReceiptTypeChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field amount-field">
+                                    <label class="field-label required">Amount Received</label>
+                                    <div class="amount-input-wrapper">
+
+                                        <lightning-input
+                                            type="number"
+                                            value={amountReceived}
+                                            onchange={handleAmountChange}
+                                            variant="label-hidden"
+                                            step="0.01"
+                                            min="0"
+                                            message-when-range-underflow="Amount must be a positive value"
+                                            class="amount-input">
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Payment Mode</label>
+                                    <lightning-combobox
+                                        value={paymentMode}
+                                        placeholder="Choose..."
+                                        options={paymentModeOptions}
+                                        onchange={handlePaymentModeChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Transaction Number</label>
+                                    <lightning-input
+                                        type="text"
+                                        value={transactionNumber}
+                                        onchange={handleTransactionNumberChange}
+                                        variant="label-hidden"
+                                        placeholder="Enter transaction reference"
+                                        >
+                                    </lightning-input>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Bank Name</label>
+                                    <lightning-combobox
+                                        value={bankName}
+                                        placeholder="Choose..."
+                                        options={bankOptions}
+                                        onchange={handleBankChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Payment From</label>
+                                    <lightning-combobox
+                                        value={paymentFrom}
+                                        placeholder="Choose..."
+                                        options={paymentFromOptions}
+                                        onchange={handlePaymentFromChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field">
+                                    <label class="field-label">Remarks</label>
+                                    <lightning-textarea 
+                                        value={remarks}
+                                        onchange={handleRemarksChange}
+                                        variant="label-hidden"
+                                        placeholder="Add any additional notes..."
+                                        >
+                                    </lightning-textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Credit Note Form -->
+                    <template if:true={isCreditTab}>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Credit Date</label>
+                                    <lightning-input 
+                                        type="date" 
+                                        value={creditDate}
+                                        onchange={handleCreditDateChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-input>
+                                </div>
+                                <div class="form-field amount-field">
+                                    <label class="field-label required">Credit Amount</label>
+                                    <div class="amount-input-wrapper">
+                                        
+                                        <lightning-input
+                                            type="number"
+                                            value={creditAmount}
+                                            onchange={handleCreditAmountChange}
+                                            variant="label-hidden"
+                                            step="0.01"
+                                            min="0"
+                                            message-when-range-underflow="Amount must be a positive value"
+                                            class="amount-input">
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Credit Type</label>
+                                    <lightning-combobox
+                                        value={creditType}
+                                        placeholder="Choose..."
+                                        options={creditTypeOptions}
+                                        onchange={handleCreditTypeChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Apply To</label>
+                                    <lightning-combobox
+                                        value={applyTo}
+                                        placeholder="Choose..."
+                                        options={applyToOptions}
+                                        onchange={handleApplyToChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field">
+                                    <label class="field-label">Description</label>
+                                    <lightning-textarea 
+                                        value={creditDescription}
+                                        onchange={handleCreditDescriptionChange}
+                                        variant="label-hidden"
+                                        placeholder="Describe the reason for this credit note..."
+                                        >
+                                    </lightning-textarea>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field checkbox-field">
+                                    <lightning-input 
+                                        type="checkbox"
+                                        label="Auto-apply in next receipt"
+                                        checked={autoApply}
+                                        onchange={handleAutoApplyChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Debit Note Form -->
+                    <template if:true={isDebitTab}>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Debit Date</label>
+                                    <lightning-input 
+                                        type="date" 
+                                        value={debitDate}
+                                        onchange={handleDebitDateChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-input>
+                                </div>
+                                <div class="form-field amount-field">
+                                    <label class="field-label required">Debit Amount</label>
+                                    <div class="amount-input-wrapper">
+                                        
+                                        <lightning-input
+                                            type="number"
+                                            value={debitAmount}
+                                            onchange={handleDebitAmountChange}
+                                            variant="label-hidden"
+                                            step="0.01"
+                                            min="0"
+                                            message-when-range-underflow="Amount must be a positive value"
+                                            class="amount-input">
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Debit Type</label>
+                                    <lightning-combobox
+                                        value={debitType}
+                                        placeholder="Choose..."
+                                        options={debitTypeOptions}
+                                        onchange={handleDebitTypeChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Charge Against</label>
+                                    <lightning-combobox
+                                        value={chargeAgainst}
+                                        placeholder="Choose..."
+                                        options={chargeAgainstOptions}
+                                        onchange={handleChargeAgainstChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field">
+                                    <label class="field-label">Description</label>
+                                    <lightning-textarea 
+                                        value={debitDescription}
+                                        onchange={handleDebitDescriptionChange}
+                                        variant="label-hidden"
+                                        placeholder="Describe the reason for this debit note..."
+                                        >
+                                    </lightning-textarea>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field checkbox-field">
+                                    <lightning-input 
+                                        type="checkbox"
+                                        label="Auto-create demand on approval"
+                                        checked={autoCreateDemand}
+                                        onchange={handleAutoCreateDemandChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Refund Form -->
+                    <template if:true={isRefundTab}>
+                        <div class="max-refund-banner">
+                            <lightning-icon icon-name="utility:warning" size="x-small"></lightning-icon>
+                            <span>Maximum refundable amount: <strong>{formattedMaxRefund}</strong></span>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Refund Date</label>
+                                    <lightning-input 
+                                        type="date" 
+                                        value={refundDate}
+                                        onchange={handleRefundDateChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-input>
+                                </div>
+                                <div class="form-field amount-field">
+                                    <label class="field-label required">Refund Amount</label>
+                                    <div class="amount-input-wrapper">
+                                        
+                                        <lightning-input
+                                            type="number"
+                                            value={refundAmount}
+                                            onchange={handleRefundAmountChange}
+                                            variant="label-hidden"
+                                            step="0.01"
+                                            min="0"
+                                            message-when-range-underflow="Amount must be a positive value"
+                                            class="amount-input">
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label required">Refund Reason</label>
+                                    <lightning-combobox
+                                        value={refundReason}
+                                        placeholder="Choose..."
+                                        options={refundReasonOptions}
+                                        onchange={handleRefundReasonChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label required">Refund Mode</label>
+                                    <lightning-combobox
+                                        value={refundMode}
+                                        placeholder="Choose..."
+                                        options={refundModeOptions}
+                                        onchange={handleRefundModeChange}
+                                        variant="label-hidden"
+                                        >
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="field-label">Bank Name</label>
+                                    <lightning-input 
+                                        type="text" 
+                                        value={refundBankName}
+                                        onchange={handleRefundBankChange}
+                                        variant="label-hidden"
+                                        placeholder="Enter bank name"
+                                        >
+                                    </lightning-input>
+                                </div>
+                                <div class="form-field">
+                                    <label class="field-label">Transaction Reference</label>
+                                    <lightning-input 
+                                        type="text" 
+                                        value={refundReference}
+                                        onchange={handleRefundReferenceChange}
+                                        variant="label-hidden"
+                                        placeholder="Enter reference number"
+                                        >
+                                    </lightning-input>
+                                </div>
+                            </div>
+                            <div class="form-row full-width">
+                                <div class="form-field">
+                                    <label class="field-label">Description</label>
+                                    <lightning-textarea 
+                                        value={refundDescription}
+                                        onchange={handleRefundDescriptionChange}
+                                        variant="label-hidden"
+                                        placeholder="Add refund details..."
+                                        >
+                                    </lightning-textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick={handleCancel}>
+                        <lightning-icon icon-name="utility:close" size="x-small"></lightning-icon>
+                        <span>Cancel</span>
+                    </button>
+                    <button class={primaryButtonClass} onclick={handleSubmit}>
+                        <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                        <span>{submitButtonLabel}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Preview & History -->
+            <div class="right-panel">
+                <!-- Live Preview Section -->
+                <div class="preview-section">
+                    <div class="preview-header">
+                        <h3>
+                            <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                            <span>Live Preview</span>
+                        </h3>
+                    </div>
+                    <div class="preview-content">
+                        <!-- Before & After Comparison -->
+                        <div class="comparison-grid">
+                            <!--<div class="comparison-card before">
+                                <span class="comparison-label">Current Balance</span>
+                                <span class="comparison-value">{formattedCurrentBalancePreview}</span>
+                            </div>
+                            <div class="comparison-arrow">
+                                <lightning-icon icon-name="utility:arrowdown" size="x-small"></lightning-icon>
+                            </div>-->
+                            <div class="comparison-card after">
+                                <span class="comparison-label">After This Transaction</span>
+                                <span class={afterTransactionClass}>{formattedAfterTransaction}</span>
+                            </div>
+                        </div>
+
+                        <!-- Impact Summary -->
+                        <div class="impact-summary">
+                            <h4>Transaction Impact</h4>
+                            <div class="impact-list">
+                                <template if:true={isReceiptTab}>
+                                    <div class="impact-item">
+                                        <span class="impact-label">Amount to Apply</span>
+                                        <span class="impact-value positive">+ {formattedAmountToApply}</span>
+                                    </div>
+                                    <template if:true={hasCreditsToUse}>
+                                        <div class="impact-item">
+                                            <span class="impact-label">Credits Utilized</span>
+                                            <span class="impact-value positive">+ {formattedCreditsToUse}</span>
+                                        </div>
+                                    </template>
+                                    <template if:true={hasAdvancesToUse}>
+                                        <div class="impact-item">
+                                            <span class="impact-label">Advances Utilized</span>
+                                            <span class="impact-value positive">+ {formattedAdvancesToUse}</span>
+                                        </div>
+                                    </template>
+                                    <template if:true={willCreateAdvance}>
+                                        <div class="impact-item highlight">
+                                            <span class="impact-label">New Advance Created</span>
+                                            <span class="impact-value info">{formattedNewAdvance}</span>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:true={isCreditTab}>
+                                    <div class="impact-item">
+                                        <span class="impact-label">Agreement Reduction</span>
+                                        <span class="impact-value positive">- {formattedCreditImpact}</span>
+                                    </div>
+                                    <div class="impact-item">
+                                        <span class="impact-label">New Net Agreement</span>
+                                        <span class="impact-value">{formattedNewNetAgreement}</span>
+                                    </div>
+                                </template>
+                                <template if:true={isDebitTab}>
+                                    <div class="impact-item">
+                                        <span class="impact-label">Agreement Increase</span>
+                                        <span class="impact-value negative">+ {formattedDebitImpact}</span>
+                                    </div>
+                                    <div class="impact-item">
+                                        <span class="impact-label">New Net Agreement</span>
+                                        <span class="impact-value">{formattedNewNetAgreementDebit}</span>
+                                    </div>
+                                </template>
+                                <template if:true={isRefundTab}>
+                                    <div class="impact-item">
+                                        <span class="impact-label">Refund Amount</span>
+                                        <span class="impact-value negative">- {formattedRefundImpact}</span>
+                                    </div>
+                                    <div class="impact-item">
+                                        <span class="impact-label">Remaining Advance</span>
+                                        <span class="impact-value">{formattedRemainingAdvance}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Payment Schedule Allocation Preview (for Receipt) -->
+                        <template if:true={isReceiptTab}>
+                            <template if:true={hasPendingPaymentSchedules}>
+                                <div class="allocation-preview">
+                                    <h4>Payment Schedule Allocation</h4>
+                                    <div class="allocation-list">
+                                        <template for:each={paymentScheduleAllocationPreview} for:item="ps">
+                                            <div key={ps.scheduleId} class="allocation-item">
+                                                <div class="allocation-info">
+                                                    <span class="allocation-number">{ps.scheduleName}</span>
+                                                    <span class="allocation-milestone">{ps.milestoneName}</span>
+                                                </div>
+                                                <div class="allocation-amounts">
+                                                    <span class="allocation-pending">Pending: {ps.formattedPending}</span>
+                                                    <span class={ps.allocationClass}>Applying: {ps.formattedAllocated}</span>
+                                                </div>
+                                                <div class="allocation-bar">
+                                                    <div class="allocation-progress" style={ps.progressStyle}></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:true={hasOpenDemands}>
+                                <div class="allocation-preview">
+                                    <h4>Demand Allocation</h4>
+                                    <div class="allocation-list">
+                                        <template for:each={demandAllocationPreview} for:item="demand">
+                                            <div key={demand.demandId} class="allocation-item">
+                                                <div class="allocation-info">
+                                                    <span class="allocation-number">{demand.demandNumber}</span>
+                                                    <span class="allocation-milestone">{demand.milestoneName}</span>
+                                                </div>
+                                                <div class="allocation-amounts">
+                                                    <span class="allocation-pending">Pending: {demand.formattedPending}</span>
+                                                    <span class="allocation-applying">Applying: {demand.formattedAllocated}</span>
+                                                </div>
+                                                <div class="allocation-bar">
+                                                    <div class="allocation-progress" style={demand.progressStyle}></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Transaction History Section -->
+                <div class="history-section">
+                    <div class="history-header">
+                        <h3>
+                            <lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon>
+                            <span>Recent {activeTransactionTitle}s</span>
+                        </h3>
+                        <button class="view-all-btn" onclick={handleViewAllHistory}>
+                            View All
+                        </button>
+                    </div>
+                    <div class="history-content">
+                        <template if:true={hasTransactionHistory}>
+                            <div class="history-list">
+                                <template for:each={transactionHistory} for:item="txn">
+                                    <div key={txn.id} class="history-item" onclick={handleHistoryItemClick} data-id={txn.id}>
+                                        <div class="history-icon-wrapper">
+                                            <div class={txn.iconClass}>
+                                                <lightning-icon icon-name={txn.icon} size="xx-small"></lightning-icon>
+                                            </div>
+                                        </div>
+                                        <div class="history-details">
+                                            <div class="history-primary">
+                                                <span class="history-number">{txn.number_x}</span>
+                                                <span class="history-amount">{txn.formattedAmount}</span>
+                                            </div>
+                                            <div class="history-secondary">
+                                                <span class="history-date">{txn.formattedDate}</span>
+                                                <span class={txn.statusClass}>{txn.status}</span>
+                                            </div>
+                                        </div>
+                                        <lightning-icon icon-name="utility:chevronright" size="xx-small" class="history-arrow"></lightning-icon>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={hasTransactionHistory}>
+                            <div class="empty-history">
+                                <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                <p>No {activeTransactionTitleLower}s recorded yet</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Open Demands Quick View -->
+                <template if:true={hasOpenDemands}>
+                    <div class="demands-quick-view">
+                        <div class="demands-header">
+                            <h3>
+                                <lightning-icon icon-name="utility:list" size="x-small"></lightning-icon>
+                                <span>Open Demands</span>
+                            </h3>
+                            <span class="demands-count">{openDemands.length}</span>
+                        </div>
+                        <div class="demands-list">
+                            <template for:each={openDemandsPreview} for:item="demand">
+                                <div key={demand.demandId} class="demand-item">
+                                    <div class="demand-info">
+                                        <span class="demand-number">{demand.demandNumber}</span>
+                                        <span class="demand-milestone">{demand.milestoneName}</span>
+                                    </div>
+                                    <div class="demand-meta">
+                                        <span class="demand-due">Due: {demand.formattedDueDate}</span>
+                                        <span class="demand-pending">{demand.formattedPending}</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,190 @@
+<template>
+    <lightning-card icon-name="standard:user" title={userName}>
+
+        <!-- Spinner -->
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+        </template>
+
+        <div class="slds-p-around_small">
+            <div class="toggle-container">
+                <!-- Status Indicator -->
+                <div>
+                    <div class={statusClass}>
+                        <lightning-icon
+                            icon-name={statusIcon}
+                            size="xx-small"
+                            variant={statusIconVariant}
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        <span class="status-text">{statusText}</span>
+                    </div>
+                    <div class={timerClass}>{currentStatusDisplay}</div>
+                </div>
+
+                <!-- Toggle Switch -->
+                <lightning-input
+                    type="toggle"
+                    label="My Availability"
+                    variant="label-hidden"
+                    checked={isAvailable}
+                    onchange={handleToggle}
+                    message-toggle-active="Available"
+                    message-toggle-inactive="Offline"
+                    disabled={isLoading}>
+                </lightning-input>
+            </div>
+
+            <!-- Shift Info -->
+            <div class="shift-section slds-m-top_small">
+                <div class="shift-info" onclick={handleShiftClick}>
+                    <lightning-icon icon-name="utility:shift_pattern" size="xx-small"
+                        class="slds-m-right_xx-small"></lightning-icon>
+                    <span class="shift-label">Shift:</span>
+                    <span class="shift-value">{shiftDisplay}</span>
+                    <template lwc:if={hasShiftOptions}>
+                        <lightning-icon icon-name="utility:edit" size="xx-small"
+                            class="slds-m-left_xx-small shift-edit-icon"
+                            alternative-text="Change shift"></lightning-icon>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Session & Cumulative Time Summary -->
+            <div class="summary-section slds-m-top_small">
+                <template lwc:if={hasSessionStart}>
+                    <div class="session-info slds-m-bottom_x-small">
+                        <lightning-icon icon-name="utility:date_time" size="xx-small"
+                            class="slds-m-right_xx-small"></lightning-icon>
+                        <span class="session-label">Session started at {sessionStartDisplay}</span>
+                    </div>
+                </template>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <lightning-icon
+                            icon-name="utility:success"
+                            size="xx-small"
+                            variant="success"
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        <span class="summary-label">Available</span>
+                        <span class={availableSummaryClass}>{totalAvailableDisplay}</span>
+                    </div>
+                    <div class="summary-item">
+                        <lightning-icon
+                            icon-name="utility:clock"
+                            size="xx-small"
+                            variant="warning"
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        <span class="summary-label">Break</span>
+                        <span class={offlineSummaryClass}>{totalOfflineDisplay}</span>
+                    </div>
+                    <div class="summary-item">
+                        <lightning-icon
+                            icon-name="utility:shift_pattern"
+                            size="xx-small"
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        <span class="summary-label">Session</span>
+                        <span class={sessionSummaryClass}>{totalSessionDisplay}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+
+    <!-- Reason Modal (shown when toggling OFF) -->
+    <template lwc:if={showReasonModal}>
+        <section role="dialog" tabindex="-1"
+            class="slds-modal slds-fade-in-open"
+            aria-modal="true"
+            aria-labelledby="reason-modal-heading">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={handleCancelOffline}>
+                        <lightning-icon icon-name="utility:close" size="small"
+                            variant="inverse"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="reason-modal-heading" class="slds-modal__title">
+                        Going Offline
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-m-bottom_small slds-text-body_regular">
+                        You are about to set your status to Offline.
+                        Optionally select a reason:
+                    </p>
+                    <lightning-combobox
+                        label="Reason (Optional)"
+                        value={selectedReason}
+                        options={reasonOptions}
+                        placeholder="-- Select a reason --"
+                        onchange={handleReasonChange}>
+                    </lightning-combobox>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancelOffline}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Go Offline"
+                        variant="destructive"
+                        onclick={handleConfirmOffline}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Shift Change Modal -->
+    <template lwc:if={showShiftModal}>
+        <section role="dialog" tabindex="-1"
+            class="slds-modal slds-fade-in-open"
+            aria-modal="true"
+            aria-labelledby="shift-modal-heading">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={handleCancelShift}>
+                        <lightning-icon icon-name="utility:close" size="small"
+                            variant="inverse"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="shift-modal-heading" class="slds-modal__title">
+                        Change Shift
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-m-bottom_small slds-text-body_regular">
+                        Select your shift:
+                    </p>
+                    <lightning-combobox
+                        label="Shift"
+                        value={pendingShift}
+                        options={shiftOptions}
+                        onchange={handleShiftChange}>
+                    </lightning-combobox>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancelShift}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Update Shift"
+                        variant="brand"
+                        onclick={handleConfirmShift}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

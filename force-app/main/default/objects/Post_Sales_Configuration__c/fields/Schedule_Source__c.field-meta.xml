@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Schedule_Source__c</fullName>
+    <description>Payment Schedule config: source for creating payment schedules - from Master Payment Schedule or Cost Sheet Line Items</description>
+    <label>Schedule Source</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Master Payment Schedule</fullName>
+                <default>false</default>
+                <label>Master Payment Schedule</label>
+            </value>
+            <value>
+                <fullName>Cost Sheet Line</fullName>
+                <default>false</default>
+                <label>Cost Sheet Line</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

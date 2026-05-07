@@ -1,0 +1,140 @@
+:host {
+    display: block;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.status-available {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-offline {
+    background-color: #fff3e0;
+    color: #e65100;
+}
+
+.status-text {
+    white-space: nowrap;
+}
+
+.elapsed-timer {
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    padding-left: 0.75rem;
+    margin-top: 0.25rem;
+    letter-spacing: 0.05em;
+}
+
+.timer-available {
+    color: #2563eb;
+}
+
+.timer-offline {
+    color: #e65100;
+}
+
+/* ── Cumulative Summary Section ── */
+.summary-section {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.75rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-right: 0.25rem;
+}
+
+.summary-timer {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    letter-spacing: 0.05em;
+}
+
+.summary-available {
+    color: #2e7d32;
+}
+
+.summary-offline {
+    color: #e65100;
+}
+
+.summary-session {
+    color: #1565c0;
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.session-label {
+    font-weight: 500;
+}
+
+/* ── Shift Section ── */
+.shift-section {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.5rem;
+}
+
+.shift-info {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    cursor: default;
+}
+
+.shift-info:hover .shift-edit-icon {
+    opacity: 1;
+}
+
+.shift-label {
+    font-weight: 500;
+    margin-right: 0.25rem;
+}
+
+.shift-value {
+    font-weight: 600;
+    color: #374151;
+}
+
+.shift-edit-icon {
+    opacity: 0.4;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}

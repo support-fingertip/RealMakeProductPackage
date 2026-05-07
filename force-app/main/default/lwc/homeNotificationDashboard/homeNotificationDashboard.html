@@ -1,0 +1,238 @@
+<template>
+    <div class="dashboard-container">
+
+        <!-- ═══ HEADER ═══ -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <lightning-icon icon-name="standard:home" size="medium" class="header-icon"></lightning-icon>
+                    <div class="header-text">
+                        <h1 class="header-title">Dashboard</h1>
+                        <p class="header-subtitle">Your daily overview</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <template lwc:if={hasLoaded}>
+                        <div class="header-stats">
+                            <template for:each={summaryStats} for:item="stat">
+                                <div key={stat.key} class="stat-chip">
+                                    <span class="stat-count">{stat.count}</span>
+                                    <span class="stat-label">{stat.label}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <button class="refresh-btn" onclick={handleRefresh} title="Refresh">
+                        <lightning-icon icon-name="utility:refresh" size="xx-small" class="refresh-icon"></lightning-icon>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ LOADING SPINNER ═══ -->
+        <template lwc:if={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={hasLoaded}>
+
+            <!-- ═══ TABS BAR ═══ -->
+            <nav class="tab-bar">
+                <template for:each={processedTabs} for:item="tab">
+                    <button key={tab.tabKey}
+                        class={tab.tabClass}
+                        data-tab-key={tab.tabKey}
+                        onclick={handleTabClick}>
+                        <lightning-icon icon-name={tab.iconName} size="xx-small" class="tab-icon"></lightning-icon>
+                        <span class="tab-label">{tab.tabName}</span>
+                        <template lwc:if={tab.showBadgeCount}>
+                            <span class="tab-badge">{tab.badgeLabel}</span>
+                        </template>
+                    </button>
+                </template>
+            </nav>
+
+            <!-- ═══ TAB CONTENT ═══ -->
+            <div class="tab-body">
+
+                <!-- Sections grouped by sObject type -->
+                <template lwc:if={hasAnySections}>
+                    <template for:each={objectSections} for:item="section">
+                        <div key={section.sObjectName} class="section-group" style={section.sectionStyle}>
+
+                            <!-- Section Header -->
+                            <div class="section-header"
+                                 data-section={section.sObjectName}
+                                 onclick={handleSectionToggle}>
+                                <div class="section-header-left">
+                                    <lightning-icon icon-name={section.chevronIcon} size="xx-small" class="section-chevron"></lightning-icon>
+                                    <lightning-icon icon-name={section.icon} size="small" class="section-icon"></lightning-icon>
+                                    <h3 class="section-title">{section.label}</h3>
+                                    <span class="section-count">{section.countLabel}</span>
+                                </div>
+                            </div>
+
+                            <!-- Section Body -->
+                            <template lwc:if={section.isExpanded}>
+                                <div class="section-body">
+                                    <template lwc:if={section.hasRecords}>
+                                        <div class="cards-scroll">
+                                            <div class="cards-grid">
+                                                <template for:each={section.records} for:item="record">
+                                                    <div key={record.recordId} class="card-col">
+                                                        <c-notification-card
+                                                            record={record}
+                                                            field-configs={cardFieldConfigs}
+                                                            status-actions={activeStatusActions}
+                                                            onstatuschange={handleStatusChange}
+                                                            onrecordnavigate={handleRecordNavigate}
+                                                            oncallclick={handleCallClick}>
+                                                        </c-notification-card>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <!-- View All / Show Less toggle -->
+                                        <template lwc:if={section.hasMore}>
+                                            <div class="view-all-bar">
+                                                <button class="view-all-btn"
+                                                    data-section={section.sObjectName}
+                                                    onclick={handleViewAll}>
+                                                    <span>{section.viewAllLabel}</span>
+                                                    <lightning-icon icon-name={section.viewAllIcon} size="xx-small" class="view-all-icon"></lightning-icon>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <div class="section-empty">
+                                            <lightning-icon icon-name="utility:check" size="small" class="empty-icon"></lightning-icon>
+                                            <span class="empty-text">All clear! No {section.label} right now.</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Empty State (no sections at all) -->
+                <template lwc:if={hasNoRecordsAtAll}>
+                    <div class="empty-state-global">
+                        <div class="empty-state-content">
+                            <lightning-icon icon-name="utility:sentiment_positive" size="large" class="empty-state-icon"></lightning-icon>
+                            <h3 class="empty-state-title">All caught up!</h3>
+                            <p class="empty-state-desc">{emptyStateText}</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Pagination (Leads tab) -->
+                <template lwc:if={showPagination}>
+                    <div class="pagination-bar">
+                        <button class="pagination-btn" onclick={handleFirst} disabled={isFirstPage}>
+                            <lightning-icon icon-name="utility:jump_to_left" size="xx-small"></lightning-icon>
+                        </button>
+                        <button class="pagination-btn" onclick={handlePrevious} disabled={isFirstPage}>
+                            <lightning-icon icon-name="utility:chevronleft" size="xx-small"></lightning-icon>
+                        </button>
+                        <span class="pagination-info">{pageInfo}</span>
+                        <button class="pagination-btn" onclick={handleNext} disabled={isLastPage}>
+                            <lightning-icon icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                        </button>
+                        <button class="pagination-btn" onclick={handleLast} disabled={isLastPage}>
+                            <lightning-icon icon-name="utility:jump_to_right" size="xx-small"></lightning-icon>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <!-- ═══ STATUS CHANGE MODAL ═══ -->
+    <template lwc:if={showStatusModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open modal-dialog" aria-modal="true" aria-labelledby="modal-heading">
+            <div class="slds-modal__container modal-container">
+                <header class="modal-header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={closeStatusModal}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <lightning-icon icon-name="utility:change_record_type" size="small" class="modal-header-icon"></lightning-icon>
+                    <h2 id="modal-heading" class="modal-heading">{modalTitle}</h2>
+                </header>
+                <div class="slds-modal__content modal-body">
+                    <div class="modal-record-info">
+                        <span class="modal-record-label">Record:</span>
+                        <span class="modal-record-name">{modalRecordTitle}</span>
+                    </div>
+                    <template lwc:if={modalHasRequiredField}>
+                        <lightning-input
+                            label={modalRequiredFieldLabel}
+                            type={modalRequiredFieldType}
+                            value={modalAdditionalValue}
+                            onchange={handleModalFieldChange}
+                            required
+                            class="slds-m-top_small">
+                        </lightning-input>
+                    </template>
+                    <template lwc:if={modalHasRemarksField}>
+                        <lightning-textarea
+                            label="Remarks"
+                            value={modalRemarks}
+                            onchange={handleModalRemarksChange}
+                            placeholder="Enter your remarks or comments..."
+                            max-length="5000"
+                            required={modalRemarksRequired}
+                            class="slds-m-top_small">
+                        </lightning-textarea>
+                    </template>
+                    <!-- Follow-up fields (shown for Move to Follow-up transition) -->
+                    <template lwc:if={modalRequiresFollowUp}>
+                        <lightning-input
+                            label="Subject"
+                            value={followUpSubject}
+                            onchange={handleFollowUpSubjectChange}
+                            required
+                            class="slds-m-top_small">
+                        </lightning-input>
+                        <lightning-input
+                            label="Due Date"
+                            type="datetime-local"
+                            value={followUpDueDate}
+                            onchange={handleFollowUpDueDateChange}
+                            required
+                            class="slds-m-top_small">
+                        </lightning-input>
+                        <lightning-textarea
+                            label="Notes"
+                            value={followUpNotes}
+                            onchange={handleFollowUpNotesChange}
+                            placeholder="Enter follow-up notes..."
+                            max-length="5000"
+                            class="slds-m-top_small">
+                        </lightning-textarea>
+                    </template>
+                </div>
+                <footer class="modal-footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={closeStatusModal}
+                        disabled={isProcessing}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Confirm"
+                        variant={modalConfirmVariant}
+                        onclick={confirmStatusChange}
+                        disabled={isProcessing}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open modal-backdrop"></div>
+    </template>
+</template>

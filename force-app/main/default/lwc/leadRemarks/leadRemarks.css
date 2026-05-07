@@ -1,0 +1,38 @@
+.note-header {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0070d2;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.note-container {
+    word-wrap: break-word;
+    overflow: hidden;
+    padding: 10px 0;
+}
+
+.note-item {
+    text-align: left;
+    padding: 12px 15px;
+    background: #f4f6f9;
+    border: 1px solid #dddbda;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.remark-textarea {
+    width: 100%;
+}
+
+@media only screen and (max-width: 768px) {
+    .note-item {
+        font-size: 14px;
+    }
+}

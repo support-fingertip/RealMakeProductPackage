@@ -1,0 +1,225 @@
+<template>
+    <lightning-card icon-name="standard:lead" title="Lead Activity and History">
+        <!-- Refresh Button -->
+        <div slot="actions">
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh"
+                title="Refresh"
+                onclick={handleRefresh}>
+            </lightning-button-icon>
+        </div>
+
+        <div class="slds-var-p-around_medium">
+            <!-- Filter Dropdown -->
+            <div class="slds-var-m-bottom_medium">
+                <lightning-combobox
+                    name="filter"
+                    label="Filter"
+                    value={selectedFilter}
+                    options={filterOptions}
+                    onchange={handleFilterChange}>
+                </lightning-combobox>
+            </div>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner size="medium" alternative-text="Loading"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+
+                <!-- ════════════════════════════════════════════════════════
+                     OWNERSHIP HISTORY TABLE VIEW
+                     ════════════════════════════════════════════════════════ -->
+                <template if:true={isOwnershipView}>
+                    <template if:true={hasOwnershipRecords}>
+                        <div class="ownership-table-wrapper">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered ownership-table">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-text-title_caps">Lead</th>
+                                        <th scope="col" class="slds-text-title_caps">Owner</th>
+                                        <th scope="col" class="slds-text-title_caps">Status</th>
+                                        <th scope="col" class="slds-text-title_caps">History</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={ownershipRecords} for:item="row">
+                                        <tr key={row.key}>
+                                            <td data-label="Lead">{row.leadEvent}</td>
+                                            <td data-label="Owner">{row.ownerName}</td>
+                                            <td data-label="Status">{row.statusValue}</td>
+                                            <td data-label="History">{row.historyAction}</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+                    <template if:false={hasOwnershipRecords}>
+                        <div class="empty-state slds-text-align_center slds-text-color_weak slds-var-p-around_large">
+                            No ownership history found.
+                        </div>
+                    </template>
+                </template>
+
+                <!-- ════════════════════════════════════════════════════════
+                     DEFAULT TIMELINE VIEW (All / Field Updates / Calls / Activities)
+                     ════════════════════════════════════════════════════════ -->
+                <template if:false={isOwnershipView}>
+                    <!-- Records List -->
+                    <template if:true={hasRecords}>
+                        <div class="record-list">
+                            <template for:each={displayRecords} for:item="record">
+                                <div key={record.key} class="record-item slds-var-m-bottom_x-small">
+                                    <!-- Name and Date Header -->
+                                    <div class="record-meta">
+                                        <span><strong>Name: </strong>{record.createdByName}</span>
+                                        <span class="slds-var-m-left_medium">
+                                            <strong>Date: </strong>
+                                            <lightning-formatted-date-time
+                                                value={record.createdDate}
+                                                year="numeric"
+                                                month="short"
+                                                day="2-digit"
+                                                hour="2-digit"
+                                                minute="2-digit">
+                                            </lightning-formatted-date-time>
+                                        </span>
+                                    </div>
+
+                                    <!-- Field History: Created -->
+                                    <template if:true={record.isCreated}>
+                                        <div class="record-body">Lead is created.</div>
+                                    </template>
+
+                                    <!-- Field History: Field Update -->
+                                    <template if:true={record.isFieldUpdate}>
+                                        <div class="record-body">
+                                            {record.fieldLabel} has been updated
+                                            <template if:true={record.hasOldValue}>
+                                                &nbsp;from <strong>{record.oldValue}</strong>
+                                            </template>
+                                            &nbsp;to <strong>{record.newValue}</strong>.
+                                        </div>
+                                    </template>
+
+                                    <!-- Activity -->
+                                    <template if:true={record.isActivity}>
+                                        <div class="record-body">
+                                            <div>
+                                                <strong>Activity Subject: </strong>{record.subject}
+                                            </div>
+                                            <template if:true={record.description}>
+                                                <div class="slds-var-m-top_xx-small">
+                                                    <strong>Activity Description: </strong>{record.description}
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <!-- Call Detail -->
+                                    <template if:true={record.isCall}>
+                                        <div class="record-body">
+                                            <div class="call-details">
+                                                <template if:true={record.callType}>
+                                                    <span><strong>Call Type: </strong>{record.callType}</span>
+                                                </template>
+                                                <template if:true={record.callStatus}>
+                                                    <span class="slds-var-m-left_medium">
+                                                        <strong>Status: </strong>{record.callStatus}
+                                                    </span>
+                                                </template>
+                                            </div>
+                                            <div class="slds-var-m-top_xx-small">
+                                                <strong>Comments: </strong>
+                                                <template if:true={record.comments}>
+                                                    {record.comments}
+                                                </template>
+                                                <template if:false={record.comments}>
+                                                    N/A
+                                                </template>
+                                            </div>
+                                            <div class="slds-var-m-top_xx-small">
+                                                <strong>Recording: </strong>
+                                                <template if:true={record.callUrl}>
+                                                    <div class="audio-player-wrapper">
+                                                        <template if:true={record.isLoadingRecording}>
+                                                            <lightning-spinner size="small" alternative-text="Loading recording"></lightning-spinner>
+                                                        </template>
+                                                        <template if:true={record.showPlayButton}>
+                                                            <lightning-button-icon
+                                                                icon-name="utility:play"
+                                                                alternative-text="Play Recording"
+                                                                title="Play Recording"
+                                                                size="medium"
+                                                                data-record-id={record.recordId}
+                                                                data-url={record.callUrl}
+                                                                onclick={handlePlayRecording}>
+                                                            </lightning-button-icon>
+                                                        </template>
+                                                        <audio data-record-id={record.recordId}
+                                                            controls preload="none" class="audio-player"
+                                                            onended={handleAudioEnded}
+                                                            data-call-record-id={record.recordId}>
+                                                        </audio>
+                                                    </div>
+                                                </template>
+                                                <template if:false={record.callUrl}>
+                                                    N/A
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-bar slds-var-m-top_medium">
+                            <div class="slds-grid slds-grid_align-center slds-grid_vertical-align-center">
+                                <lightning-button
+                                    label="First"
+                                    onclick={handleFirst}
+                                    disabled={isFirstPage}
+                                    class="slds-var-m-right_xx-small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Previous"
+                                    onclick={handlePrevious}
+                                    disabled={isFirstPage}
+                                    class="slds-var-m-right_xx-small">
+                                </lightning-button>
+                                <span class="page-info slds-var-p-horizontal_small">
+                                    {pageInfo}
+                                </span>
+                                <lightning-button
+                                    label="Next"
+                                    onclick={handleNext}
+                                    disabled={isLastPage}
+                                    class="slds-var-m-left_xx-small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Last"
+                                    onclick={handleLast}
+                                    disabled={isLastPage}
+                                    class="slds-var-m-left_xx-small">
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- No Records -->
+                    <template if:false={hasRecords}>
+                        <div class="empty-state slds-text-align_center slds-text-color_weak slds-var-p-around_large">
+                            No records found.
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

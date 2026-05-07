@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Max_Score__c</fullName>
+    <description>Maximum score (inclusive) for this tier. A lead with score &gt;= Min_Score and &lt;= Max_Score falls into this tier.</description>
+    <externalId>false</externalId>
+    <label>Max Score</label>
+    <precision>8</precision>
+    <required>true</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

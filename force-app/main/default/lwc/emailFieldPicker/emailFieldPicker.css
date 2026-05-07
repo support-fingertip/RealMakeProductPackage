@@ -1,0 +1,44 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    position: relative;
+}
+
+.slds-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.slds-listbox__option:hover {
+    background-color: #f3f3f3;
+    cursor: pointer;
+}
+
+.field-label {
+    display: block;
+    font-weight: 500;
+}
+
+.field-api-name {
+    display: block;
+    font-size: 11px;
+    color: #706e6b;
+}
+
+.selected-value {
+    padding: 0 12px;
+    height: 32px;
+    border:  1px solid #dddbda;
+    border-radius: 4px;
+    background:  #f3f3f3;
+}
+
+.clear-btn {
+    flex-shrink: 0;
+}
+
+.slds-badge {
+    margin-left: 8px;
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Refund_Type__c</fullName>
+    <label>Refund Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cancellation Refund</fullName>
+                <default>false</default>
+                <label>Cancellation Refund</label>
+            </value>
+            <value>
+                <fullName>Overpayment Refund</fullName>
+                <default>false</default>
+                <label>Overpayment Refund</label>
+            </value>
+            <value>
+                <fullName>Adjustment Refund</fullName>
+                <default>false</default>
+                <label>Adjustment Refund</label>
+            </value>
+            <value>
+                <fullName>Advance Refund</fullName>
+                <default>false</default>
+                <label>Advance Refund</label>
+            </value>
+            <value>
+                <fullName>Swap Difference</fullName>
+                <default>false</default>
+                <label>Swap Difference</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

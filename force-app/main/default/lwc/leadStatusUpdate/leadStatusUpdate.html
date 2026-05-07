@@ -1,0 +1,180 @@
+<template>
+    <!-- Loading Spinner -->
+    <template if:true={isLoading}>
+        <div class="slds-p-around_medium slds-text-align_center">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <div class="slds-p-around_medium">
+            <!-- Lead Name -->
+            <div class="lead-name">{leadName}</div>
+
+            <!-- Status Picklist -->
+            <div class="form-field">
+                <lightning-combobox
+                    name="status"
+                    label="Lead Status"
+                    value={selectedStatus}
+                    options={statusOptions}
+                    onchange={handleStatusChange}
+                    required>
+                </lightning-combobox>
+            </div>
+
+            <!-- Lost Reason (conditional) -->
+            <template if:true={showLostReason}>
+                <div class="form-field">
+                    <lightning-combobox
+                        name="lostReason"
+                        label="Lost Reason"
+                        value={lostReason}
+                        options={lostReasonOptions}
+                        onchange={handleLostReasonChange}
+                        required>
+                    </lightning-combobox>
+                </div>
+            </template>
+
+            <!-- Target Project (for "Looking for other Project" flow) -->
+            <template if:true={showTargetProjectPicker}>
+                <div class="form-field">
+                    <lightning-record-picker
+                        label="Target Project"
+                        placeholder="Select the project the customer is interested in..."
+                        object-api-name="Project__c"
+                        value={targetProjectId}
+                        onchange={handleTargetProjectChange}
+                        required
+                        data-id="targetProjectPicker">
+                    </lightning-record-picker>
+                </div>
+            </template>
+
+            <!-- Remarks (conditional) -->
+            <template if:true={showRemarks}>
+                <div class="form-field">
+                    <lightning-textarea
+                        name="remarks"
+                        label="Remarks"
+                        value={remarks}
+                        onchange={handleRemarksChange}
+                        required
+                        max-length="5000">
+                    </lightning-textarea>
+                </div>
+            </template>
+
+            <!-- Site Visit Section (conditional) -->
+            <template if:true={showSiteVisitSection}>
+                <div class="section-header">{siteVisitSectionLabel}</div>
+
+                <div class="form-field">
+                    <lightning-input
+                        type="datetime-local"
+                        name="siteVisitDate"
+                        label="Scheduled Date"
+                        value={siteVisitScheduledDate}
+                        min={minDateTime}
+                        onchange={handleSiteVisitDateChange}
+                        required={isSiteVisitMandatory}>
+                    </lightning-input>
+                </div>
+
+                <div class="form-field">
+                    <lightning-record-picker
+                        label="Project"
+                        placeholder="Search for a project..."
+                        object-api-name="Project__c"
+                        value={siteVisitProjectId}
+                        onchange={handleProjectChange}
+                        required={isSiteVisitMandatory}
+                        disabled={isProjectPickerDisabled}
+                        data-id="projectPicker">
+                    </lightning-record-picker>
+                </div>
+
+                <div class="form-field">
+                    <lightning-combobox
+                        name="visitType"
+                        label="Mode Of Visit"
+                        value={siteVisitVisitType}
+                        options={visitTypeOptions}
+                        onchange={handleVisitTypeChange}
+                        required>
+                    </lightning-combobox>
+                </div>
+
+                <div class="form-field">
+                    <lightning-input
+                        type="checkbox"
+                        label="Need Pick Up Assistance"
+                        checked={siteVisitNeedPickUp}
+                        onchange={handleSiteVisitNeedPickUpChange}>
+                    </lightning-input>
+                </div>
+
+            </template>
+
+            <!-- Follow-Up Section (conditional) -->
+            <template if:true={showFollowUpSection}>
+                <div class="section-header">{followUpSectionLabel}</div>
+
+                <div class="form-field">
+                    <lightning-input
+                        type="datetime-local"
+                        name="followUpDueDate"
+                        label="Due Date"
+                        value={followUpDueDate}
+                        min={minDateTime}
+                        onchange={handleFollowUpDueDateChange}
+                        required={isFollowUpMandatory}>
+                    </lightning-input>
+                </div>
+
+                <div class="form-field">
+                    <lightning-input
+                        type="text"
+                        name="followUpSubject"
+                        label="Subject"
+                        value={followUpSubject}
+                        onchange={handleFollowUpSubjectChange}
+                        max-length="255"
+                        required={isFollowUpMandatory}>
+                    </lightning-input>
+                </div>
+
+                <div class="form-field">
+                    <lightning-textarea
+                        name="followUpNotes"
+                        label="Notes"
+                        value={followUpNotes}
+                        onchange={handleFollowUpNotesChange}
+                        max-length="5000"
+                        required={isFollowUpMandatory}>
+                    </lightning-textarea>
+                </div>
+            </template>
+
+            <!-- Footer Actions -->
+            <div class="footer-actions">
+                <lightning-button
+                    label="Cancel"
+                    onclick={handleClose}>
+                </lightning-button>
+                <lightning-button
+                    label="Save"
+                    variant="brand"
+                    onclick={handleSave}
+                    disabled={isSaveDisabled}>
+                </lightning-button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Submitting overlay -->
+    <template if:true={isSubmitting}>
+        <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+    </template>
+</template>

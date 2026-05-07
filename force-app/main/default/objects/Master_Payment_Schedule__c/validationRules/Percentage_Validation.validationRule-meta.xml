@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Percentage_Validation</fullName>
+    <active>true</active>
+    <errorConditionFormula>OR(
+    Percentage__c &lt; 0,
+    Percentage__c &gt; 100
+)</errorConditionFormula>
+    <errorMessage>Percentage must be between 0 and 100.</errorMessage>
+</ValidationRule>

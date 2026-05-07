@@ -1,0 +1,63 @@
+<template>
+    <lightning-button
+        label={buttonLabel}
+        variant={buttonVariant}
+        icon-name={buttonIcon}
+        onclick={handleButtonClick}>
+    </lightning-button>
+
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- Configuration Selection Modal -->
+    <template if:true={showConfigModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCloseConfigModal}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-text-heading_medium">Select a Form</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <template for:each={availableConfigs} for:item="config">
+                            <div key={config.id} class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                <article class="slds-card config-card"
+                                         data-id={config.id}
+                                         onclick={handleConfigSelect}>
+                                    <div class="slds-card__body slds-card__body_inner">
+                                        <h3 class="slds-text-heading_small">{config.name}</h3>
+                                        <template if:true={config.description}>
+                                            <p class="slds-text-color_weak slds-m-top_xx-small">{config.description}</p>
+                                        </template>
+                                    </div>
+                                </article>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCloseConfigModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Dynamic Form Modal -->
+    <template if:true={showFormModal}>
+        <c-dynamic-form-modal
+            config={selectedConfig}
+            object-api-name={targetObjectApiName}
+            clone-record-id={cloneRecordId}
+            onclose={handleCloseFormModal}
+            onsuccess={handleFormSuccess}>
+        </c-dynamic-form-modal>
+    </template>
+</template>

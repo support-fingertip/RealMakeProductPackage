@@ -1,0 +1,525 @@
+<template>
+    <lightning-card title="Lead Scoring Designer" icon-name="custom:custom18">
+
+        <!-- LOADING SPINNER -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <!-- SAVE ALL BUTTON -->
+        <div slot="actions">
+            <lightning-button
+                label="Save All"
+                variant="brand"
+                icon-name="utility:save"
+                onclick={handleSaveAll}
+                disabled={isLoading}>
+            </lightning-button>
+        </div>
+
+        <!-- 3-PANEL LAYOUT -->
+        <div class="designer-container slds-grid slds-wrap">
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- LEFT PANEL: Lead Fields                     -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 panel-left">
+                <div class="panel-header">
+                    <h2 class="slds-text-heading_small slds-m-bottom_x-small">Lead Fields</h2>
+                    <lightning-input
+                        type="search"
+                        placeholder="Search fields..."
+                        value={fieldSearch}
+                        onchange={handleFieldSearch}
+                        variant="label-hidden">
+                    </lightning-input>
+                </div>
+                <div class="field-list">
+                    <template for:each={filteredFields} for:item="field">
+                        <div key={field.apiName}
+                             class="field-item slds-box slds-box_x-small slds-m-bottom_xx-small"
+                             data-apiname={field.apiName}
+                             onclick={handleFieldClick}>
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <div class="slds-col slds-grow">
+                                    <span class="field-label">{field.label}</span>
+                                    <span class="field-api slds-text-body_small slds-text-color_weak">{field.apiName}</span>
+                                </div>
+                                <div class="slds-col slds-shrink">
+                                    <template if:true={field.isPicklist}>
+                                        <lightning-badge label="Picklist" class="badge-picklist"></lightning-badge>
+                                    </template>
+                                    <template if:true={field.isLookup}>
+                                        <lightning-badge label="Lookup" class="badge-lookup"></lightning-badge>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- CENTER PANEL: Rules & Tiers (Tabbed)       -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12 panel-center">
+
+                <!-- TABS -->
+                <div class="slds-tabs_default">
+                    <ul class="slds-tabs_default__nav">
+                        <li class={rulesTabClass} data-tab="rules" onclick={handleTabClick}>
+                            <a class="slds-tabs_default__link" data-tab="rules" onclick={handleTabClick}>
+                                Scoring Rules ({totalRules})
+                            </a>
+                        </li>
+                        <li class={tiersTabClass} data-tab="tiers" onclick={handleTabClick}>
+                            <a class="slds-tabs_default__link" data-tab="tiers" onclick={handleTabClick}>
+                                Score Tiers ({tiers.length})
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- RULES TAB CONTENT -->
+                    <template if:true={isRulesTab}>
+                        <div class="slds-tabs_default__content slds-show">
+
+                            <!-- Stats bar -->
+                            <div class="slds-grid slds-grid_align-spread slds-m-bottom_small stats-bar">
+                                <div>
+                                    <lightning-badge label={activeRuleCount} class="slds-m-right_xx-small"></lightning-badge>
+                                    <span class="slds-text-body_small"> active rules</span>
+                                </div>
+                                <lightning-button
+                                    label="New Rule"
+                                    variant="neutral"
+                                    icon-name="utility:add"
+                                    onclick={handleNewRule}>
+                                </lightning-button>
+                            </div>
+
+                            <!-- Rule Form Modal -->
+                            <template if:true={showRuleForm}>
+                                <section class="slds-modal slds-fade-in-open slds-modal_medium">
+                                    <div class="slds-modal__container">
+                                        <header class="slds-modal__header">
+                                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                                    onclick={handleCancelRule}>
+                                                <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                                            </button>
+                                            <h2 class="slds-text-heading_medium">{ruleFormTitle}</h2>
+                                        </header>
+                                        <div class="slds-modal__content slds-p-around_medium">
+
+                                            <!-- Rule Type -->
+                                            <lightning-radio-group
+                                                label="Rule Type"
+                                                options={ruleTypeOptions}
+                                                value={ruleForm.Rule_Type__c}
+                                                type="button"
+                                                onchange={handleRuleTypeChange}
+                                                class="slds-m-bottom_small">
+                                            </lightning-radio-group>
+
+                                            <!-- Field Rule Fields -->
+                                            <template if:true={isFieldRule}>
+                                                <lightning-combobox
+                                                    label="Lead Field"
+                                                    value={ruleForm.Field_API_Name__c}
+                                                    options={fieldOptions}
+                                                    onchange={handleRuleFieldChange}
+                                                    placeholder="Select a field..."
+                                                    class="slds-m-bottom_small">
+                                                </lightning-combobox>
+
+                                                <lightning-combobox
+                                                    label="Operator"
+                                                    value={ruleForm.Operator__c}
+                                                    options={operatorOptions}
+                                                    data-field="Operator__c"
+                                                    onchange={handleRuleInputChange}
+                                                    class="slds-m-bottom_small">
+                                                </lightning-combobox>
+
+                                                <!-- Picklist values or text input -->
+                                                <template if:true={hasPicklistValues}>
+                                                    <lightning-combobox
+                                                        label="Field Value"
+                                                        value={ruleForm.Field_Value__c}
+                                                        options={picklistValues}
+                                                        data-field="Field_Value__c"
+                                                        onchange={handleRuleInputChange}
+                                                        placeholder="Select a value..."
+                                                        class="slds-m-bottom_small">
+                                                    </lightning-combobox>
+                                                </template>
+                                                <template if:false={hasPicklistValues}>
+                                                    <lightning-input
+                                                        label="Field Value"
+                                                        value={ruleForm.Field_Value__c}
+                                                        data-field="Field_Value__c"
+                                                        onchange={handleRuleInputChange}
+                                                        class="slds-m-bottom_small">
+                                                    </lightning-input>
+                                                </template>
+                                            </template>
+
+                                            <!-- Count Rule Fields -->
+                                            <template if:true={isCountRule}>
+                                                <!-- 1. Object -->
+                                                <lightning-combobox
+                                                    label="Related Object"
+                                                    value={ruleForm.Related_Object__c}
+                                                    options={relatedObjectOptions}
+                                                    onchange={handleRelatedObjectChange}
+                                                    placeholder="Select related object..."
+                                                    class="slds-m-bottom_small">
+                                                </lightning-combobox>
+
+                                                <!-- 2. Field -->
+                                                <lightning-combobox
+                                                    label="Filter Field"
+                                                    value={ruleForm.Filter_Field__c}
+                                                    options={filterFieldOptions}
+                                                    onchange={handleFilterFieldChange}
+                                                    placeholder="Select field to filter by..."
+                                                    class="slds-m-bottom_small">
+                                                </lightning-combobox>
+
+                                                <!-- 3. Operator -->
+                                                <lightning-combobox
+                                                    label="Operator"
+                                                    value={ruleForm.Operator__c}
+                                                    options={operatorOptions}
+                                                    data-field="Operator__c"
+                                                    onchange={handleRuleInputChange}
+                                                    class="slds-m-bottom_small">
+                                                </lightning-combobox>
+
+                                                <!-- 4. Value (picklist/lookup combobox or text input) -->
+                                                <template if:true={hasFilterField}>
+                                                    <template if:true={hasFilterPicklistValues}>
+                                                        <lightning-combobox
+                                                            label="Filter Value"
+                                                            value={ruleForm.Filter_Value__c}
+                                                            options={filterPicklistValues}
+                                                            data-field="Filter_Value__c"
+                                                            onchange={handleRuleInputChange}
+                                                            placeholder="Select a value..."
+                                                            class="slds-m-bottom_small">
+                                                        </lightning-combobox>
+                                                    </template>
+                                                    <template if:false={hasFilterPicklistValues}>
+                                                        <lightning-input
+                                                            label="Filter Value"
+                                                            value={ruleForm.Filter_Value__c}
+                                                            data-field="Filter_Value__c"
+                                                            onchange={handleRuleInputChange}
+                                                            placeholder="Enter filter value..."
+                                                            class="slds-m-bottom_small">
+                                                        </lightning-input>
+                                                    </template>
+                                                </template>
+
+                                                <!-- 5. Count Threshold -->
+                                                <lightning-input
+                                                    label="Count Threshold"
+                                                    type="number"
+                                                    value={ruleForm.Count_Threshold__c}
+                                                    data-field="Count_Threshold__c"
+                                                    onchange={handleRuleInputChange}
+                                                    min="0"
+                                                    class="slds-m-bottom_small">
+                                                </lightning-input>
+                                            </template>
+
+                                            <!-- Common fields -->
+                                            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-input
+                                                        label="Points"
+                                                        type="number"
+                                                        value={ruleForm.Points__c}
+                                                        data-field="Points__c"
+                                                        onchange={handleRuleInputChange}>
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-combobox
+                                                        label="Category"
+                                                        value={ruleForm.Category__c}
+                                                        options={categoryOptions}
+                                                        data-field="Category__c"
+                                                        onchange={handleRuleInputChange}>
+                                                    </lightning-combobox>
+                                                </div>
+                                            </div>
+
+                                            <lightning-input
+                                                type="toggle"
+                                                label="Active"
+                                                checked={ruleForm.Is_Active__c}
+                                                data-field="Is_Active__c"
+                                                onchange={handleRuleInputChange}
+                                                class="slds-m-bottom_small">
+                                            </lightning-input>
+
+                                        </div>
+                                        <footer class="slds-modal__footer">
+                                            <lightning-button label="Cancel" onclick={handleCancelRule} class="slds-m-right_x-small"></lightning-button>
+                                            <lightning-button label="Save Rule" variant="brand" onclick={handleSaveRule}></lightning-button>
+                                        </footer>
+                                    </div>
+                                </section>
+                                <div class="slds-backdrop slds-backdrop_open"></div>
+                            </template>
+
+                            <!-- Rules List -->
+                            <div class="rules-list">
+                                <template for:each={displayRules} for:item="rule">
+                                    <div key={rule._key} class="rule-card slds-box slds-box_x-small slds-m-bottom_x-small">
+                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                            <div class="slds-col slds-grow">
+                                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                                    <lightning-badge label={rule.categoryBadge} class="slds-m-right_xx-small"></lightning-badge>
+                                                    <lightning-badge label={rule.statusBadge} variant={rule.statusVariant} class="slds-m-right_xx-small"></lightning-badge>
+                                                    <span class={rule.pointsClass}>{rule.pointsDisplay}</span>
+                                                </div>
+                                                <p class="rule-description slds-text-body_small">{rule.ruleDescription}</p>
+                                            </div>
+                                            <div class="slds-col slds-shrink rule-actions">
+                                                <lightning-button-icon
+                                                    icon-name="utility:edit"
+                                                    alternative-text="Edit"
+                                                    data-index={rule.index}
+                                                    onclick={handleEditRule}
+                                                    class="slds-m-right_xx-small">
+                                                </lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name={rule.toggleIconName}
+                                                    alternative-text="Toggle Active"
+                                                    data-index={rule.index}
+                                                    onclick={handleToggleRuleActive}
+                                                    class="slds-m-right_xx-small">
+                                                </lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Delete"
+                                                    variant="bare"
+                                                    data-index={rule.index}
+                                                    onclick={handleDeleteRule}>
+                                                </lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template if:false={totalRules}>
+                                    <div class="slds-align_absolute-center slds-p-around_large slds-text-color_weak">
+                                        <p>No scoring rules configured yet. Click a field on the left or use "New Rule" to create one.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TIERS TAB CONTENT -->
+                    <template if:true={isTiersTab}>
+                        <div class="slds-tabs_default__content slds-show">
+
+                            <div class="slds-grid slds-grid_align-end slds-m-bottom_small">
+                                <lightning-button
+                                    label="New Tier"
+                                    variant="neutral"
+                                    icon-name="utility:add"
+                                    onclick={handleNewTier}>
+                                </lightning-button>
+                            </div>
+
+                            <!-- Tier Form Modal -->
+                            <template if:true={showTierForm}>
+                                <section class="slds-modal slds-fade-in-open slds-modal_small">
+                                    <div class="slds-modal__container">
+                                        <header class="slds-modal__header">
+                                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                                    onclick={handleCancelTier}>
+                                                <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                                            </button>
+                                            <h2 class="slds-text-heading_medium">{tierFormTitle}</h2>
+                                        </header>
+                                        <div class="slds-modal__content slds-p-around_medium">
+                                            <lightning-input
+                                                label="Tier Name"
+                                                value={tierForm.Name}
+                                                data-field="Name"
+                                                onchange={handleTierInputChange}
+                                                placeholder="e.g. Hot, Warm, Cool, Cold"
+                                                required
+                                                class="slds-m-bottom_small">
+                                            </lightning-input>
+
+                                            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-input
+                                                        label="Min Score"
+                                                        type="number"
+                                                        value={tierForm.Min_Score__c}
+                                                        data-field="Min_Score__c"
+                                                        onchange={handleTierInputChange}
+                                                        required>
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-input
+                                                        label="Max Score"
+                                                        type="number"
+                                                        value={tierForm.Max_Score__c}
+                                                        data-field="Max_Score__c"
+                                                        onchange={handleTierInputChange}
+                                                        required>
+                                                    </lightning-input>
+                                                </div>
+                                            </div>
+
+                                            <lightning-input
+                                                label="Badge Color"
+                                                type="color"
+                                                value={tierForm.Color__c}
+                                                data-field="Color__c"
+                                                onchange={handleTierInputChange}
+                                                class="slds-m-bottom_small">
+                                            </lightning-input>
+                                        </div>
+                                        <footer class="slds-modal__footer">
+                                            <lightning-button label="Cancel" onclick={handleCancelTier} class="slds-m-right_x-small"></lightning-button>
+                                            <lightning-button label="Save Tier" variant="brand" onclick={handleSaveTier}></lightning-button>
+                                        </footer>
+                                    </div>
+                                </section>
+                                <div class="slds-backdrop slds-backdrop_open"></div>
+                            </template>
+
+                            <!-- Tiers List -->
+                            <div class="tiers-list">
+                                <template for:each={displayTiers} for:item="tier">
+                                    <div key={tier._key} class="tier-card slds-box slds-box_x-small slds-m-bottom_x-small">
+                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                            <div class="slds-col slds-grow">
+                                                <div class="slds-grid slds-grid_vertical-align-center">
+                                                    <span style={tier.badgeStyle}>{tier.Name}</span>
+                                                    <span class="slds-m-left_small slds-text-body_regular tier-range">{tier.rangeDisplay} pts</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-shrink tier-actions">
+                                                <lightning-button-icon
+                                                    icon-name="utility:edit"
+                                                    alternative-text="Edit"
+                                                    data-index={tier.index}
+                                                    onclick={handleEditTier}
+                                                    class="slds-m-right_xx-small">
+                                                </lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Delete"
+                                                    variant="bare"
+                                                    data-index={tier.index}
+                                                    onclick={handleDeleteTier}>
+                                                </lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template if:false={tiers.length}>
+                                    <div class="slds-align_absolute-center slds-p-around_large slds-text-color_weak">
+                                        <p>No tiers configured yet. Click "New Tier" to define score ranges.</p>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Visual Score Bar -->
+                            <template if:true={tiers.length}>
+                                <div class="score-bar-container slds-m-top_medium">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Score Range Overview</h3>
+                                    <div class="score-bar slds-grid">
+                                        <template for:each={displayTiers} for:item="tier">
+                                            <div key={tier._key} class="score-segment" style={tier.badgeStyle}>
+                                                <span class="segment-label">{tier.Name}</span>
+                                                <span class="segment-range">{tier.rangeDisplay}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- RIGHT PANEL: Summary / Quick Stats          -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 panel-right">
+                <div class="panel-header">
+                    <h2 class="slds-text-heading_small">Summary</h2>
+                </div>
+
+                <!-- Max Score Setting -->
+                <div class="slds-m-bottom_small slds-p-horizontal_small">
+                    <lightning-input type="number" label="Max Score"
+                        value={maxScore} onchange={handleMaxScoreChange}
+                        min="1" step="1" variant="label-stacked">
+                    </lightning-input>
+                </div>
+
+                <div class="summary-section slds-m-bottom_small">
+                    <div class="summary-item slds-box slds-box_x-small slds-m-bottom_xx-small">
+                        <span class="summary-label">Total Rules</span>
+                        <span class="summary-value">{totalRules}</span>
+                    </div>
+                    <div class="summary-item slds-box slds-box_x-small slds-m-bottom_xx-small">
+                        <span class="summary-label">Active Rules</span>
+                        <span class="summary-value">{activeRuleCount}</span>
+                    </div>
+                    <div class="summary-item slds-box slds-box_x-small slds-m-bottom_xx-small">
+                        <span class="summary-label">Points Budget</span>
+                        <span class={pointsBudgetClass}>{totalConfiguredPoints} / {maxScore}</span>
+                    </div>
+                    <div class="summary-item slds-box slds-box_x-small slds-m-bottom_xx-small">
+                        <span class="summary-label">Remaining</span>
+                        <span class={pointsBudgetClass}>{remainingPoints} pts</span>
+                    </div>
+                    <div class="summary-item slds-box slds-box_x-small slds-m-bottom_xx-small">
+                        <span class="summary-label">Score Tiers</span>
+                        <span class="summary-value">{tiers.length}</span>
+                    </div>
+                </div>
+
+                <!-- Tier Preview -->
+                <template if:true={tiers.length}>
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Tier Preview</h3>
+                    <template for:each={displayTiers} for:item="tier">
+                        <div key={tier._key} class="tier-preview slds-m-bottom_xx-small">
+                            <span style={tier.badgeStyle}>{tier.Name}</span>
+                            <span class="slds-text-body_small slds-m-left_x-small">{tier.rangeDisplay}</span>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Score Gaps Warning -->
+                <template if:true={hasGaps}>
+                    <h3 class="slds-text-heading_small slds-m-top_small slds-m-bottom_x-small slds-text-color_error">Score Gaps</h3>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+                        Leads scoring in these ranges will have no tier assigned:
+                    </p>
+                    <template for:each={tierGaps} for:item="gap">
+                        <div key={gap.key} class="gap-indicator slds-box slds-box_x-small slds-m-bottom_xx-small">
+                            <span class="slds-text-color_error">{gap.label}</span>
+                            <span class="slds-text-body_small slds-text-color_weak"> (uncovered)</span>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CS_Executive__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Default complaint owner</description>
+    <label>CS Executive</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>CS Executive Projects</relationshipLabel>
+    <relationshipName>CS_Executive_Projects</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

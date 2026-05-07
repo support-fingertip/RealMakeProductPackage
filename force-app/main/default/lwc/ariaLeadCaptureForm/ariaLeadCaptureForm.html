@@ -1,0 +1,123 @@
+<template>
+    <div class="aria-form-backdrop" onclick={handleBackdropClick}>
+        <div class="aria-form-card" role="dialog" aria-label="Create Lead">
+            <div class="aria-form-header">
+                <h3>Create New Lead</h3>
+                <button class="aria-form-close" onclick={handleCancel} title="Close">×</button>
+            </div>
+
+            <div class="aria-form-body">
+                <p class="aria-form-hint">Pick from the lists below — only name, mobile and email are typed.</p>
+
+                <template lwc:if={errorMessage}>
+                    <div class="aria-form-error">{errorMessage}</div>
+                </template>
+
+                <lightning-combobox
+                    label="State"
+                    value={form.state}
+                    placeholder="Select state"
+                    options={stateOptions}
+                    onchange={handleStateChange}
+                    required>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    label="Project"
+                    value={form.projectId}
+                    placeholder={projectPlaceholder}
+                    options={projectOptions}
+                    onchange={handleProjectChange}
+                    disabled={isProjectDisabled}
+                    required>
+                </lightning-combobox>
+
+                <template lwc:if={hasProjectInfo}>
+                    <div class="aria-form-project-info">
+                        <template for:each={projectInfoLines} for:item="line">
+                            <span key={line.id} class="aria-form-project-info-pill">{line.text}</span>
+                        </template>
+                    </div>
+                </template>
+
+                <lightning-combobox
+                    label="BHK Type"
+                    value={form.bhk}
+                    placeholder="Select BHK"
+                    options={bhkOptions}
+                    onchange={handleBhkChange}
+                    disabled={isBhkDisabled}>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    label="Budget"
+                    value={form.budget}
+                    placeholder="Select budget range"
+                    options={budgetOptions}
+                    onchange={handleBudgetChange}>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    label="Purpose"
+                    value={form.purpose}
+                    placeholder="Self-use or Investment"
+                    options={purposeOptions}
+                    onchange={handlePurposeChange}>
+                </lightning-combobox>
+
+                <lightning-combobox
+                    label="Timeline"
+                    value={form.timeline}
+                    placeholder="When do you want to move in?"
+                    options={timelineOptions}
+                    onchange={handleTimelineChange}>
+                </lightning-combobox>
+
+                <div class="aria-form-row">
+                    <lightning-input
+                        label="First Name"
+                        value={form.firstName}
+                        onchange={handleFirstNameChange}
+                        type="text">
+                    </lightning-input>
+                    <lightning-input
+                        label="Last Name"
+                        value={form.lastName}
+                        onchange={handleLastNameChange}
+                        type="text">
+                    </lightning-input>
+                </div>
+
+                <lightning-input
+                    label="Mobile (10 digits)"
+                    value={form.mobile}
+                    onchange={handleMobileChange}
+                    type="tel"
+                    pattern="[0-9]{10,}"
+                    message-when-pattern-mismatch="Enter at least 10 digits"
+                    required>
+                </lightning-input>
+
+                <lightning-input
+                    label="Email"
+                    value={form.email}
+                    onchange={handleEmailChange}
+                    type="email">
+                </lightning-input>
+            </div>
+
+            <div class="aria-form-actions">
+                <template lwc:if={submitHelpText}>
+                    <span class="aria-form-help">{submitHelpText}</span>
+                </template>
+                <button class="aria-btn aria-btn--secondary" onclick={handleCancel} disabled={isSubmitting}>
+                    Cancel
+                </button>
+                <button class="aria-btn aria-btn--primary" onclick={handleSubmit} disabled={isSubmitDisabled}>
+                    <template lwc:if={isSubmitting}>Creating…</template>
+                    <template lwc:else>Create Lead</template>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>

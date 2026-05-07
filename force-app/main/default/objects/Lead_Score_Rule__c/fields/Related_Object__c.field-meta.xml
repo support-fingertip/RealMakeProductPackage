@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Related_Object__c</fullName>
+    <description>API name of the child object to count (e.g. Site_Visit__c, Enquiry_Source__c). Used for Count-type rules only.</description>
+    <externalId>false</externalId>
+    <label>Related Object</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

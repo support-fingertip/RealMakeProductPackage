@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>completed_date_and_remarks_mandatory</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+    ISPICKVAL(Status__c, &quot;Completed&quot;),
+    OR(
+        ISBLANK(Completed_Date__c),
+        ISBLANK(Feedback__c)
+    )
+)</errorConditionFormula>
+    <errorMessage>Completed Date and Feedback are required when Status is Completed.</errorMessage>
+</ValidationRule>

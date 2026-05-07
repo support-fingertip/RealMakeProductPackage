@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Callback_URL__c</fullName>
+    <description>URL to send callback notifications to after async integration processing completes.</description>
+    <inlineHelpText>For async or batch integrations, this URL receives a POST callback with the processing result.</inlineHelpText>
+    <label>Callback URL</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Url</type>
+</CustomField>

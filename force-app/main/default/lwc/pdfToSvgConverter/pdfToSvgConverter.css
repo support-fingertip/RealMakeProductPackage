@@ -1,0 +1,77 @@
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed #d8dde6;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-zone:hover {
+    border-color: #0070d2;
+    background-color: #f4f6f9;
+}
+
+.upload-zone-active {
+    border: 2px dashed #0070d2;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    cursor: pointer;
+    background-color: #eef4ff;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-zone-loaded {
+    border: 2px solid #4bca81;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    position: relative;
+    min-height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0faf5;
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* SVG Preview */
+.svg-preview-container {
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    background-color: #ffffff;
+    overflow: auto;
+    max-height: 600px;
+    min-height: 200px;
+    padding: 1rem;
+}
+
+.svg-preview-container svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Page Indicator */
+.page-indicator {
+    font-weight: 600;
+    color: #3e3e3c;
+}

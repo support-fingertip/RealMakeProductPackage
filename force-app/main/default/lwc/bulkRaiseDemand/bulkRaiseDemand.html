@@ -1,0 +1,374 @@
+<template>
+    <!-- Launch Section -->
+    <lightning-card>
+        <div class="launch-section">
+            <div class="launch-content">
+                <lightning-icon icon-name="utility:moneybag" size="medium"></lightning-icon>
+                <div class="launch-text">
+                    <h2 class="launch-title">Bulk Raise Demand</h2>
+                    <p class="launch-subtitle">Create payment demands for multiple bookings at once</p>
+                </div>
+            </div>
+            <lightning-button label="Raise Bulk Demand" variant="brand"
+                            icon-name="utility:new" onclick={handleLaunch}
+                            disabled={launchDisabled}></lightning-button>
+        </div>
+
+        <!-- Project Selector (shown when no recordId, e.g. from Tab) -->
+        <template if:true={showProjectSelector}>
+            <div class="project-selector">
+                <lightning-combobox label="Select Project" value={selectedProjectId}
+                    options={projectOptions} onchange={handleProjectSelect}
+                    placeholder="Choose a project..." class="project-combo">
+                </lightning-combobox>
+            </div>
+        </template>
+    </lightning-card>
+
+    <!-- Modal -->
+    <template if:true={showModal}>
+        <div class="modal-container">
+            <section class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container custom-modal-container">
+
+                    <!-- Header -->
+                    <header class="slds-modal__header custom-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close custom-close-btn"
+                                title="Close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" variant="inverse" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-text-heading_medium">
+                            <lightning-icon icon-name="utility:moneybag" variant="inverse" size="small"></lightning-icon>
+                            Bulk Raise Demand - {projectContext.projectName}
+                        </h2>
+                    </header>
+
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <template for:each={stepIndicator} for:item="step">
+                            <div key={step.number} class={step.cssClass}>
+                                <div class="step-circle">
+                                    <template if:true={step.isComplete}>
+                                        <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
+                                    </template>
+                                    <template if:false={step.isComplete}>
+                                        {step.number}
+                                    </template>
+                                </div>
+                                <span class="step-label">{step.label}</span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="slds-modal__content slds-p-around_medium custom-modal-content">
+
+                        <!-- Loading -->
+                        <template if:true={isLoading}>
+                            <div class="loading-container">
+                                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <template if:false={isLoading}>
+
+                            <!-- STEP 2: Master Payment Schedule Selection -->
+                            <template if:true={isStep2}>
+                                <h3 class="custom-section-title">
+                                    <lightning-icon icon-name="utility:checkin" size="x-small"></lightning-icon>
+                                    Select Milestone to Raise Demand
+                                </h3>
+                                <p class="section-desc">Select the milestone up to which you want to raise demand. All pending schedules from milestone 1 to the selected one will be included.</p>
+                                <template if:true={hasMilestones}>
+                                    <div class="milestone-list">
+                                        <template for:each={milestones} for:item="ms">
+                                            <div key={ms.id} class={ms.cardClass}
+                                                 data-id={ms.id} onclick={handleMilestoneSelect}>
+                                                <div class="ms-left">
+                                                    <div class={ms.radioClass}></div>
+                                                </div>
+                                                <div class="ms-center">
+                                                    <div class="ms-name-row">
+                                                        <span class="ms-seq">#{ms.sequence}</span>
+                                                        <span class="ms-name">{ms.paymentType}</span>
+                                                        <template if:true={ms.isCompleted}>
+                                                            <span class="ms-badge ms-badge-completed">Completed</span>
+                                                        </template>
+                                                        <template if:true={ms.demandAlreadyRaised}>
+                                                            <span class="ms-badge ms-badge-raised">Demand Raised</span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="ms-details">
+                                                        <span>{ms.percentage}% (Cumulative: {ms.cumulativePercentage}%)</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ms-right">
+                                                    <span class="ms-pct">{ms.percentage}%</span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasMilestones}>
+                                    <div class="empty-state">
+                                        <lightning-icon icon-name="utility:info" size="large"></lightning-icon>
+                                        <h3>No Milestones</h3>
+                                        <p>No master payment schedules found for this project.</p>
+                                    </div>
+                                </template>
+
+                                <!-- Milestone selection footer handled by modal footer -->
+                            </template>
+
+                            <!-- STEP 3: Booking Selection Table -->
+                            <template if:true={isStep3}>
+                                <h3 class="custom-section-title">
+                                    <lightning-icon icon-name="utility:table" size="x-small"></lightning-icon>
+                                    Select Bookings for Demand
+                                </h3>
+
+                                <!-- Summary Bar -->
+                                <div class="summary-bar">
+                                    <div class="summary-item">
+                                        <span class="summary-label">Selected</span>
+                                        <span class="summary-value">{selectedCount} bookings</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Total Pending</span>
+                                        <span class="summary-value pending-text">{formattedTotalDemand}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Total Interest</span>
+                                        <span class="summary-value interest-text">{formattedTotalInterest}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Net Amount</span>
+                                        <span class="summary-value amount-total">{formattedTotalNet}</span>
+                                    </div>
+                                </div>
+
+                                <div class="custom-table-wrapper">
+                                    <table class="slds-table slds-table_bordered custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="custom-th" style="width:40px;">
+                                                    <lightning-input type="checkbox" checked={selectAll}
+                                                        onchange={handleSelectAll} variant="label-hidden"
+                                                        label="Select All"></lightning-input>
+                                                </th>
+                                                <th class="custom-th">Booking</th>
+                                                <th class="custom-th">Unit</th>
+                                                <th class="custom-th">Applicant</th>
+                                                <th class="custom-th slds-text-align_right">Previous Dues</th>
+                                                <th class="custom-th slds-text-align_right">Current Milestone</th>
+                                                <th class="custom-th slds-text-align_right">Total Pending</th>
+                                                <th class="custom-th slds-text-align_right">Interest</th>
+                                                <th class="custom-th slds-text-align_right">Net Demand</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={bookings} for:item="booking">
+                                                <tr key={booking.bookingId}>
+                                                    <td>
+                                                        <lightning-input type="checkbox" checked={booking.isSelected}
+                                                            data-id={booking.bookingId} onchange={handleBookingSelect}
+                                                            variant="label-hidden" label="Select"></lightning-input>
+                                                    </td>
+                                                    <td><strong>{booking.bookingName}</strong></td>
+                                                    <td>{booking.unitName}</td>
+                                                    <td>{booking.applicantName}</td>
+                                                    <td class="slds-text-align_right">{booking.formattedPreviousAmount}</td>
+                                                    <td class="slds-text-align_right">{booking.formattedCurrentAmount}</td>
+                                                    <td class="slds-text-align_right pending-text">{booking.formattedPending}</td>
+                                                    <td class="slds-text-align_right interest-text">{booking.formattedInterest}</td>
+                                                    <td class="slds-text-align_right amount-text"><strong>{booking.formattedNet}</strong></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+
+                            <!-- STEP 4: Review & Configure -->
+                            <template if:true={isStep4}>
+                                <h3 class="custom-section-title">
+                                    <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                                    Review & Configure
+                                </h3>
+
+                                <!-- Summary Cards -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                                        <div class="info-box">
+                                            <div class="info-label">BOOKINGS</div>
+                                            <div class="info-value">{selectedCount}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                                        <div class="info-box">
+                                            <div class="info-label">TOTAL PENDING</div>
+                                            <div class="info-value pending-text">{formattedTotalDemand}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                                        <div class="info-box">
+                                            <div class="info-label">TOTAL INTEREST</div>
+                                            <div class="info-value interest-text">{formattedTotalInterest}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                                        <div class="info-box">
+                                            <div class="info-label">NET DEMAND</div>
+                                            <div class="info-value amount-total">{formattedTotalNet}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configuration Options -->
+                                <div class="demand-card slds-m-bottom_medium">
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Email Template"
+                                                value={selectedTemplateId}
+                                                options={emailTemplateOptions}
+                                                onchange={handleTemplateChange}
+                                                placeholder="Select email template..."></lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-input type="number" label="Grace Period (Days)"
+                                                value={gracePeriodDays} onchange={handleGracePeriodChange}
+                                                min="0" max="365"></lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-input type="checkbox" label="Include Interest"
+                                                checked={includeInterest} onchange={handleInterestToggle}></lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                            <lightning-textarea label="Notes" value={notes}
+                                                onchange={handleNotesChange} max-length="32768"></lightning-textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- STEP 5: Processing -->
+                            <template if:true={isStep5}>
+                                <div class="loading-container">
+                                    <lightning-spinner alternative-text="Processing" size="large"></lightning-spinner>
+                                    <h3>Creating Demands...</h3>
+                                    <p>Processing {selectedCount} bookings. Please wait.</p>
+                                </div>
+                            </template>
+
+                            <!-- STEP 6: Results -->
+                            <template if:true={isStep6}>
+                                <h3 class="custom-section-title">
+                                    <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                                    Results
+                                </h3>
+
+                                <!-- Result Summary -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">TOTAL PROCESSED</div>
+                                            <div class="info-value">{demandResult.totalProcessed}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box info-box-success">
+                                            <div class="info-label">SUCCESSFUL</div>
+                                            <div class="info-value" style="color:#2e844a;">{demandResult.successCount}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box info-box-error">
+                                            <div class="info-label">FAILED</div>
+                                            <div class="info-value" style="color:#ea001e;">{demandResult.failureCount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Results Table -->
+                                <template if:true={hasResults}>
+                                    <div class="custom-table-wrapper">
+                                        <table class="slds-table slds-table_bordered custom-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="custom-th">Booking</th>
+                                                    <th class="custom-th">Demand #</th>
+                                                    <th class="custom-th slds-text-align_center">Status</th>
+                                                    <th class="custom-th slds-text-align_center">Email</th>
+                                                    <th class="custom-th">Error</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={demandResult.results} for:item="item">
+                                                    <tr key={item.bookingId}>
+                                                        <td>{item.bookingName}</td>
+                                                        <td>{item.demandName}</td>
+                                                        <td class="slds-text-align_center">
+                                                            <template if:true={item.success}>
+                                                                <span class="badge badge-success">Success</span>
+                                                            </template>
+                                                            <template if:false={item.success}>
+                                                                <span class="badge badge-error">Failed</span>
+                                                            </template>
+                                                        </td>
+                                                        <td class="slds-text-align_center">
+                                                            <template if:true={item.emailSent}>
+                                                                <lightning-icon icon-name="utility:email" size="x-small"></lightning-icon>
+                                                            </template>
+                                                        </td>
+                                                        <td class="error-text">{item.errorMessage}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+
+                                <template if:true={demandResult.errorMessage}>
+                                    <div class="info-banner info-banner-error slds-m-top_medium">
+                                        <lightning-icon icon-name="utility:error" size="small"></lightning-icon>
+                                        <span>{demandResult.errorMessage}</span>
+                                    </div>
+                                </template>
+                            </template>
+
+                        </template>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="slds-modal__footer custom-modal-footer">
+                        <template if:true={isStep2}>
+                            <lightning-button label="Cancel" onclick={handleClose}></lightning-button>
+                            <lightning-button label="Load Bookings" variant="brand"
+                                icon-name="utility:forward" icon-position="right"
+                                onclick={handleLoadBookings}
+                                disabled={isLoadBookingsDisabled}></lightning-button>
+                        </template>
+
+                        <template if:true={isStep3}>
+                            <lightning-button label="Back" icon-name="utility:back" onclick={handleBack}></lightning-button>
+                            <lightning-button label="Review & Configure" variant="brand"
+                                icon-name="utility:forward" icon-position="right"
+                                onclick={handleGoToReview}
+                                disabled={isReviewDisabled}></lightning-button>
+                        </template>
+
+                        <template if:true={isStep4}>
+                            <lightning-button label="Back" icon-name="utility:back" onclick={handleBack}></lightning-button>
+                            <lightning-button label="Raise Demands" variant="brand"
+                                icon-name="utility:moneybag" onclick={handleRaiseDemands}></lightning-button>
+                        </template>
+
+                        <template if:true={isStep6}>
+                            <lightning-button label="Close" variant="brand" onclick={handleClose}></lightning-button>
+                        </template>
+                    </footer>
+                </div>
+            </section>
+        </div>
+    </template>
+</template>

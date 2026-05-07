@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Andhra Pradesh</fullName>
+        <default>false</default>
+        <label>Andhra Pradesh</label>
+    </customValue>
+    <customValue>
+        <fullName>Arunachal Pradesh</fullName>
+        <default>false</default>
+        <label>Arunachal Pradesh</label>
+    </customValue>
+    <customValue>
+        <fullName>Assam</fullName>
+        <default>false</default>
+        <label>Assam</label>
+    </customValue>
+    <customValue>
+        <fullName>Bihar</fullName>
+        <default>false</default>
+        <label>Bihar</label>
+    </customValue>
+    <customValue>
+        <fullName>Chhattisgarh</fullName>
+        <default>false</default>
+        <label>Chhattisgarh</label>
+    </customValue>
+    <customValue>
+        <fullName>Goa</fullName>
+        <default>false</default>
+        <label>Goa</label>
+    </customValue>
+    <customValue>
+        <fullName>Gujarat</fullName>
+        <default>false</default>
+        <label>Gujarat</label>
+    </customValue>
+    <customValue>
+        <fullName>Haryana</fullName>
+        <default>false</default>
+        <label>Haryana</label>
+    </customValue>
+    <customValue>
+        <fullName>Himachal Pradesh</fullName>
+        <default>false</default>
+        <label>Himachal Pradesh</label>
+    </customValue>
+    <customValue>
+        <fullName>Jharkhand</fullName>
+        <default>false</default>
+        <label>Jharkhand</label>
+    </customValue>
+    <customValue>
+        <fullName>Karnataka</fullName>
+        <default>false</default>
+        <label>Karnataka</label>
+    </customValue>
+    <customValue>
+        <fullName>Kerala</fullName>
+        <default>false</default>
+        <label>Kerala</label>
+    </customValue>
+    <customValue>
+        <fullName>Madhya Pradesh</fullName>
+        <default>false</default>
+        <label>Madhya Pradesh</label>
+    </customValue>
+    <customValue>
+        <fullName>Maharashtra</fullName>
+        <default>false</default>
+        <label>Maharashtra</label>
+    </customValue>
+    <customValue>
+        <fullName>Manipur</fullName>
+        <default>false</default>
+        <label>Manipur</label>
+    </customValue>
+    <customValue>
+        <fullName>Meghalaya</fullName>
+        <default>false</default>
+        <label>Meghalaya</label>
+    </customValue>
+    <customValue>
+        <fullName>Mizoram</fullName>
+        <default>false</default>
+        <label>Mizoram</label>
+    </customValue>
+    <customValue>
+        <fullName>Nagaland</fullName>
+        <default>false</default>
+        <label>Nagaland</label>
+    </customValue>
+    <customValue>
+        <fullName>Odisha</fullName>
+        <default>false</default>
+        <label>Odisha</label>
+    </customValue>
+    <customValue>
+        <fullName>Punjab</fullName>
+        <default>false</default>
+        <label>Punjab</label>
+    </customValue>
+    <customValue>
+        <fullName>Rajasthan</fullName>
+        <default>false</default>
+        <label>Rajasthan</label>
+    </customValue>
+    <customValue>
+        <fullName>Sikkim</fullName>
+        <default>false</default>
+        <label>Sikkim</label>
+    </customValue>
+    <customValue>
+        <fullName>Tamil Nadu</fullName>
+        <default>false</default>
+        <label>Tamil Nadu</label>
+    </customValue>
+    <customValue>
+        <fullName>Telangana</fullName>
+        <default>false</default>
+        <label>Telangana</label>
+    </customValue>
+    <customValue>
+        <fullName>Tripura</fullName>
+        <default>false</default>
+        <label>Tripura</label>
+    </customValue>
+    <customValue>
+        <fullName>Uttar Pradesh</fullName>
+        <default>false</default>
+        <label>Uttar Pradesh</label>
+    </customValue>
+    <customValue>
+        <fullName>Uttarakhand</fullName>
+        <default>false</default>
+        <label>Uttarakhand</label>
+    </customValue>
+    <customValue>
+        <fullName>West Bengal</fullName>
+        <default>false</default>
+        <label>West Bengal</label>
+    </customValue>
+    <customValue>
+        <fullName>California</fullName>
+        <default>false</default>
+        <label>California</label>
+    </customValue>
+    <customValue>
+        <fullName>Texas</fullName>
+        <default>false</default>
+        <label>Texas</label>
+    </customValue>
+    <customValue>
+        <fullName>New York</fullName>
+        <default>false</default>
+        <label>New York</label>
+    </customValue>
+    <customValue>
+        <fullName>Florida</fullName>
+        <default>false</default>
+        <label>Florida</label>
+    </customValue>
+    <customValue>
+        <fullName>Illinois</fullName>
+        <default>false</default>
+        <label>Illinois</label>
+    </customValue>
+    <customValue>
+        <fullName>Abu Dhabi</fullName>
+        <default>false</default>
+        <label>Abu Dhabi</label>
+    </customValue>
+    <customValue>
+        <fullName>Dubai</fullName>
+        <default>false</default>
+        <label>Dubai</label>
+    </customValue>
+    <customValue>
+        <fullName>Sharjah</fullName>
+        <default>false</default>
+        <label>Sharjah</label>
+    </customValue>
+    <customValue>
+        <fullName>Ajman</fullName>
+        <default>false</default>
+        <label>Ajman</label>
+    </customValue>
+    <customValue>
+        <fullName>Umm Al Quwain</fullName>
+        <default>false</default>
+        <label>Umm Al Quwain</label>
+    </customValue>
+    <customValue>
+        <fullName>Ras Al Khaimah</fullName>
+        <default>false</default>
+        <label>Ras Al Khaimah</label>
+    </customValue>
+    <customValue>
+        <fullName>Fujairah</fullName>
+        <default>false</default>
+        <label>Fujairah</label>
+    </customValue>
+    <masterLabel>State</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

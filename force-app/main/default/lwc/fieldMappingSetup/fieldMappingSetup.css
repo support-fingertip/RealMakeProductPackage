@@ -1,0 +1,122 @@
+.card-title {
+    font-weight: 700;
+    color: #032d60;
+}
+
+.section-heading {
+    font-weight: 600;
+    color: #181818;
+}
+
+.setup-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.setup-link {
+    color: #0070d2;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.setup-link:hover {
+    text-decoration: underline;
+}
+
+.setup-form {
+    border-radius: 8px;
+    border: 1px solid #d8dde6;
+}
+
+.mapping-section {
+    border-radius: 8px;
+    border: 1px solid #d8dde6;
+}
+
+.header-row {
+    background-color: #f3f3f3;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: #514f4d;
+}
+
+.mapping-row {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+    transition: background-color 0.15s ease;
+}
+
+.mapping-row:hover {
+    background-color: #f7f9fb;
+}
+
+.mapping-row:last-child {
+    border-bottom: none;
+}
+
+.sequence-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #0070d2;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.delete-btn {
+    --sds-c-button-icon-color-foreground: #c23934;
+}
+
+:host {
+    --sds-c-badge-color-background: #e8f4fd;
+    --sds-c-badge-text-color: #0070d2;
+}
+
+/* ===== Step 3: Setup Summary Review Card ===== */
+.summary-review-card {
+    border-radius: 8px;
+    border: 1px solid #d8dde6;
+    background: #ffffff;
+    padding: 1.25rem 1.5rem;
+}
+
+.summary-row {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+}
+
+.summary-row_last {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #706e6b;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    font-size: 0.9rem;
+    color: #181818;
+}
+
+.badge-active {
+    --sds-c-badge-color-background: #dcfce7;
+    --sds-c-badge-text-color: #16a34a;
+}
+
+.badge-inactive {
+    --sds-c-badge-color-background: #fee2e2;
+    --sds-c-badge-text-color: #dc2626;
+}

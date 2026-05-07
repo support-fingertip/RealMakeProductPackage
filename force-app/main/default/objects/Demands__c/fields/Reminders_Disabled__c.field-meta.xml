@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reminders_Disabled__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When true, all reminders and auto-unblocking are disabled for this demand. Automatically set to true when customer pays on time.</description>
+    <inlineHelpText>Check to disable all reminders for this demand</inlineHelpText>
+    <label>Reminders Disabled</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

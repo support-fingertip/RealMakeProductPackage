@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Budget_Range__c</fullName>
+    <label>Budget Range</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Below 25L</fullName>
+                <default>false</default>
+                <label>Below 25L</label>
+            </value>
+            <value>
+                <fullName>25L-50L</fullName>
+                <default>false</default>
+                <label>25L-50L</label>
+            </value>
+            <value>
+                <fullName>50L-75L</fullName>
+                <default>false</default>
+                <label>50L-75L</label>
+            </value>
+            <value>
+                <fullName>75L-1Cr</fullName>
+                <default>false</default>
+                <label>75L-1Cr</label>
+            </value>
+            <value>
+                <fullName>1Cr-1.5Cr</fullName>
+                <default>false</default>
+                <label>1Cr-1.5Cr</label>
+            </value>
+            <value>
+                <fullName>1.5Cr-2Cr</fullName>
+                <default>false</default>
+                <label>1.5Cr-2Cr</label>
+            </value>
+            <value>
+                <fullName>Above 2Cr</fullName>
+                <default>false</default>
+                <label>Above 2Cr</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

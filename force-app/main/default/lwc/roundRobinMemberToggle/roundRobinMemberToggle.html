@@ -1,0 +1,58 @@
+<template>
+    <lightning-card title="Round Robin Members" icon-name="standard:groups">
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-p-around_large">
+                <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:true={hasMembers}>
+                <div class="slds-p-horizontal_medium">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col" class="slds-text-title_caps">Name</th>
+                                <th scope="col" class="slds-text-title_caps">Active</th>
+                                <th scope="col" class="slds-text-title_caps">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={groupedMembers} for:item="group">
+                                <tr key={group.key} class="section-header-row">
+                                    <td colspan="3" class="section-header">
+                                        {group.sectionTitle}
+                                    </td>
+                                </tr>
+                                <template for:each={group.members} for:item="member">
+                                    <tr key={member.id}>
+                                        <td class="slds-p-vertical_x-small">
+                                            <span class="member-name">{member.name}</span>
+                                        </td>
+                                        <td class="slds-p-vertical_x-small">
+                                            <span>{member.activeLabel}</span>
+                                        </td>
+                                        <td class="slds-p-vertical_x-small">
+                                            <button
+                                                class={member.buttonCssClass}
+                                                data-id={member.id}
+                                                onclick={handleToggle}>
+                                                {member.buttonLabel}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+
+            <template if:false={hasMembers}>
+                <div class="slds-p-around_medium slds-text-align_center slds-text-color_weak">
+                    No members found for this Round Robin.
+                </div>
+            </template>
+        </template>
+    </lightning-card>
+</template>

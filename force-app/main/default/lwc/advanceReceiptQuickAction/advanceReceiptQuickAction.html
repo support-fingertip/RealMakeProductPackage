@@ -1,0 +1,113 @@
+<!--
+LWC Quick Action: Advance Receipt creation form
+Requirements:
+- Exposed on Contact as Quick Action
+- Auto-populate Customer (Contact) and make read-only
+- Project -> Unit filtering
+- Required fields and conditional UI validation mirroring VRs
+- Clean SLDS layout, success toast, redirect to created record
+LDS-first: use lightning-record-edit-form with custom lookup filtering for Unit by Project
+-->
+<template>
+    <lightning-card title="Create Advance Receipt" class="slds-card">
+        <div class="slds-p-around_medium">
+            <lightning-record-edit-form
+                object-api-name="Advance_Receipt__c"
+                onsuccess={handleSuccess}
+                onsubmit={handleSubmit}
+                onerror={handleError}>
+
+                <!-- Section 1 – Customer & Property -->
+                <div class="slds-section slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Customer & Property</h3>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Customer__c" value={recordId} variant="label-stacked" disabled>
+                            </lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Project__c" onchange={handleProjectChange}></lightning-input-field>
+                        </div>
+                    </div>
+
+                    <div class="slds-grid slds-gutters slds-m-top_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <!-- Custom Unit lookup with filtering by selected Project -->
+                            <c-unit-lookup
+                                label="Unit"
+                                project-id={selectedProjectId}
+                                onunitselect={handleUnitSelect}
+                                required>
+                            </c-unit-lookup>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2 – Payment Details -->
+                <div class="slds-section slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Payment Details</h3>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Amount__c"></lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Amount_Received__c" required></lightning-input-field>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters slds-m-top_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Receipt_Date__c" required></lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Payment_Mode__c" onchange={handlePaymentModeChange} required></lightning-input-field>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3 – Bank / Transaction Details -->
+                <div class="slds-section slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Bank / Transaction Details</h3>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Transaction_Number__c" required={isTxnRequired}></lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Bank_Name__c" required={isBankRequired}></lightning-input-field>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters slds-m-top_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input-field field-name="Payment_From__c"></lightning-input-field>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4 – Branch Details -->
+                <div class="slds-section slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Branch Details</h3>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input-field field-name="Branch_Name__c"></lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input-field field-name="Branch_Code__c"></lightning-input-field>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input-field field-name="Branch_Address__c"></lightning-input-field>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden/system-controlled fields -->
+                <lightning-input-field field-name="Status__c" value="Advance" class="slds-hide"></lightning-input-field>
+                <lightning-input-field field-name="Approval_Status__c" value="Pending" class="slds-hide"></lightning-input-field>
+
+                <div class="slds-m-top_medium">
+                    <lightning-button variant="neutral" class="slds-m-right_small" label="Cancel" onclick={handleCancel}></lightning-button>
+                    <lightning-button type="submit" variant="brand" label="Save"></lightning-button>
+                </div>
+
+            </lightning-record-edit-form>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Previous_History__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Previous History</label>
+    <referenceTo>Reassignment_History__c</referenceTo>
+    <relationshipLabel>Next History</relationshipLabel>
+    <relationshipName>Next_History</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,398 @@
+<template>
+    <div class="approval-center">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-brand">
+                <lightning-icon icon-name="standard:approval" size="medium"></lightning-icon>
+                <div class="header-text">
+                    <h1 class="slds-text-heading_medium">Approval Center</h1>
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        All pending approvals across your organization
+                    </p>
+                </div>
+            </div>
+            <div class="stats-badges">
+                <lightning-badge label={statsTotal} class="badge-total"></lightning-badge>
+                <lightning-badge label={statsStandard} class="badge-standard"></lightning-badge>
+                <lightning-badge label={statsDiscount} class="badge-discount"></lightning-badge>
+                <lightning-badge label={statsDynamic} class="badge-dynamic"></lightning-badge>
+            </div>
+        </header>
+
+        <!-- FILTERS BAR -->
+        <div class="filters-bar">
+            <div class="slds-grid slds-gutters slds-wrap">
+                <div class="slds-col slds-size_12-of-12 slds-medium-size_4-of-12">
+                    <lightning-input
+                        type="search"
+                        label="Search"
+                        placeholder="Search by name, submitter, or object..."
+                        value={searchTerm}
+                        onchange={handleSearchChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_12-of-12 slds-medium-size_4-of-12">
+                    <lightning-combobox
+                        label="Object Type"
+                        value={selectedObjectType}
+                        placeholder="All Objects"
+                        options={objectOptions}
+                        onchange={handleObjectTypeChange}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_12-of-12 slds-medium-size_4-of-12">
+                    <lightning-combobox
+                        label="Approval Type"
+                        value={selectedApprovalType}
+                        placeholder="All Types"
+                        options={approvalTypeOptions}
+                        onchange={handleApprovalTypeChange}>
+                    </lightning-combobox>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION BAR -->
+        <div class="action-bar">
+            <lightning-button-group>
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}>
+                </lightning-button>
+                <lightning-button
+                    label="Approve Selected"
+                    variant="success"
+                    icon-name="utility:check"
+                    disabled={hasNoSelection}
+                    onclick={handleBulkApprove}>
+                </lightning-button>
+                <lightning-button
+                    label="Reject Selected"
+                    variant="destructive"
+                    icon-name="utility:close"
+                    disabled={hasNoSelection}
+                    onclick={handleBulkReject}>
+                </lightning-button>
+            </lightning-button-group>
+            <div class="record-count slds-text-body_small slds-text-color_weak">
+                Showing {filteredCount} of {totalRecords} approval(s)
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner size="medium" alternative-text="Loading"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <template if:true={hasRecords}>
+                    <lightning-datatable
+                        key-field="id"
+                        data={filteredApprovals}
+                        columns={columns}
+                        onrowselection={handleRowSelection}
+                        onrowaction={handleRowAction}
+                        show-row-number-column>
+                    </lightning-datatable>
+                </template>
+
+                <template if:false={hasRecords}>
+                    <div class="empty-state">
+                        <lightning-icon icon-name="utility:approval" size="large"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-m-top_medium">
+                            No Pending Approvals
+                        </h3>
+                        <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                            You don't have any pending approval requests across any system.
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </div>
+
+    <!-- ═══ DETAIL MODAL ══════════════════════════════════════════ -->
+    <!-- ═══ DETAIL MODAL ══════════════════════════════════════════ -->
+<template if:true={showDetailModal}>
+    <section role="dialog" tabindex="-1" 
+        class="slds-modal slds-fade-in-open slds-modal_large" 
+        aria-modal="true">
+        <div class="slds-modal__container">
+
+            <!-- Header -->
+            <header class="slds-modal__header detail-modal-header">
+                <button 
+                    class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                    title="Close" onclick={closeDetailModal}>
+                    <lightning-icon icon-name="utility:close" size="small" variant="inverse">
+                    </lightning-icon>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="detail-header-content">
+                    <div class="detail-header-icon">
+                        <lightning-icon icon-name="standard:approval" size="small"></lightning-icon>
+                    </div>
+                    <div>
+                        <h2 class="slds-text-heading_medium slds-hyphenate detail-title">
+                            {detailItem.recordName}
+                        </h2>
+                        <div class="detail-header-meta">
+                            <span class="meta-badge">{detailItem.objectLabel}</span>
+                            <span class="meta-sep">·</span>
+                            <span class="meta-badge meta-badge--type">{detailItem.approvalType}</span>
+                            <template if:true={detailItem.approvalSubType}>
+                                <span class="meta-sep">·</span>
+                                <span class="meta-badge meta-badge--sub">{detailItem.approvalSubType}</span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Body -->
+            <div class="slds-modal__content detail-modal-body">
+                <template if:true={isLoadingDetail}>
+                    <div class="loading-container">
+                        <lightning-spinner size="medium" alternative-text="Loading details">
+                        </lightning-spinner>
+                    </div>
+                </template>
+
+                <template if:false={isLoadingDetail}>
+
+                    <!-- ── CARD 1: Record Details ───────────────── -->
+                    <div class="detail-card">
+                        <div class="detail-card__header" onclick={toggleRecordDetails}>
+                            <div class="detail-card__header-left">
+                                <lightning-icon 
+                                    icon-name="utility:record" 
+                                    size="x-small" 
+                                    class="detail-card__icon">
+                                </lightning-icon>
+                                <span class="detail-card__title">Record Details</span>
+                                <span class="detail-card__count">{detailFields.length} fields</span>
+                            </div>
+                            <lightning-icon 
+                                icon-name={recordDetailsChevron} 
+                                size="x-small"
+                                class="detail-card__chevron">
+                            </lightning-icon>
+                        </div>
+                        <template if:true={showRecordDetails}>
+                            <div class="detail-card__body">
+                                <template if:true={hasDetailFields}>
+                                    <div class="fields-grid">
+                                        <template for:each={detailFields} for:item="field">
+                                            <div key={field.label} class="field-item">
+                                                <div class="field-item__label">{field.label}</div>
+                                                <div class="field-item__value">{field.value}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasDetailFields}>
+                                    <div class="empty-card-state">
+                                        <lightning-icon icon-name="utility:info" size="x-small">
+                                        </lightning-icon>
+                                        <span>No field data available</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- ── CARD 2: Related Records ─────────────── -->
+                    <template if:true={hasChildObjects}>
+                        <div class="detail-card">
+                            <div class="detail-card__header" onclick={toggleRelatedRecords}>
+                                <div class="detail-card__header-left">
+                                    <lightning-icon 
+                                        icon-name="utility:related_list" 
+                                        size="x-small" 
+                                        class="detail-card__icon">
+                                    </lightning-icon>
+                                    <span class="detail-card__title">Related Records</span>
+                                    <span class="detail-card__count">
+                                        {childObjects.length} object(s)
+                                    </span>
+                                </div>
+                                <lightning-icon 
+                                    icon-name={relatedRecordsChevron} 
+                                    size="x-small"
+                                    class="detail-card__chevron">
+                                </lightning-icon>
+                            </div>
+                            <template if:true={showRelatedRecords}>
+                                <div class="detail-card__body">
+                                    <!-- Pills -->
+                                    <div class="child-pills">
+                                        <template for:each={childObjects} for:item="child">
+                                            <button
+                                                key={child.childObject}
+                                                class="child-pill-btn"
+                                                data-child={child.childObject}
+                                                data-lookup={child.lookupField}
+                                                data-label={child.childLabel}
+                                                onclick={handleChildClick}>
+                                                <lightning-icon 
+                                                    icon-name="utility:rows" 
+                                                    size="xx-small">
+                                                </lightning-icon>
+                                                {child.badgeLabel}
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <template if:true={isLoadingRelated}>
+                                        <div class="loading-inline">
+                                            <lightning-spinner size="small" 
+                                                alternative-text="Loading related">
+                                            </lightning-spinner>
+                                        </div>
+                                    </template>
+
+                                    <template if:true={hasSelectedChildRecords}>
+                                        <div class="related-table-wrap">
+                                            <p class="related-table-label">{selectedChildLabel}</p>
+                                            <lightning-datatable
+                                                data={selectedChildRelated}
+                                                columns={selectedChildColumns}
+                                                key-field="Id"
+                                                hide-checkbox-column>
+                                            </lightning-datatable>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ── CARD 3: Approval History ────────────── -->
+                    <div class="detail-card">
+                        <div class="detail-card__header" onclick={toggleApprovalHistory}>
+                            <div class="detail-card__header-left">
+                                <lightning-icon 
+                                    icon-name="utility:date_time" 
+                                    size="x-small" 
+                                    class="detail-card__icon">
+                                </lightning-icon>
+                                <span class="detail-card__title">Approval History</span>
+                                <span class="detail-card__count">{detailHistory.length} entries</span>
+                            </div>
+                            <lightning-icon 
+                                icon-name={approvalHistoryChevron} 
+                                size="x-small"
+                                class="detail-card__chevron">
+                            </lightning-icon>
+                        </div>
+                        <template if:true={showApprovalHistory}>
+                            <div class="detail-card__body">
+                                <template if:true={hasDetailHistory}>
+                                    <lightning-datatable
+                                        data={detailHistory}
+                                        columns={historyColumns}
+                                        key-field="id"
+                                        hide-checkbox-column>
+                                    </lightning-datatable>
+                                </template>
+                                <template if:false={hasDetailHistory}>
+                                    <div class="empty-card-state">
+                                        <lightning-icon icon-name="utility:clock" size="x-small">
+                                        </lightning-icon>
+                                        <span>No approval history yet</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <footer class="slds-modal__footer detail-modal-footer">
+                <lightning-button 
+                    label="Close" 
+                    onclick={closeDetailModal}
+                    class="slds-m-right_small">
+                </lightning-button>
+                <div class="footer-actions">
+                    <lightning-button 
+                        label="Reject" 
+                        variant="destructive"
+                        icon-name="utility:close" 
+                        onclick={handleDetailReject}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button 
+                        label="Approve" 
+                        variant="success"
+                        icon-name="utility:check" 
+                        onclick={handleDetailApprove}>
+                    </lightning-button>
+                </div>
+            </footer>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</template>
+
+    <!-- ═══ ACTION MODAL ══════════════════════════════════════════ -->
+    <template if:true={showActionModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true">
+            <div class="slds-modal__container">
+
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={closeActionModal}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-text-heading_medium">{actionModalTitle}</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={isBulkAction}>
+                        <p class="slds-m-bottom_small">
+                            You are about to <strong>{actionModalTypeLower}</strong> {selectedCount} selected item(s).
+                        </p>
+                    </template>
+                    <template if:false={isBulkAction}>
+                        <template if:true={actionItem}>
+                            <p class="slds-m-bottom_small">
+                                You are about to <strong>{actionModalTypeLower}</strong>: <strong>{actionItem.recordName}</strong>
+                                <template if:true={actionItem.approvalSubType}>
+                                    ({actionItem.approvalSubType})
+                                </template>
+                            </p>
+                        </template>
+                    </template>
+                    <lightning-textarea
+                        label="Comments (optional)"
+                        value={actionComments}
+                        onchange={handleCommentsChange}
+                        max-length="5000"
+                        placeholder="Enter your comments...">
+                    </lightning-textarea>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeActionModal}
+                        class="slds-m-right_small" disabled={isProcessing}></lightning-button>
+                    <lightning-button label="Confirm" variant={actionModalConfirmVariant}
+                        onclick={confirmAction} disabled={isProcessing}>
+                    </lightning-button>
+                    <template if:true={isProcessing}>
+                        <lightning-spinner size="small" alternative-text="Processing" class="slds-m-left_small"></lightning-spinner>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

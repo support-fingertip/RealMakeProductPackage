@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Outstanding_Demand_Amount__c</fullName>
+    <label>Outstanding Demand Amount</label>
+    <summarizedField>Demands__c.Pending_Amount__c</summarizedField>
+    <summaryFilterItems>
+        <field>Demands__c.Status__c</field>
+        <operation>notEqual</operation>
+        <value>Paid, Cancelled</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Demands__c.Booking__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

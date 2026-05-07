@@ -1,0 +1,55 @@
+<apex:page controller="DynamicDocumentPDFController"
+           renderAs="pdf"
+           showHeader="false"
+           sidebar="false"
+           applyBodyTag="false"
+           applyHtmlTag="false"
+           title="{!documentTitle}">
+<html>
+<head>
+    <style type="text/css">
+        @page {
+            size: {!pageSize} {!pageOrientation};
+            margin: {!marginTop}mm {!marginRight}mm {!marginBottom}mm {!marginLeft}mm;
+
+            @bottom-center {
+                content: "";
+            }
+        }
+
+        body {
+            font-family: {!fontFamily};
+            font-size: 12px;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        .pagenumber:before {
+            content: counter(page);
+        }
+
+        .pagecount:before {
+            content: counter(pages);
+        }
+    </style>
+</head>
+<body>
+    <apex:outputText value="{!renderedHtml}" escape="false" />
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,137 @@
+.aria-voice-wrapper {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+}
+
+.aria-mic-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.aria-mic-btn--idle:hover {
+    background: #cbd5e1;
+    color: #1e293b;
+}
+
+.aria-mic-btn--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.aria-voice-error-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    pointer-events: auto;
+}
+
+/* ─── Recording strip (WhatsApp-style) ──────────────────────────── */
+
+.aria-voice-strip {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 4px;
+    min-height: 34px;
+}
+
+.aria-voice-cancel,
+.aria-voice-confirm {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.aria-voice-cancel {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.aria-voice-cancel:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    transform: scale(1.05);
+}
+
+.aria-voice-confirm {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #ffffff;
+}
+
+.aria-voice-confirm:hover {
+    transform: scale(1.05);
+}
+
+.aria-voice-timer {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #475569;
+    min-width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.aria-wave {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 24px;
+    padding: 0 4px;
+    min-width: 90px;
+}
+
+.aria-wave-bar {
+    flex: 1;
+    background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+    border-radius: 2px;
+    height: 30%;
+    transform-origin: center;
+    animation: aria-wave-anim 1s ease-in-out infinite;
+}
+
+.aria-wave-bar:nth-child(1) { animation-delay: 0s;    }
+.aria-wave-bar:nth-child(2) { animation-delay: 0.10s; }
+.aria-wave-bar:nth-child(3) { animation-delay: 0.20s; }
+.aria-wave-bar:nth-child(4) { animation-delay: 0.30s; }
+.aria-wave-bar:nth-child(5) { animation-delay: 0.20s; }
+.aria-wave-bar:nth-child(6) { animation-delay: 0.10s; }
+.aria-wave-bar:nth-child(7) { animation-delay: 0s;    }
+
+@keyframes aria-wave-anim {
+    0%, 100% { height: 20%; }
+    25%      { height: 70%; }
+    50%      { height: 100%; }
+    75%      { height: 45%; }
+}

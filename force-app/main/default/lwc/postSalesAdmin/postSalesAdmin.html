@@ -1,0 +1,535 @@
+<template>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <lightning-icon icon-name="custom:custom108" size="medium"></lightning-icon>
+                </div>
+                <div class="header-text">
+                    <h1 class="header-title">Post Sales Administration</h1>
+                    <p class="header-subtitle">Manage configurations for demands, receipts, approvals, email templates, integrations, and more</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <lightning-tabset variant="scoped" active-tab-value={activeTab} onactive={handleTabChange}>
+
+            <!-- Tab 1: Post Sales Configuration -->
+            <lightning-tab label="Post Sales Config" value="postSalesConfig" icon-name="utility:settings">
+                <div class="tab-content">
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={showConfigForm}>
+                        <!-- Config List View -->
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <lightning-icon icon-name="utility:settings" size="x-small"></lightning-icon>
+                                Configuration Settings
+                            </h2>
+                            <div class="header-actions">
+                                <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                                    onclick={handleRefreshConfigs} variant="border-filled" class="slds-m-right_x-small"></lightning-button-icon>
+                                <lightning-button label="New Configuration" variant="brand"
+                                    icon-name="utility:add" onclick={handleNewConfig}></lightning-button>
+                            </div>
+                        </div>
+
+                        <template if:true={hasConfigurations}>
+                            <div class="config-grid">
+                                <template for:each={configurations} for:item="config">
+                                    <div key={config.id} class="config-card">
+                                        <div class="config-card-header">
+                                            <div class="config-type-badge">
+                                                <span class="badge">{config.configurationType}</span>
+                                                <template if:true={config.isActive}>
+                                                    <span class="badge badge-success">Active</span>
+                                                </template>
+                                                <template if:false={config.isActive}>
+                                                    <span class="badge badge-inactive">Inactive</span>
+                                                </template>
+                                            </div>
+                                            <div class="config-actions">
+                                                <lightning-button-icon icon-name="utility:edit"
+                                                    alternative-text="Edit" data-id={config.id}
+                                                    onclick={handleEditConfig} variant="border-filled"
+                                                    size="small"></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Delete" data-id={config.id}
+                                                    onclick={handleDeleteConfig} variant="border-filled"
+                                                    size="small"></lightning-button-icon>
+                                            </div>
+                                        </div>
+                                        <div class="config-card-body">
+                                            <div class="config-row">
+                                                <span class="config-label">Email Template</span>
+                                                <span class="config-value">{config.displayEmailTemplate}</span>
+                                            </div>
+                                            <div class="config-row">
+                                                <span class="config-label">VF Page</span>
+                                                <span class="config-value">{config.displayVfPage}</span>
+                                            </div>
+                                            <div class="config-row">
+                                                <span class="config-label">Document Template</span>
+                                                <span class="config-value">{config.displayDocTemplate}</span>
+                                            </div>
+                                            <div class="config-row">
+                                                <span class="config-label">Approval Config</span>
+                                                <span class="config-value">{config.displayApprovalConfig}</span>
+                                            </div>
+                                            <div class="config-row">
+                                                <span class="config-label">Grace Period</span>
+                                                <span class="config-value">{config.gracePeriodDays} days</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={hasConfigurations}>
+                            <div class="empty-state">
+                                <lightning-icon icon-name="utility:settings" size="large"></lightning-icon>
+                                <h3>No Configurations Yet</h3>
+                                <p>Create your first post-sales configuration to get started.</p>
+                            </div>
+                        </template>
+                    </template>
+
+                    <!-- Config Form -->
+                    <template if:true={showConfigForm}>
+                        <div class="form-container">
+                            <div class="form-header">
+                                <h2 class="form-title">
+                                    <template if:true={isEditMode}>Edit Configuration</template>
+                                    <template if:false={isEditMode}>New Configuration</template>
+                                </h2>
+                            </div>
+
+                            <!-- Section 1: Basic Settings -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">1</span> Basic Settings
+                                </h3>
+                                <div class="slds-grid slds-gutters slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-combobox label="Configuration Type" value={editingConfig.configurationType}
+                                            options={configurationTypeOptions} data-field="configurationType"
+                                            onchange={handleConfigFieldChange} required></lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-input type="checkbox" label="Is Active" checked={editingConfig.isActive}
+                                            data-field="isActive" onchange={handleConfigFieldChange}></lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sections 2-4: Only for non-Payment Schedule types -->
+                            <template if:false={isPaymentScheduleConfig}>
+
+                            <!-- Section 2: Template Settings -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">2</span> Template Settings
+                                </h3>
+                                <div class="slds-grid slds-gutters slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-combobox label="Email Template" value={editingConfig.emailTemplateId}
+                                            options={emailTemplateOptions} data-field="emailTemplateId"
+                                            onchange={handleConfigFieldChange}
+                                            placeholder="Select email template..."></lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-combobox label="Visualforce Page" value={editingConfig.vfPageName}
+                                            options={vfPageOptions} data-field="vfPageName"
+                                            onchange={handleConfigFieldChange}
+                                            placeholder="Select VF page for PDF..."></lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-combobox label="Document Template" value={editingConfig.documentTemplateId}
+                                            options={documentTemplateOptions} data-field="documentTemplateId"
+                                            onchange={handleConfigFieldChange}
+                                            placeholder="Select document template..."></lightning-combobox>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Approval Settings -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">3</span> Approval Settings
+                                </h3>
+                                <div class="slds-grid slds-gutters slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <lightning-combobox label="Approval Configuration" value={editingConfig.approvalConfigurationId}
+                                            options={approvalConfigOptions} data-field="approvalConfigurationId"
+                                            onchange={handleConfigFieldChange}
+                                            placeholder="Select approval config..."></lightning-combobox>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Demand Defaults -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">4</span> Demand Defaults
+                                </h3>
+                                <div class="slds-grid slds-gutters slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                        <lightning-input type="number" label="Grace Period (Days)"
+                                            value={editingConfig.gracePeriodDays} data-field="gracePeriodDays"
+                                            onchange={handleConfigFieldChange} min="0"></lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                        <lightning-input type="number" label="Due Date Offset (Days)"
+                                            value={editingConfig.dueDateOffsetDays} data-field="dueDateOffsetDays"
+                                            onchange={handleConfigFieldChange} min="0"></lightning-input>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                        <lightning-input type="checkbox" label="Include Interest"
+                                            checked={editingConfig.includeInterest} data-field="includeInterest"
+                                            onchange={handleConfigFieldChange}></lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                        <lightning-input type="checkbox" label="Include Previous Dues"
+                                            checked={editingConfig.includePreviousDues} data-field="includePreviousDues"
+                                            onchange={handleConfigFieldChange}></lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                        <lightning-input type="checkbox" label="Auto Send Email"
+                                            checked={editingConfig.autoSendEmail} data-field="autoSendEmail"
+                                            onchange={handleConfigFieldChange}></lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 5: Matching Criteria -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">5</span> Matching Criteria
+                                </h3>
+                                <c-config-matching-criteria
+                                    object-api-name="Booking__c"
+                                    criteria-json={editingConfig.matchingCriteria}
+                                    label="Record Matching Criteria"
+                                    help-text="Define conditions to control when this configuration applies. For example, match only records where Project Type equals 'Residential'. If no conditions are set, this config applies to all Booking records."
+                                    oncriteriachange={handleMatchingCriteriaChange}>
+                                </c-config-matching-criteria>
+                            </div>
+
+                            </template>
+
+                            <!-- Section 2 for Payment Schedule: Creation Configuration -->
+                            <template if:true={isPaymentScheduleConfig}>
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <span class="section-number">2</span> Schedule Creation Source
+                                    </h3>
+                                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                                        Configure where payment schedules are created from when a new booking is made.
+                                    </p>
+
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Source Object (Template Records)"
+                                                value={editingConfig.sourceObject}
+                                                options={allObjectOptions}
+                                                onchange={handleSourceObjectChange}
+                                                placeholder="Select source object..."
+                                                field-level-help="The object that holds the template records to copy from">
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Target Object (Records to Create)"
+                                                value={editingConfig.targetObject}
+                                                options={allObjectOptions}
+                                                onchange={handleTargetObjectChange}
+                                                placeholder="Select target object..."
+                                                field-level-help="The object where new records will be created">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Source → Parent Link"
+                                                value={editingConfig.sourceParentField}
+                                                options={sourceFieldOptions}
+                                                data-field="sourceParentField"
+                                                onchange={handleConfigFieldChange}
+                                                placeholder="Select field..."
+                                                field-level-help="Which field on the Source Object links to the parent? (e.g. Master_Payment_Schedule has Project__c)">
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Booking → Same Parent Link"
+                                                value={editingConfig.bookingParentField}
+                                                options={bookingFieldOptions}
+                                                data-field="bookingParentField"
+                                                onchange={handleConfigFieldChange}
+                                                placeholder="Select field..."
+                                                field-level-help="Which field on Booking links to the same parent? (e.g. Booking also has Project__c)">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                            <lightning-combobox label="Target → Booking Link"
+                                                value={editingConfig.targetBookingField}
+                                                options={targetFieldOptions}
+                                                data-field="targetBookingField"
+                                                onchange={handleConfigFieldChange}
+                                                placeholder="Select field..."
+                                                field-level-help="Which field on the Target Object links back to Booking? (e.g. Payment_Schedule has Booking__c)">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-box slds-theme_shade slds-m-top_small slds-m-bottom_medium">
+                                        <p class="slds-text-body_small">
+                                            <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <strong>How it works:</strong><br/>
+                                            1. Booking is created with <em>{editingConfig.bookingParentField}</em> = Project X<br/>
+                                            2. System finds all <em>{editingConfig.sourceObject}</em> where <em>{editingConfig.sourceParentField}</em> = Project X<br/>
+                                            3. For each source record, creates a <em>{editingConfig.targetObject}</em> linked to the Booking via <em>{editingConfig.targetBookingField}</em>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Section 3: Schedule Mode -->
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <span class="section-number">3</span> Schedule Edit Mode
+                                    </h3>
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                            <lightning-radio-group
+                                                label="Schedule Mode"
+                                                options={scheduleModeOptions}
+                                                value={editingConfig.scheduleMode}
+                                                data-field="scheduleMode"
+                                                onchange={handleConfigFieldChange}
+                                                type="radio">
+                                            </lightning-radio-group>
+                                        </div>
+                                    </div>
+                                    <div class="slds-box slds-theme_shade slds-m-top_small">
+                                        <template if:true={isStandardMode}>
+                                            <p class="slds-text-body_small">
+                                                <lightning-icon icon-name="utility:lock" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                <strong>Standard:</strong> Schedules are auto-created and locked. Amounts cannot be edited after creation.
+                                            </p>
+                                        </template>
+                                        <template if:false={isStandardMode}>
+                                            <p class="slds-text-body_small">
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                <strong>Custom:</strong> Schedules are auto-created but amounts can be edited via the Payment Schedule Editor.
+                                            </p>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Section 6: Demand Reminders -->
+                            <template if:true={isDemandConfig}>
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <span class="section-number">6</span> Demand Reminders
+                                    </h3>
+                                    <div class="slds-m-bottom_small">
+                                        <lightning-input type="checkbox" label="Enable Demand Reminders"
+                                            checked={editingConfig.enableReminders}
+                                            data-field="enableReminders"
+                                            onchange={handleConfigFieldChange}>
+                                        </lightning-input>
+                                    </div>
+
+                                    <template if:true={editingConfig.enableReminders}>
+                                        <div class="reminder-grid">
+                                            <template for:each={reminderCards} for:item="card">
+                                                <div key={card.key} class="reminder-card">
+                                                    <div class={card.headerClass}>
+                                                        <span class="reminder-title">{card.label}</span>
+                                                    </div>
+                                                    <div class="reminder-body">
+                                                        <lightning-input type="checkbox"
+                                                            label="Not Applicable"
+                                                            checked={card.isNA}
+                                                            data-index={card.index}
+                                                            onchange={handleReminderNAChange}
+                                                            class="slds-m-bottom_small">
+                                                        </lightning-input>
+
+                                                        <template if:false={card.isNA}>
+                                                            <lightning-input type="number"
+                                                                label="Days After Due Date"
+                                                                value={card.daysAfterDue}
+                                                                data-index={card.index}
+                                                                data-field="daysAfterDue"
+                                                                onchange={handleReminderFieldChange}
+                                                                min="1"
+                                                                class="slds-m-bottom_small">
+                                                            </lightning-input>
+
+                                                            <lightning-combobox
+                                                                label="Against Object"
+                                                                value={card.againstObject}
+                                                                options={reminderObjectOptions}
+                                                                data-index={card.index}
+                                                                data-field="againstObject"
+                                                                onchange={handleReminderFieldChange}
+                                                                class="slds-m-bottom_small">
+                                                            </lightning-combobox>
+
+                                                            <lightning-combobox
+                                                                label="Document Template"
+                                                                value={card.documentTemplateId}
+                                                                options={documentTemplateOptions}
+                                                                data-index={card.index}
+                                                                data-field="documentTemplateId"
+                                                                onchange={handleReminderFieldChange}
+                                                                placeholder="Select template...">
+                                                            </lightning-combobox>
+                                                        </template>
+
+                                                        <template if:true={card.isNA}>
+                                                            <div class="na-overlay">
+                                                                <lightning-icon icon-name="utility:ban" size="small"></lightning-icon>
+                                                                <span>This reminder will not fire</span>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Section 7: Notes -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">
+                                    <span class="section-number">{notesSectionNumber}</span> Notes
+                                </h3>
+                                <lightning-textarea label="Admin Notes" value={editingConfig.notes}
+                                    data-field="notes" onchange={handleConfigFieldChange}
+                                    max-length="32768"></lightning-textarea>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="form-actions">
+                                <lightning-button label="Cancel" onclick={handleCancelConfig}></lightning-button>
+                                <lightning-button label="Save Configuration" variant="brand"
+                                    icon-name="utility:save" onclick={handleSaveConfig}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 2: Approval Configuration -->
+            <lightning-tab label="Approval Config" value="approvalConfig" icon-name="utility:approval">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshApprovalConfig} variant="border-filled" size="small"
+                            tooltip="Refresh Approval Config"></lightning-button-icon>
+                    </div>
+                    <c-dynamic-approval-config data-id="approvalConfig"></c-dynamic-approval-config>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 3: Email Templates -->
+            <lightning-tab label="Email Templates" value="emailTemplates" icon-name="utility:email">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshEmailTemplates} variant="border-filled" size="small"
+                            tooltip="Refresh Email Templates"></lightning-button-icon>
+                    </div>
+                    <c-email-template-list data-id="emailTemplates"></c-email-template-list>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 4: Field Mapper -->
+            <lightning-tab label="Field Mapper" value="fieldMapper" icon-name="utility:connected_apps">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshFieldMapper} variant="border-filled" size="small"
+                            tooltip="Refresh Field Mapper"></lightning-button-icon>
+                    </div>
+                    <c-field-mapper data-id="fieldMapper"></c-field-mapper>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 5: Dynamic Forms -->
+            <lightning-tab label="Dynamic Forms" value="formConfig" icon-name="utility:form">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshFormConfig} variant="border-filled" size="small"
+                            tooltip="Refresh Dynamic Forms"></lightning-button-icon>
+                    </div>
+                    <c-form-configurator-builder data-id="formConfig"></c-form-configurator-builder>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 6: Reports -->
+            <lightning-tab label="Reports" value="reportConfig" icon-name="utility:table">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshReports} variant="border-filled" size="small"
+                            tooltip="Refresh Reports"></lightning-button-icon>
+                    </div>
+                    <c-report-configurator data-id="reportConfig"></c-report-configurator>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 7: Dashboards -->
+            <lightning-tab label="Dashboards" value="dashboardConfig" icon-name="utility:chart">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshDashboards} variant="border-filled" size="small"
+                            tooltip="Refresh Dashboards"></lightning-button-icon>
+                    </div>
+                    <c-dashboard-configurator data-id="dashboardConfig"></c-dashboard-configurator>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 8: Document Designer -->
+            <lightning-tab label="Document Designer" value="documentDesigner" icon-name="utility:document_preview">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshDocDesigner} variant="border-filled" size="small"
+                            tooltip="Refresh Document Designer"></lightning-button-icon>
+                    </div>
+                    <c-document-designer data-id="docDesigner"></c-document-designer>
+                </div>
+            </lightning-tab>
+
+            <!-- Tab 9: Integration Configurator -->
+            <lightning-tab label="Integrations" value="integrationConfig" icon-name="utility:connected_apps">
+                <div class="tab-content embedded-component">
+                    <div class="tab-refresh-header">
+                        <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                            onclick={handleRefreshIntegrations} variant="border-filled" size="small"
+                            tooltip="Refresh Integrations"></lightning-button-icon>
+                    </div>
+                    <c-integration-dashboard data-id="integrations"></c-integration-dashboard>
+                </div>
+            </lightning-tab>
+        </lightning-tabset>
+    </div>
+</template>

@@ -1,0 +1,71 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+    </template>
+
+    <template if:false={isLoading}>
+        <!-- Cannot Push -->
+        <template if:true={cannotPush}>
+            <div class="slds-p-around_medium">
+                <div class="slds-illustration slds-illustration_small">
+                    <div class="slds-text-longform">
+                        <h3 class="slds-text-heading_medium">Cannot Push to Sales</h3>
+                        <p class="slds-text-body_regular slds-m-top_small">{blockReason}</p>
+                    </div>
+                </div>
+                <div class="slds-m-top_medium slds-text-align_right">
+                    <lightning-button label="Close" onclick={handleClose}></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Confirmation Screen -->
+        <template if:false={cannotPush}>
+            <template if:false={isPushing}>
+                <div class="slds-p-around_medium">
+                    <p class="slds-text-body_regular slds-m-bottom_medium">
+                        Are you sure you want to push this lead to <strong>Sales</strong>?
+                        A Sales user will be assigned via Round Robin.
+                    </p>
+
+                    <div class="slds-box slds-m-bottom_medium lead-info-box">
+                        <dl class="slds-dl_horizontal">
+                            <dt class="slds-dl_horizontal__label">Lead ID:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.leadIdName}</dd>
+
+                            <dt class="slds-dl_horizontal__label">Lead Name:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.leadName}</dd>
+
+                            <dt class="slds-dl_horizontal__label">Project:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.projectName}</dd>
+
+                            <dt class="slds-dl_horizontal__label">Status:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.leadStatus}</dd>
+
+                            <dt class="slds-dl_horizontal__label">Current Owner:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.ownerName}</dd>
+
+                            <dt class="slds-dl_horizontal__label">Bucket:</dt>
+                            <dd class="slds-dl_horizontal__detail">{leadInfo.recordTypeName}</dd>
+                        </dl>
+                    </div>
+
+                    <div class="slds-text-align_right">
+                        <lightning-button label="Cancel" onclick={handleClose}
+                                          class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Push to Sales" variant="brand"
+                                          icon-name="utility:forward"
+                                          onclick={handlePush}></lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <template if:true={isPushing}>
+                <div class="slds-p-around_medium slds-text-align_center">
+                    <lightning-spinner alternative-text="Pushing to Sales..." size="medium"></lightning-spinner>
+                    <p class="slds-m-top_medium slds-text-body_regular">Pushing lead to Sales...</p>
+                </div>
+            </template>
+        </template>
+    </template>
+</template>

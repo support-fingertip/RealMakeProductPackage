@@ -1,0 +1,198 @@
+<template>
+    <!-- ==================== MAIN PAYMENT SCHEDULES VIEW ==================== -->
+    <template if:true={showMainModal}>
+        <div class="modal-container">
+            <section role="dialog" tabindex="-1" aria-modal="true"
+                     class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container custom-modal-container">
+
+                    <!-- Header -->
+                    <header class="slds-modal__header custom-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close custom-close-btn"
+                                title="Close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" alternative-text="Close"
+                                          variant="inverse" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-text-heading_medium">
+                            <lightning-icon icon-name="standard:schedule_objective"
+                                          variant="inverse" size="small"></lightning-icon>
+                            Payment Schedule Overview
+                        </h2>
+                    </header>
+
+                    <!-- Content -->
+                    <div class="slds-modal__content slds-p-around_medium custom-modal-content">
+
+                        <!-- Loading -->
+                        <template if:true={isLoading}>
+                            <div class="loading-container">
+                                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <!-- Error -->
+                        <template if:true={hasError}>
+                            <template if:false={isLoading}>
+                                <div class="slds-notify slds-notify_alert slds-theme_error" role="alert">
+                                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    <span>{errorMessage}</span>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- Main Content -->
+                        <template if:false={isLoading}>
+                            <template if:false={hasError}>
+
+                                <!-- Booking Info -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Booking</div>
+                                            <div class="info-value slds-truncate">{bookingName}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Project</div>
+                                            <div class="info-value slds-truncate">{projectName}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Unit</div>
+                                            <div class="info-value slds-truncate">{unitName}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Standard Mode Banner -->
+                                <template if:false={isCustomMode}>
+                                    <div class="mode-banner mode-standard">
+                                        <lightning-icon icon-name="utility:lock" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                        <span><strong>Standard Mode</strong> — Payment schedules are read-only. To enable editing, change the Schedule Mode to "Custom" in Post Sales Admin.</span>
+                                    </div>
+                                </template>
+                                <template if:true={isCustomMode}>
+                                    <div class="mode-banner mode-custom">
+                                        <lightning-icon icon-name="utility:edit" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                        <span><strong>Custom Mode</strong> — You can edit amounts for schedules where demand has not been raised.</span>
+                                    </div>
+                                </template>
+
+                                <!-- Payment Schedules Table -->
+                                <template if:true={hasSchedules}>
+                                    <h3 class="section-divider">Payment Schedules</h3>
+                                    <div class="table-scroll">
+                                        <table class="slds-table slds-table_bordered slds-table_striped slds-table_cell-buffer">
+                                            <thead>
+                                                <tr class="slds-text-title_caps">
+                                                    <th scope="col"><div class="slds-truncate">Name</div></th>
+                                                    <th scope="col"><div class="slds-truncate">Milestone</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Amount</div></th>
+                                                    <th scope="col" class="slds-text-align_center"><div class="slds-truncate">%</div></th>
+                                                    <th scope="col" class="slds-text-align_center"><div class="slds-truncate">Status</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Pending</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Interest</div></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={schedules} for:item="schedule">
+                                                    <tr key={schedule.id} class={schedule.rowClass}>
+                                                        <td><div class="slds-truncate">{schedule.name}</div></td>
+                                                        <td><div class="slds-truncate">{schedule.milestoneName}</div></td>
+                                                        <td class="slds-text-align_right">
+                                                            <template if:true={schedule.isEditable}>
+                                                                <lightning-input type="number" value={schedule.amount}
+                                                                    data-id={schedule.id} onchange={handleAmountChange}
+                                                                    variant="label-hidden" step="1" min="0"
+                                                                    formatter="currency" class="amount-input">
+                                                                </lightning-input>
+                                                            </template>
+                                                            <template if:false={schedule.isEditable}>
+                                                                <span class="amount-text">{schedule.formattedAmount}</span>
+                                                                <template if:true={schedule.demandRaised}>
+                                                                    <lightning-icon icon-name="utility:lock" size="xx-small"
+                                                                        class="lock-icon" title="Demand raised - locked"></lightning-icon>
+                                                                </template>
+                                                            </template>
+                                                        </td>
+                                                        <td class="slds-text-align_center"><span class="slds-badge">{schedule.percentage}%</span></td>
+                                                        <td class="slds-text-align_center">
+                                                            <template if:true={schedule.isPaid}>
+                                                                <span class="status-badge status-paid">{schedule.status}</span>
+                                                            </template>
+                                                            <template if:true={schedule.isCompleted}>
+                                                                <span class="status-badge status-completed">{schedule.status}</span>
+                                                            </template>
+                                                            <template if:false={schedule.isCompleted}>
+                                                                <template if:false={schedule.isPaid}>
+                                                                    <span class="status-badge status-pending">{schedule.status}</span>
+                                                                </template>
+                                                            </template>
+                                                        </td>
+                                                        <td class="slds-text-align_right"><span class="pending-text">{schedule.formattedPending}</span></td>
+                                                        <td class="slds-text-align_right"><span class="interest-text">{schedule.formattedInterest}</span></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="total-row">
+                                                    <td colspan="2"><strong>Total</strong></td>
+                                                    <td class="slds-text-align_right"><strong class="amount-text">{formattedTotalAmount}</strong></td>
+                                                    <td class="slds-text-align_center">100%</td>
+                                                    <td></td>
+                                                    <td class="slds-text-align_right"><strong class="pending-text">{formattedTotalPending}</strong></td>
+                                                    <td class="slds-text-align_right"><strong class="interest-text">{formattedTotalInterest}</strong></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    <template if:true={hasChanges}>
+                                        <template if:true={totalMismatch}>
+                                            <div class="validation-bar validation-error">
+                                                <span class="validation-text">
+                                                    <lightning-icon icon-name="utility:error" size="xx-small" variant="error" class="slds-m-right_xx-small"></lightning-icon>
+                                                    Total mismatch! Schedules total must equal booking total ({formattedBookingTotal}). Difference: {totalDifference}
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <div class="save-bar">
+                                            <span class="save-bar-text">
+                                                <lightning-icon icon-name="utility:warning" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                You have unsaved amount changes
+                                            </span>
+                                            <lightning-button label="Save Changes" variant="brand"
+                                                icon-name="utility:save" onclick={handleSaveAmounts}
+                                                disabled={isSaving}></lightning-button>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- No Schedules -->
+                                <template if:false={hasSchedules}>
+                                    <div class="empty-state">
+                                        <lightning-icon icon-name="utility:info" size="large"></lightning-icon>
+                                        <h3>No Payment Schedules</h3>
+                                        <p>No payment schedules found for this booking.</p>
+                                    </div>
+                                </template>
+
+                            </template>
+                        </template>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="slds-modal__footer custom-modal-footer">
+                        <lightning-button label="Close" onclick={handleClose}
+                            variant="neutral" class="slds-m-right_x-small"></lightning-button>
+                        <lightning-button label="Refresh" icon-name="utility:refresh" onclick={handleRefresh}
+                            variant="neutral" class="slds-m-right_x-small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

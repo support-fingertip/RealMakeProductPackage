@@ -1,0 +1,163 @@
+.pig-container {
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+.pig-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.pig-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.pig-header-icon {
+    background: #eaf5fe;
+    border-radius: 50%;
+    padding: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pig-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0;
+}
+
+.pig-subtitle {
+    color: #54698d;
+    font-size: 0.85rem;
+    margin: 0.15rem 0 0;
+}
+
+.pig-header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.pig-search {
+    margin-bottom: 1rem;
+}
+
+.pig-step {
+    padding: 0.5rem 0.25rem 0.75rem;
+}
+
+.pig-step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.pig-step-number {
+    background: #16325c;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    letter-spacing: 0.05em;
+}
+
+.pig-step-icon {
+    --sds-c-icon-color-foreground-default: #1589ee;
+}
+
+.pig-step-summary {
+    color: #3e3e3c;
+    font-size: 0.9rem;
+    margin: 0;
+    flex: 1 1 auto;
+}
+
+.pig-step-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pig-step-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #444;
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.pig-bullet-icon {
+    --sds-c-icon-color-foreground-default: #2e844a;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+}
+
+.pig-links {
+    margin-top: 0.85rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed #e5e5e5;
+}
+
+.pig-links-title {
+    font-weight: 600;
+    color: #16325c;
+    font-size: 0.85rem;
+    margin: 0 0 0.4rem;
+}
+
+.pig-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #1589ee;
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-right: 1rem;
+}
+
+.pig-link:hover {
+    text-decoration: underline;
+}
+
+.pig-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem;
+    background: #fafaf9;
+    border: 1px dashed #d8dde6;
+    border-radius: 0.35rem;
+    color: #54698d;
+    justify-content: center;
+}
+
+.pig-footer {
+    margin-top: 1rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid #e5e5e5;
+    color: #54698d;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+/* This is a CSS comment */

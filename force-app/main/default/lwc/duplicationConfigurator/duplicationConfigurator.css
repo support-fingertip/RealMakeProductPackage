@@ -1,0 +1,119 @@
+.step-number {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    background-color: #0176d3;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.expression-builder {
+    background-color: #f3f3f3;
+    border-left: 4px solid #0176d3;
+}
+
+.related-expression {
+    border-left: 4px solid #ff9a3c;
+}
+
+/* Field Mapping Section Styles */
+.field-mapping-section {
+    background-color: #f9f9f9;
+    border-left: 4px solid #16325c;
+}
+
+.mapping-row {
+    background-color: white;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+}
+
+.mapping-row:hover {
+    background-color: #fafaf9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.placeholder-text {
+    padding: 0.5rem;
+    color: #706e6b;
+    font-style: italic;
+    background-color: #f3f2f2;
+    border-radius: 0.25rem;
+    text-align: center;
+}
+
+.expression-preview {
+    margin-top: 12px;
+    border-radius: 4px;
+}
+
+.slds-theme_success {
+    background-color: #e8f4e8;
+    border-left: 4px solid #4bca81;
+}
+
+.slds-theme_info {
+    background-color: #e8f3ff;
+    border-left: 4px solid #1589ee;
+}
+
+.slds-theme_error {
+    background-color: #ffe6e6;
+    border-left: 4px solid #ea001e;
+}
+
+.slds-box_small {
+    padding: 1rem;
+}
+
+.slds-box_x-small {
+    padding: 0.75rem;
+}
+
+.slds-theme_shade {
+    background-color: #fafaf9;
+}
+
+code {
+    background-color: #eee;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+lightning-icon {
+    vertical-align: middle;
+}
+
+.invalid-expression lightning-textarea {
+    border-color: #ea001e;
+}
+
+.clear-button-container {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+}
+
+.slds-text-color_error {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments for field mapping */
+@media (max-width: 768px) {
+    .mapping-row .slds-grid {
+        flex-direction: column;
+    }
+    
+    .mapping-row .slds-col {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+}

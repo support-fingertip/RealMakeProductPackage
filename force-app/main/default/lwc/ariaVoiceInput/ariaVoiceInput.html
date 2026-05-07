@@ -1,0 +1,60 @@
+<template>
+    <template lwc:if={isListening}>
+        <div class="aria-voice-strip" role="group" aria-label="Voice recording">
+            <button type="button"
+                    class="aria-voice-cancel"
+                    title="Cancel recording"
+                    onclick={handleCancel}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 7h12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-7 0v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"
+                          stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <div class="aria-wave" aria-hidden="true">
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+                <span class="aria-wave-bar"></span>
+            </div>
+
+            <span class="aria-voice-timer">{elapsedLabel}</span>
+
+            <button type="button"
+                    class="aria-voice-confirm"
+                    title="Stop and insert transcript"
+                    onclick={handleConfirm}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 12l4 4L19 7"
+                          stroke="currentColor" stroke-width="2.5"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </template>
+
+    <template lwc:else>
+        <div class="aria-voice-wrapper">
+            <button type="button"
+                    class={buttonClass}
+                    disabled={isButtonDisabled}
+                    title={buttonTitle}
+                    onclick={handleMicClick}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"
+                          stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 11a7 7 0 0 1-14 0M12 18v3"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <template lwc:if={hasError}>
+                <span class="aria-voice-error-dot" title={errorMessage} aria-label={errorMessage}>!</span>
+            </template>
+        </div>
+    </template>
+</template>

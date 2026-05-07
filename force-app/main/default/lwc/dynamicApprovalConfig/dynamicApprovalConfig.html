@@ -1,0 +1,472 @@
+<template>
+    <lightning-card title="Dynamic Approval Configuration" icon-name="custom:custom63">
+        
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            
+            <!-- Object Selection Section -->
+            <div class="slds-p-around_medium slds-border_bottom">
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-end">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox
+                            name="objectSelection"
+                            label="Select Object"
+                            value={selectedObject}
+                            placeholder="Select an Object..."
+                            options={objectOptions}
+                            onchange={handleObjectChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col">
+                        <template if:true={selectedObject}>
+                            <lightning-button 
+                                variant="brand" 
+                                label="New Configuration" 
+                                icon-name="utility:add"
+                                onclick={handleCreateNew}>
+                            </lightning-button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration List View -->
+            <template if:true={showConfigList}>
+                <div class="slds-p-around_medium">
+
+                    <!-- Has Configurations -->
+                    <template if:true={hasConfigurations}>
+                        <div class="slds-m-bottom_small">
+                            <span class="slds-text-heading_small">Existing Configurations for {selectedObjectLabel}</span>
+                        </div>
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped compact-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Process Label</th>
+                                    <th scope="col">Process Type</th>
+                                    <th scope="col">Sequence</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col" class="action-col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={configurations} for:item="cfg">
+                                    <tr key={cfg.Id}>
+                                        <td><strong>{cfg.Name}</strong></td>
+                                        <td>{cfg.Process_Label__c}</td>
+                                        <td>{cfg.Process_Type__c}</td>
+                                        <td>{cfg.Sequence_Order__c}</td>
+                                        <td>
+                                            <template if:true={cfg.Is_Active__c}>
+                                                <span class="slds-badge slds-theme_success">Active</span>
+                                            </template>
+                                            <template if:false={cfg.Is_Active__c}>
+                                                <span class="slds-badge">Inactive</span>
+                                            </template>
+                                        </td>
+                                        <td class="action-col">
+                                            <lightning-button-icon icon-name="utility:edit"
+                                                alternative-text="Edit" data-id={cfg.Id}
+                                                onclick={handleEditRow} variant="bare"
+                                                size="small" class="slds-m-right_xx-small"></lightning-button-icon>
+                                            <lightning-button-icon icon-name="utility:delete"
+                                                alternative-text="Delete" data-id={cfg.Id}
+                                                onclick={handleDeleteRow} variant="bare"
+                                                size="small"></lightning-button-icon>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+
+                    <!-- No Configurations -->
+                    <template if:false={hasConfigurations}>
+                        <template if:true={selectedObject}>
+                            <div class="slds-text-align_center slds-p-around_large">
+                                <div class="slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:info" size="large"></lightning-icon>
+                                </div>
+                                <p class="slds-text-heading_medium slds-m-bottom_x-small">No Configurations Found</p>
+                                <p class="slds-text-body_regular slds-text-color_weak">
+                                    Click "New Configuration" to create your first approval configuration for {selectedObjectLabel}.
+                                </p>
+                            </div>
+                        </template>
+
+                        <template if:false={selectedObject}>
+                            <div class="slds-text-align_center slds-p-around_large">
+                                <div class="slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:setup" size="large"></lightning-icon>
+                                </div>
+                                <p class="slds-text-heading_medium slds-m-bottom_x-small">Select an Object</p>
+                                <p class="slds-text-body_regular slds-text-color_weak">
+                                    Choose an object from the dropdown above to view or create approval configurations.
+                                </p>
+                            </div>
+                        </template>
+                    </template>
+
+                </div>
+            </template>
+
+            <!-- Configuration Form View -->
+            <template if:true={showConfigForm}>
+                <div class="slds-p-around_medium">
+
+                    <!-- Header with Back Button -->
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
+                        <lightning-button-icon
+                            icon-name="utility:back"
+                            variant="bare"
+                            alternative-text="Back"
+                            onclick={handleBackToList}
+                            class="slds-m-right_small">
+                        </lightning-button-icon>
+                        <span class="slds-text-heading_small">{formTitle}</span>
+                    </div>
+
+                    <!-- Step Progress Indicator -->
+                    <lightning-progress-indicator
+                        current-step={currentStepValue}
+                        type="base"
+                        variant="base">
+                        <lightning-progress-step label="Basic Info" value="0"></lightning-progress-step>
+                        <lightning-progress-step label="Status" value="1"></lightning-progress-step>
+                        <lightning-progress-step label="Prerequisites" value="2"></lightning-progress-step>
+                        <lightning-progress-step label="Steps" value="3"></lightning-progress-step>
+                        <lightning-progress-step label="On Approval" value="4"></lightning-progress-step>
+                        <lightning-progress-step label="On Rejection" value="5"></lightning-progress-step>
+                        <lightning-progress-step label="Required Fields" value="6"></lightning-progress-step>
+                        <lightning-progress-step label="Matching Criteria" value="7"></lightning-progress-step>
+                    </lightning-progress-indicator>
+
+                    <!-- Step Content -->
+                    <div class="step-content slds-m-top_medium">
+
+                        <!-- Step 1: Basic Information -->
+                        <template if:true={isStep0}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-input
+                                            label="Process Label"
+                                            value={configProcessLabel}
+                                            onchange={handleProcessLabelChange}
+                                            required
+                                            placeholder="e.g., Initial Approval">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-input
+                                            label="Process Type (API Name)"
+                                            value={configProcessType}
+                                            onchange={handleProcessTypeChange}
+                                            required
+                                            placeholder="e.g., Initial_Approval">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-input
+                                            type="number"
+                                            label="Sequence Order"
+                                            value={configSequenceOrder}
+                                            onchange={handleSequenceOrderChange}
+                                            min="1"
+                                            placeholder="Display order (1, 2, 3...)">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-input
+                                            label="Salesforce Approval Process API Name"
+                                            value={configApprovalProcessName}
+                                            onchange={handleApprovalProcessNameChange}
+                                            placeholder="e.g., Booking_Approval_Process">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                        <lightning-input
+                                            type="checkbox"
+                                            label="Is Active"
+                                            checked={configIsActive}
+                                            onchange={handleIsActiveChange}>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Step 2: Status Tracking -->
+                        <template if:true={isStep1}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-combobox
+                                            name="statusField"
+                                            label="Status Field"
+                                            value={configStatusFieldName}
+                                            placeholder="Select status picklist field..."
+                                            options={picklistFieldOptions}
+                                            onchange={handleStatusFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+                                <template if:true={configStatusFieldName}>
+                                    <div class="slds-grid slds-wrap slds-gutters slds-m-top_small">
+                                        <div class="slds-col slds-size_1-of-3 slds-m-bottom_small">
+                                            <lightning-combobox
+                                                name="pendingValue"
+                                                label="Pending Status Value"
+                                                value={configPendingValue}
+                                                options={statusPicklistValues}
+                                                onchange={handlePendingValueChange}
+                                                placeholder="Select value...">
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3 slds-m-bottom_small">
+                                            <lightning-combobox
+                                                name="approvedValue"
+                                                label="Approved Status Value"
+                                                value={configApprovedValue}
+                                                options={statusPicklistValues}
+                                                onchange={handleApprovedValueChange}
+                                                placeholder="Select value...">
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3 slds-m-bottom_small">
+                                            <lightning-combobox
+                                                name="rejectedValue"
+                                                label="Rejected Status Value"
+                                                value={configRejectedValue}
+                                                options={statusPicklistValues}
+                                                onchange={handleRejectedValueChange}
+                                                placeholder="Select value...">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p class="slds-m-top_small slds-text-body_small slds-text-color_weak">
+                                    Select the picklist field on the object that will track this approval's status.
+                                </p>
+                            </div>
+                        </template>
+
+                        <!-- Step 3: Prerequisites -->
+                        <template if:true={isStep2}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-combobox
+                                            name="prerequisite"
+                                            label="Prerequisite Approval Process"
+                                            value={configPrerequisiteType}
+                                            placeholder="-- None --"
+                                            options={prerequisiteOptions}
+                                            onchange={handlePrerequisiteTypeChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <template if:true={configPrerequisiteType}>
+                                        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                            <lightning-input
+                                                label="Required Status Value"
+                                                value={configPrerequisiteValue}
+                                                onchange={handlePrerequisiteValueChange}
+                                                placeholder="e.g., Approved">
+                                            </lightning-input>
+                                        </div>
+                                    </template>
+                                </div>
+                                <p class="slds-m-top_small slds-text-body_small slds-text-color_weak">
+                                    If set, this approval can only be submitted after the prerequisite approval is completed with the required status.
+                                </p>
+                            </div>
+                        </template>
+
+                        <!-- Step 4: Approval Steps -->
+                        <template if:true={isStep3}>
+                            <div class="slds-p-around_small">
+                                <c-approval-step-config
+                                    steps-json={configStepsJson}
+                                    user-lookup-options={userLookupOptions}
+                                    onstepschange={handleStepsChange}>
+                                </c-approval-step-config>
+                            </div>
+                        </template>
+
+                        <!-- Step 5: On Approval Actions -->
+                        <template if:true={isStep4}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:success" size="small" variant="success" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="slds-text-heading_small">Actions when Final Approval</span>
+                                </div>
+                                <c-approval-action-config
+                                    action-json={configOnApprovalJson}
+                                    object-api-name={selectedObject}
+                                    email-templates={emailTemplates}
+                                    email-config-templates={emailConfigTemplates}
+                                    user-lookup-options={simpleUserLookupOptions}
+                                    all-object-fields={allObjectFields}
+                                    onactionchange={handleApprovalActionChange}>
+                                </c-approval-action-config>
+                            </div>
+                        </template>
+
+                        <!-- Step 6: On Rejection Actions -->
+                        <template if:true={isStep5}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:error" size="small" variant="error" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="slds-text-heading_small">Actions when Final Rejection</span>
+                                </div>
+                                <c-approval-action-config
+                                    action-json={configOnRejectionJson}
+                                    object-api-name={selectedObject}
+                                    email-templates={emailTemplates}
+                                    email-config-templates={emailConfigTemplates}
+                                    user-lookup-options={simpleUserLookupOptions}
+                                    all-object-fields={allObjectFields}
+                                    onactionchange={handleRejectionActionChange}>
+                                </c-approval-action-config>
+                            </div>
+                        </template>
+
+                        <!-- Step 7: Required Fields -->
+                        <template if:true={isStep6}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:check" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="slds-text-heading_small">Mandatory Fields Before Submission</span>
+                                </div>
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                                    Select fields that must be filled on the record before a user can submit for this approval.
+                                </p>
+                                <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-2 slds-m-right_small">
+                                        <lightning-combobox
+                                            label="Add Required Field"
+                                            placeholder="Select a field..."
+                                            options={requiredFieldOptions}
+                                            value={selectedRequiredField}
+                                            onchange={handleRequiredFieldSelect}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col">
+                                        <lightning-button
+                                            label="Add"
+                                            variant="neutral"
+                                            icon-name="utility:add"
+                                            onclick={handleAddRequiredField}
+                                            disabled={addRequiredFieldDisabled}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                                <template if:true={hasRequiredFields}>
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer compact-table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Field Label</th>
+                                                <th scope="col">API Name</th>
+                                                <th scope="col" class="action-col">Remove</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={configRequiredFields} for:item="field">
+                                                <tr key={field.apiName}>
+                                                    <td>{field.label}</td>
+                                                    <td class="slds-text-body_small slds-text-color_weak">{field.apiName}</td>
+                                                    <td class="action-col">
+                                                        <lightning-button-icon
+                                                            icon-name="utility:delete"
+                                                            alternative-text="Remove"
+                                                            data-api-name={field.apiName}
+                                                            onclick={handleRemoveRequiredField}
+                                                            variant="bare"
+                                                            size="small">
+                                                        </lightning-button-icon>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                                <template if:false={hasRequiredFields}>
+                                    <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
+                                        No required fields configured. All fields are optional for submission.
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Step 8: Matching Criteria -->
+                        <template if:true={isStep7}>
+                            <div class="slds-p-around_small">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                                    <lightning-icon icon-name="utility:filterList" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="slds-text-heading_small">Matching Criteria</span>
+                                </div>
+                                <c-config-matching-criteria
+                                    object-api-name={selectedObject}
+                                    criteria-json={configMatchingCriteria}
+                                    label="Record Matching Criteria"
+                                    help-text="Define conditions to control when this approval configuration applies to specific records. For example, match only records where Project Type equals 'Residential'. If no conditions are set, this config applies to all records."
+                                    oncriteriachange={handleMatchingCriteriaChange}>
+                                </c-config-matching-criteria>
+                            </div>
+                        </template>
+
+                    </div>
+
+                    <!-- Form Footer with Step Navigation -->
+                    <div class="slds-m-top_large slds-p-top_medium slds-border_top">
+                        <div class="slds-grid slds-grid_align-spread">
+                            <div>
+                                <lightning-button
+                                    variant="neutral"
+                                    label="Cancel"
+                                    onclick={handleBackToList}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                                <template if:false={isFirstStep}>
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Previous"
+                                        icon-name="utility:back"
+                                        onclick={handlePreviousStep}>
+                                    </lightning-button>
+                                </template>
+                            </div>
+                            <div>
+                                <template if:false={isLastStep}>
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Next"
+                                        icon-name="utility:forward"
+                                        icon-position="right"
+                                        onclick={handleNextStep}>
+                                    </lightning-button>
+                                </template>
+                                <template if:true={isLastStep}>
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Save Configuration"
+                                        onclick={handleSave}>
+                                    </lightning-button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </template>
+
+        </template>
+    </lightning-card>
+</template>

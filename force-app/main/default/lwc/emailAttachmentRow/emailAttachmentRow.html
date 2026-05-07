@@ -1,0 +1,373 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <div class="attachment-row slds-p-around_small slds-border_bottom">
+        <div class="slds-grid slds-gutters slds-grid_vertical-align-start">
+            <!-- Row Number -->
+            <div class="slds-col slds-size_1-of-12">
+                <span class="slds-badge">{rowNumber}</span>
+            </div>
+            
+            <!-- Attachment Name -->
+            <div class="slds-col slds-size_2-of-12">
+                <lightning-input
+                    label="Display Name"
+                    value={attachmentName}
+                    placeholder="e.g., Invoice"
+                    required
+                    onchange={handleNameChange}>
+                </lightning-input>
+            </div>
+            
+            <!-- Attachment Type -->
+            <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                    label="Type"
+                    value={attachmentType}
+                    options={attachmentTypeOptions}
+                    onchange={handleTypeChange}>
+                </lightning-combobox>
+            </div>
+            
+            <!-- Type-specific Fields -->
+            <div class="slds-col slds-size_4-of-12">
+                <!-- VF Page Selection -->
+                <template if:true={showVfPageFields}>
+                    <lightning-combobox
+                        label="Visualforce Page"
+                        value={vfPageName}
+                        options={vfPageOptions}
+                        placeholder="Select VF Page..."
+                        required
+                        onchange={handleVfPageChange}>
+                    </lightning-combobox>
+                    <!-- Document Template selector when DynamicDocumentPDF is selected -->
+                    <template if:true={isDynamicDocumentPDF}>
+                        <lightning-combobox
+                            label="Document Template"
+                            value={documentTemplateId}
+                            options={documentTemplateOptions}
+                            placeholder="Select document template..."
+                            required
+                            onchange={handleDocumentTemplateIdChange}
+                            class="slds-m-top_small">
+                        </lightning-combobox>
+                    </template>
+                </template>
+                
+                <!-- Static Document Fields -->
+                <template if:true={showDocumentFields}>
+                    <lightning-input
+                        label="Document ID"
+                        value={documentId}
+                        placeholder="ContentDocument ID..."
+                        required
+                        onchange={handleDocumentIdChange}>
+                    </lightning-input>
+                </template>
+            </div>
+            
+            <!-- Options -->
+            <div class="slds-col slds-size_2-of-12">
+                <div class="slds-grid slds-grid_vertical-align-center slds-wrap">
+                    <lightning-input
+                        type="checkbox"
+                        label="Default"
+                        checked={isDefaultChecked}
+                        onchange={handleDefaultCheckedChange}
+                        class="slds-m-right_small">
+                    </lightning-input>
+                    <lightning-input
+                        type="checkbox"
+                        label="Required"
+                        checked={isRequired}
+                        onchange={handleRequiredChange}>
+                    </lightning-input>
+                </div>
+            </div>
+            
+            <!-- Delete -->
+            <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                <template if:true={showDeleteButton}>
+                    <lightning-button-icon
+                        icon-name="utility:delete"
+                        variant="bare"
+                        alternative-text="Delete"
+                        onclick={handleDelete}
+                        class="slds-m-top_medium">
+                    </lightning-button-icon>
+                </template>
+            </div>
+        </div>
+        
+        <!-- ============ VF PAGE CONFIGURATION ============ -->
+        <template if:true={showVfPageFields}>
+            <div class="slds-grid slds-gutters slds-m-top_medium">
+                <div class="slds-col slds-size_1-of-12"></div>
+                <div class="slds-col slds-size_10-of-12">
+                    
+                    <!-- Record Source Type: Direct or Related -->
+                    <div class="slds-box slds-theme_default slds-p-around_medium">
+                        <h4 class="slds-text-heading_small slds-m-bottom_small">
+                            <lightning-icon icon-name="utility:routing_offline" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                            Record Source (Parameter 'id' will be auto-filled)
+                        </h4>
+                        
+                        <div class="slds-grid slds-gutters">
+                            <!-- Source Type Selection -->
+                            <div class="slds-col slds-size_1-of-1">
+                                <lightning-radio-group
+                                    label="Which record to use?"
+                                    options={recordSourceOptions}
+                                    value={recordSourceType}
+                                    onchange={handleRecordSourceChange}
+                                    type="button">
+                                </lightning-radio-group>
+                            </div>
+                        </div>
+                        
+                        <!-- ========== RELATED RECORD CONFIGURATION ========== -->
+                        <template if:true={isRelatedRecord}>
+                            <div class="slds-box slds-theme_shade slds-m-top_medium slds-p-around_small">
+                                
+                                <!-- Step 1: Select Relationship -->
+                                <div class="slds-m-bottom_medium">
+                                    <h5 class="slds-text-heading_small slds-m-bottom_small">
+                                        Step 1: Select Related Object
+                                    </h5>
+                                    <lightning-combobox
+                                        label="Related Object"
+                                        value={selectedRelationship}
+                                        options={relationshipOptions}
+                                        placeholder="Choose a relationship..."
+                                        onchange={handleRelationshipChange}>
+                                    </lightning-combobox>
+                                </div>
+                                
+                                <!-- Step 2: Single or Multiple (only for Child relationships) -->
+                                <template if:true={showChildRecordOptions}>
+                                    <div class="slds-m-bottom_medium">
+                                        <h5 class="slds-text-heading_small slds-m-bottom_small">
+                                            Step 2: How many records?
+                                        </h5>
+                                        <lightning-radio-group
+                                            label="Generate PDF for:"
+                                            options={childRecordTypeOptions}
+                                            value={childRecordType}
+                                            onchange={handleChildRecordTypeChange}
+                                            type="button">
+                                        </lightning-radio-group>
+                                    </div>
+                                    
+                                    <!-- Single Child - Condition Builder -->
+                                    <template if:true={isSingleChild}>
+                                        <div class="slds-box slds-theme_warning slds-p-around_small">
+                                            <h5 class="slds-text-heading_small slds-m-bottom_small">
+                                                <lightning-icon icon-name="utility:filterList" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                Which specific record?
+                                            </h5>
+                                            
+                                            <!-- Condition Builder -->
+                                            <template if:true={hasConditions}>
+                                                <template for:each={filterConditions} for:item="condition">
+                                                    <div key={condition.id} class="slds-grid slds-gutters slds-m-bottom_small">
+                                                        <!-- Field -->
+                                                        <div class="slds-col slds-size_4-of-12">
+                                                            <lightning-combobox
+                                                                label="Field"
+                                                                value={condition.field}
+                                                                options={relatedObjectFields}
+                                                                placeholder="Select field..."
+                                                                data-id={condition.id}
+                                                                onchange={handleConditionFieldChange}>
+                                                            </lightning-combobox>
+                                                        </div>
+                                                        
+                                                        <!-- Operator -->
+                                                        <div class="slds-col slds-size_3-of-12">
+                                                            <lightning-combobox
+                                                                label="Operator"
+                                                                value={condition.operator}
+                                                                options={operatorOptions}
+                                                                data-id={condition.id}
+                                                                onchange={handleConditionOperatorChange}>
+                                                            </lightning-combobox>
+                                                        </div>
+                                                        
+                                                        <!-- Value -->
+                                                        <div class="slds-col slds-size_4-of-12">
+                                                            <lightning-input
+                                                                label="Value"
+                                                                value={condition.value}
+                                                                placeholder="Enter value..."
+                                                                data-id={condition.id}
+                                                                onchange={handleConditionValueChange}>
+                                                            </lightning-input>
+                                                        </div>
+                                                        
+                                                        <!-- Remove Button -->
+                                                        <div class="slds-col slds-size_1-of-12">
+                                                            <lightning-button-icon
+                                                                icon-name="utility:delete"
+                                                                variant="bare"
+                                                                alternative-text="Remove"
+                                                                title="Remove Condition"
+                                                                data-id={condition.id}
+                                                                onclick={handleRemoveCondition}
+                                                                class="slds-m-top_large">
+                                                            </lightning-button-icon>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                            
+                                            <!-- Add Condition Button -->
+                                            <div class="slds-m-top_small slds-m-bottom_medium">
+                                                <lightning-button
+                                                    label="Add Condition"
+                                                    icon-name="utility:add"
+                                                    onclick={handleAddCondition}>
+                                                </lightning-button>
+                                            </div>
+                                            
+                                            <!-- ORDER BY Section -->
+                                            <div class="slds-box slds-theme_default slds-p-around_small slds-m-top_medium">
+                                                <h5 class="slds-text-body_small slds-text-title_bold slds-m-bottom_small">
+                                                    Sort & Limit
+                                                </h5>
+                                                <div class="slds-grid slds-gutters">
+                                                    <div class="slds-col slds-size_1-of-2">
+                                                        <lightning-combobox
+                                                            label="Order By"
+                                                            value={orderByField}
+                                                            options={relatedObjectFields}
+                                                            placeholder="Select field..."
+                                                            field-level-help="Get first or last record based on this field"
+                                                            onchange={handleOrderByFieldChange}>
+                                                        </lightning-combobox>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-2">
+                                                        <lightning-radio-group
+                                                            label="Direction"
+                                                            options={orderDirectionOptions}
+                                                            value={orderByDirection}
+                                                            onchange={handleOrderByDirectionChange}
+                                                            type="button">
+                                                        </lightning-radio-group>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-m-top_small">
+                                                    <lightning-input
+                                                        type="number"
+                                                        label="Limit (if multiple matches)"
+                                                        value={singleChildLimit}
+                                                        min="1"
+                                                        max="10"
+                                                        placeholder="1"
+                                                        field-level-help="If multiple records match, how many to attach?"
+                                                        onchange={handleSingleChildLimitChange}>
+                                                    </lightning-input>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Generated WHERE Clause Preview -->
+                                            <template if:true={hasWhereClause}>
+                                                <div class="slds-m-top_medium slds-p-around_small slds-box slds-theme_info">
+                                                    <p class="slds-text-body_small slds-m-bottom_xx-small">
+                                                        <strong>Filter Preview:</strong>
+                                                    </p>
+                                                    <code class="slds-text-body_small">{whereClausePreview}</code>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- All Children - Info Message -->
+                                    <template if:true={isAllChildren}>
+                                        <div class="slds-box slds-theme_info slds-p-around_small">
+                                            <div class="slds-media slds-media_center">
+                                                <div class="slds-media__figure">
+                                                    <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                                </div>
+                                                <div class="slds-media__body">
+                                                    <p class="slds-text-body_regular">
+                                                        <strong>Multiple PDFs will be generated</strong><br/>
+                                                        One PDF attachment will be created for each {selectedRelationshipLabel} record.
+                                                        A maximum of <strong>{maxChildRecords}</strong> PDFs will be attached.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Max Records Limit -->
+                                            <div class="slds-m-top_small">
+                                                <lightning-input
+                                                    type="number"
+                                                    label="Maximum Attachments"
+                                                    value={maxChildRecords}
+                                                    min="1"
+                                                    max="100"
+                                                    placeholder="10"
+                                                    onchange={handleMaxRecordsChange}>
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                                
+                                <!-- Complete Query Preview (for child records) -->
+                                <template if:true={showCompleteQueryPreview}>
+                                    <div class="slds-m-top_medium slds-p-around_small slds-box slds-theme_success">
+                                        <p class="slds-text-body_small slds-m-bottom_xx-small">
+                                            <strong>Complete Query:</strong>
+                                        </p>
+                                        <code class="slds-text-body_small" style="white-space: pre-wrap;">{completeQueryPreview}</code>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- Help Text -->
+                        <div class="slds-m-top_small">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                {recordSourceHelpText}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-12"></div>
+            </div>
+        </template>
+        
+        <!-- File Name Pattern (Last Row) -->
+        <div class="slds-grid slds-gutters slds-m-top_small">
+            <div class="slds-col slds-size_1-of-12"></div>
+            <div class="slds-col slds-size_10-of-12">
+                <div class="slds-grid slds-grid_vertical-align-end">
+                    <div class="slds-col slds-grow">
+                        <lightning-input
+                            label="File Name Pattern"
+                            value={fileNamePattern}
+                            placeholder="e.g., Invoice_{!Name}.pdf"
+                            field-level-help="Use merge fields like {!Name} for dynamic file names"
+                            onchange={handleFileNamePatternChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-no-flex slds-m-left_small">
+                        <c-email-merge-field-picker
+                            object-api-name={currentObjectForMergeFields}
+                            button-label=""
+                            button-variant="neutral"
+                            oninsert={handleInsertMergeField}>
+                        </c-email-merge-field-picker>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-col slds-size_1-of-12"></div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Reengaged_Type__c</fullName>
+    <defaultValue>&quot;Re-engaged&quot;</defaultValue>
+    <description>Lead Type value when an active lead is re-engaged from a new source.</description>
+    <externalId>false</externalId>
+    <label>Lead Re-engaged Type</label>
+    <length>100</length>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

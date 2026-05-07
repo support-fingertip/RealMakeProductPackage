@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>OAuth_Grant_Type__c</fullName>
+    <label>OAuth Grant Type</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>client_credentials</fullName>
+                <default>false</default>
+                <label>client_credentials</label>
+            </value>
+            <value>
+                <fullName>authorization_code</fullName>
+                <default>false</default>
+                <label>authorization_code</label>
+            </value>
+            <value>
+                <fullName>password</fullName>
+                <default>false</default>
+                <label>password</label>
+            </value>
+            <value>
+                <fullName>refresh_token</fullName>
+                <default>false</default>
+                <label>refresh_token</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

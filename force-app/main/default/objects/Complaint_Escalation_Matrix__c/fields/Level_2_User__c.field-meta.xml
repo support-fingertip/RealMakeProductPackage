@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Level_2_User__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Custom user to notify at Level 2 (when Level 2 Notify = Custom User)</description>
+    <label>Level 2 - Custom User</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>L2_Escalation_Rules</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

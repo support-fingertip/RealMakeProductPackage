@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>block_until_cant_be_past</fullName>
+    <active>true</active>
+    <errorConditionFormula>Blocked_Until__c &lt; NOW()</errorConditionFormula>
+    <errorMessage>Blocked Until date cannot be in the past.</errorMessage>
+</ValidationRule>

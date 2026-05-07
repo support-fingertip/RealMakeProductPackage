@@ -1,0 +1,69 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- Configuration Selection -->
+    <template if:true={showConfigSelection}>
+        <div class="selection-container">
+            <!-- Header -->
+            <div class="selection-header">
+                <div class="header-icon-wrapper">
+                    <lightning-icon icon-name="standard:dynamic_record_choice" size="medium"></lightning-icon>
+                </div>
+                <div class="header-text">
+                    <h2 class="slds-text-heading_medium header-title">Select a Form</h2>
+                    <p class="slds-text-color_weak slds-text-body_small">{configCountLabel}</p>
+                </div>
+            </div>
+
+            <!-- Config Cards -->
+            <div class="config-list">
+                <template for:each={availableConfigs} for:item="config">
+                    <div key={config.id}
+                         class="config-card"
+                         data-id={config.id}
+                         onclick={handleConfigSelect}
+                         role="button"
+                         tabindex="0"
+                         onkeyup={handleCardKeyup}>
+                        <div class="config-card-accent"></div>
+                        <div class="config-card-body">
+                            <div class="config-card-icon">
+                                <lightning-icon icon-name="standard:record" size="small"></lightning-icon>
+                            </div>
+                            <div class="config-card-content">
+                                <h3 class="config-card-title">{config.name}</h3>
+                                <template if:true={config.description}>
+                                    <p class="config-card-description">{config.description}</p>
+                                </template>
+                            </div>
+                            <div class="config-card-arrow">
+                                <lightning-icon icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="selection-footer">
+                <lightning-button label="Cancel" onclick={closeAction} variant="neutral"></lightning-button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Dynamic Form Modal -->
+    <template if:true={showForm}>
+        <c-dynamic-form-modal
+            config={selectedConfig}
+            object-api-name={targetObjectApiName}
+            context-record-id={recordId}
+            clone-record-id={cloneRecordId}
+            onclose={handleFormClose}
+            onsuccess={handleFormSuccess}>
+        </c-dynamic-form-modal>
+    </template>
+</template>

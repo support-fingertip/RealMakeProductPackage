@@ -1,0 +1,272 @@
+<template>
+    <lightning-card title="Field Mapping Configuration" icon-name="utility:flow">
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    label="Add Row"
+                    icon-name="utility:add"
+                    onclick={handleAddRow}
+                ></lightning-button>
+                <lightning-button
+                    label="Save All"
+                    icon-name="utility:save"
+                    variant="brand"
+                    onclick={handleSaveAll}
+                    disabled={isSaving}
+                ></lightning-button>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-p-horizontal_medium">
+            <!-- Filters -->
+            <lightning-layout class="slds-m-bottom_small">
+                <lightning-layout-item size="12" medium-device-size="4" padding="around-small">
+                    <lightning-combobox
+                        label="Endpoint"
+                        value={selectedEndpointId}
+                        options={endpointOptions}
+                        onchange={handleEndpointChange}
+                        placeholder="Select Endpoint"
+                    ></lightning-combobox>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                    <lightning-combobox
+                        label="Direction"
+                        value={selectedDirection}
+                        options={directionFilterOptions}
+                        onchange={handleDirectionFilterChange}
+                        placeholder="All Directions"
+                    ></lightning-combobox>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                    <lightning-combobox
+                        label="Status"
+                        value={selectedActiveFilter}
+                        options={activeFilterOptions}
+                        onchange={handleActiveFilterChange}
+                        placeholder="All"
+                    ></lightning-combobox>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" medium-device-size="2" padding="around-small" class="slds-grid slds-grid_vertical-align-end">
+                    <lightning-button
+                        label="Delete Selected"
+                        icon-name="utility:delete"
+                        variant="destructive-text"
+                        onclick={handleDeleteSelected}
+                        disabled={noRowsSelected}
+                    ></lightning-button>
+                </lightning-layout-item>
+            </lightning-layout>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <template if:true={hasEndpointSelected}>
+                    <!-- Mapping Count -->
+                    <div class="slds-m-bottom_small slds-text-body_small slds-text-color_weak">
+                        {filteredMappingCount} field mapping(s)
+                        <template if:true={hasUnsavedChanges}>
+                            <span class="slds-text-color_error slds-m-left_small">
+                                -- Unsaved changes
+                            </span>
+                        </template>
+                    </div>
+
+                    <!-- Editable Grid -->
+                    <template if:true={hasMappings}>
+                        <div class="slds-scrollable_x">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                                   aria-label="Field Mappings" role="grid">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-cell-wrap" style="width: 40px;">
+                                            <lightning-input
+                                                type="checkbox"
+                                                label="Select All"
+                                                variant="label-hidden"
+                                                checked={allRowsSelected}
+                                                onchange={handleSelectAll}
+                                            ></lightning-input>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap" style="width: 60px;">
+                                            <div class="slds-truncate" title="Order">Order</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap">
+                                            <div class="slds-truncate" title="Mapping Name">Mapping Name</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap">
+                                            <div class="slds-truncate" title="Source Field">Source Field</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap">
+                                            <div class="slds-truncate" title="Target Field">Target Field</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap">
+                                            <div class="slds-truncate" title="Target Object">Target Object</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap" style="width: 140px;">
+                                            <div class="slds-truncate" title="Direction">Direction</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap" style="width: 80px;">
+                                            <div class="slds-truncate" title="Active">Active</div>
+                                        </th>
+                                        <th scope="col" class="slds-cell-wrap" style="width: 100px;">
+                                            <div class="slds-truncate" title="Actions">Actions</div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={filteredMappings} for:item="mapping">
+                                        <tr key={mapping.clientId} class={mapping.rowClass}>
+                                            <td>
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    label="Select Row"
+                                                    variant="label-hidden"
+                                                    checked={mapping.isSelected}
+                                                    data-client-id={mapping.clientId}
+                                                    onchange={handleRowSelect}
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    type="number"
+                                                    label="Order"
+                                                    variant="label-hidden"
+                                                    value={mapping.Order__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Order__c"
+                                                    onchange={handleInlineEdit}
+                                                    min="1"
+                                                    step="1"
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    label="Mapping Name"
+                                                    variant="label-hidden"
+                                                    value={mapping.Mapping_Name__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Mapping_Name__c"
+                                                    onchange={handleInlineEdit}
+                                                    required
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    label="Source Field"
+                                                    variant="label-hidden"
+                                                    value={mapping.Source_Field__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Source_Field__c"
+                                                    onchange={handleInlineEdit}
+                                                    required
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    label="Target Field"
+                                                    variant="label-hidden"
+                                                    value={mapping.Target_Field__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Target_Field__c"
+                                                    onchange={handleInlineEdit}
+                                                    required
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-input
+                                                    label="Target Object"
+                                                    variant="label-hidden"
+                                                    value={mapping.Target_Object__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Target_Object__c"
+                                                    onchange={handleInlineEdit}
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-combobox
+                                                    label="Direction"
+                                                    variant="label-hidden"
+                                                    value={mapping.Direction__c}
+                                                    options={directionOptions}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Direction__c"
+                                                    onchange={handleInlineEdit}
+                                                ></lightning-combobox>
+                                            </td>
+                                            <td class="slds-text-align_center">
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    label="Active"
+                                                    variant="label-hidden"
+                                                    checked={mapping.Active__c}
+                                                    data-client-id={mapping.clientId}
+                                                    data-field="Active__c"
+                                                    onchange={handleInlineCheckbox}
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-button-icon
+                                                    icon-name="utility:arrowup"
+                                                    alternative-text="Move Up"
+                                                    title="Move Up"
+                                                    variant="border-filled"
+                                                    size="small"
+                                                    data-client-id={mapping.clientId}
+                                                    data-action="move-up"
+                                                    onclick={handleMoveRow}
+                                                    class="slds-m-right_xx-small"
+                                                ></lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:arrowdown"
+                                                    alternative-text="Move Down"
+                                                    title="Move Down"
+                                                    variant="border-filled"
+                                                    size="small"
+                                                    data-client-id={mapping.clientId}
+                                                    data-action="move-down"
+                                                    onclick={handleMoveRow}
+                                                    class="slds-m-right_xx-small"
+                                                ></lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Delete Row"
+                                                    title="Delete"
+                                                    variant="bare"
+                                                    size="small"
+                                                    data-client-id={mapping.clientId}
+                                                    onclick={handleDeleteRow}
+                                                ></lightning-button-icon>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+
+                    <template if:false={hasMappings}>
+                        <div class="slds-p-vertical_large slds-align_absolute-center">
+                            <p class="slds-text-body_regular slds-text-color_weak">
+                                No field mappings found. Click "Add Row" to create one.
+                            </p>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:false={hasEndpointSelected}>
+                    <div class="slds-p-vertical_large slds-align_absolute-center">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            Select an endpoint to view and manage its field mappings.
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

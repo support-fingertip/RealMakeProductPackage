@@ -1,0 +1,43 @@
+.member-name {
+    font-weight: 500;
+}
+
+.section-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    background-color: #f3f3f3;
+}
+
+.section-header-row td {
+    background-color: #f3f3f3;
+}
+
+.action-btn {
+    border: none;
+    color: #ffffff;
+    padding: 0.4rem 1.2rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 6rem;
+}
+
+.deactivate-btn {
+    background-color: #e91e63;
+}
+
+.deactivate-btn:hover {
+    background-color: #c2185b;
+}
+
+.activate-btn {
+    background-color: #4caf50;
+}
+
+.activate-btn:hover {
+    background-color: #388e3c;
+}

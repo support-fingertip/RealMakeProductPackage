@@ -1,0 +1,39 @@
+<template>
+    <div class="slds-box slds-theme_shade slds-m-bottom_small">
+        <div class="slds-media slds-media_center">
+            <div class="slds-media__figure">
+                <lightning-icon icon-name="standard:user" size="small"></lightning-icon>
+            </div>
+            <div class="slds-media__body">
+                <p>Manage members for <strong>{role}</strong> team.</p>
+            </div>
+            <div class="slds-media__figure slds-media__figure_reverse">
+                <!-- Search Box -->
+                <lightning-input 
+                    type="search" 
+                    placeholder="Search Users..." 
+                    variant="label-hidden"
+                    onchange={handleSearch}
+                    class="search-box">
+                </lightning-input>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATATABLE FOR SELECTION -->
+    <div style="height: 300px;">
+        <lightning-datatable
+            key-field="Id"
+            data={filteredUsers}
+            columns={columns}
+            selected-rows={selectedUserIds}
+            onrowselection={handleRowSelection}
+            show-row-number-column>
+        </lightning-datatable>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="slds-p-top_small slds-text-color_weak slds-text-align_right">
+        {selectedCount} users selected
+    </div>
+</template>

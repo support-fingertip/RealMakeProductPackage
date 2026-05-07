@@ -1,0 +1,491 @@
+<template>
+    <!-- Loading spinner -->
+    <template if:true={isLoading}>
+        <div class="slds-p-around_large slds-text-align_center">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <!-- Error: No project -->
+        <template if:true={errorMsg}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-longform">
+                    <h3 class="slds-text-heading_medium">Cannot Create Cost Sheet</h3>
+                    <p class="slds-text-body_regular slds-m-top_small">{errorMsg}</p>
+                </div>
+                <div class="slds-m-top_medium slds-text-align_right">
+                    <lightning-button label="Close" onclick={handleClose}></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <template if:false={errorMsg}>
+
+            <!-- STEP 1: Unit Selection -->
+            <template if:true={isUnitStep}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        New Cost Sheet - Select Unit
+                    </h2>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                        Lead: <strong>{leadCtx.leadName}</strong> |
+                        Project: <strong>{leadCtx.projectName}</strong>
+                    </p>
+                                        <!-- Project picker (only when General Setup = Mobile Only) -->
+                    <template if:true={showProjectPicker}>
+                        <div class="slds-m-bottom_medium">
+                            <lightning-record-picker
+                                label="Project"
+                                placeholder="Select a project..."
+                                object-api-name="Project__c"
+                                value={selectedProjectId}
+                                onchange={handleProjectChange}
+                                required>
+                            </lightning-record-picker>
+                        </div>
+                    </template>
+
+
+                    <!-- Selected unit chip -->
+                    <template if:true={selectedUnit}>
+                        <div class="slds-box slds-m-bottom_medium selected-unit-box">
+                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                                <div>
+                                    <lightning-icon icon-name="standard:asset_object" size="small"
+                                                    class="slds-m-right_x-small"></lightning-icon>
+                                    <strong>{selectedUnit.unitNumber}</strong> |
+                                    {selectedUnit.bhkType} |
+                                    Floor {selectedUnit.floor} |
+                                    Tower {selectedUnit.towerName}
+                                </div>
+                                <lightning-button-icon icon-name="utility:close"
+                                    alternative-text="Clear" variant="bare"
+                                    onclick={handleClearUnit}></lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Search input -->
+                    <template if:false={selectedUnit}>
+                        <lightning-input
+                            type="search"
+                            label="Search Unit (Number / Code)"
+                            placeholder="Type to search available units..."
+                            value={searchTerm}
+                            onchange={handleSearchChange}
+                            class="slds-m-bottom_small">
+                        </lightning-input>
+
+                        <template if:true={isSearching}>
+                            <lightning-spinner alternative-text="Searching..." size="small"></lightning-spinner>
+                        </template>
+
+                        <template if:true={showUnitResults}>
+                            <div class="slds-scrollable_y unit-results">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th>Unit No</th>
+                                            <th>BHK</th>
+                                            <th>Floor</th>
+                                            <th>Tower</th>
+                                            <th>Area (sqft)</th>
+                                            <th>Rate/sqft</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={unitOptions} for:item="u">
+                                            <tr key={u.id}>
+                                                <td>{u.unitNo}</td>
+                                                <td>{u.bhk}</td>
+                                                <td>{u.floor}</td>
+                                                <td>{u.tower}</td>
+                                                <td>{u.area}</td>
+                                                <td>{u.rate}</td>
+                                                <td>
+                                                    <lightning-button label="Select" variant="brand"
+                                                        data-id={u.id}
+                                                        onclick={handleUnitSelect}
+                                                        size="small">
+                                                    </lightning-button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                    </template>
+
+                    <div class="slds-m-top_medium slds-text-align_right">
+                        <lightning-button label="Cancel" onclick={handleClose}
+                                          class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Next: Cost Sheet" variant="brand"
+                                          icon-name="utility:forward"
+                                          disabled={disableGoToCostSheet}
+                                          onclick={goToCostSheet}></lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- STEP 2: Cost Sheet Details -->
+            <template if:true={isCostSheetStep}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        Cost Sheet - {selectedUnit.unitNumber}
+                    </h2>
+
+                    <!-- Unit Info Header -->
+                    <div class="slds-box slds-m-bottom_medium cs-section">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Unit Details</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Unit</span>
+                                <span class="cs-value">{calc.unitNumber}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">BHK</span>
+                                <span class="cs-value">{calc.bhkType}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Tower</span>
+                                <span class="cs-value">{calc.towerName}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Super Builtup (sqft)</span>
+                                <span class="cs-value">{calc.Super_Builtup_Area__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Carpet Area (sqft)</span>
+                                <span class="cs-value">{calc.Carpet_Area__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">UDS (sqft)</span>
+                                <span class="cs-value">{calc.UDS__c}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="slds-box slds-m-bottom_medium cs-section">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Pricing</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Base Rate / sqft</span>
+                                <span class="cs-value cs-currency">{fmtBaseRate}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Base Price</span>
+                                <span class="cs-value cs-currency">{fmtBasePrice}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Floor Rise / sqft</span>
+                                <span class="cs-value cs-currency">{fmtFloorRiseSqft}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Floor Rise Total</span>
+                                <span class="cs-value cs-currency">{fmtFloorRiseTotal}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">PLC Charges</span>
+                                <span class="cs-value cs-currency">{fmtPLC}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Amenity Charges</span>
+                                <span class="cs-value cs-currency">{fmtAmenity}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Infra Charges</span>
+                                <span class="cs-value cs-currency">{fmtInfra}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Doc Charges</span>
+                                <span class="cs-value cs-currency">{fmtDoc}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 cs-field">
+                                <span class="cs-label">Move-In Charges</span>
+                                <span class="cs-value cs-currency">{fmtMoveIn}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance & Corpus -->
+                    <div class="slds-box slds-m-bottom_medium cs-section">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Maintenance and Corpus</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Maintenance / sqft / month</span>
+                                <span class="cs-value cs-currency">{fmtMaintSqft}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Maintenance Months</span>
+                                <span class="cs-value">{calc.Maintenance_Months__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Maintenance Total</span>
+                                <span class="cs-value cs-currency cs-highlight">{fmtMaintTotal}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Corpus Fund / sqft</span>
+                                <span class="cs-value cs-currency">{fmtCorpusSqft}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <span class="cs-label">Corpus Total</span>
+                                <span class="cs-value cs-currency cs-highlight">{fmtCorpusTotal}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discount -->
+                    <div class="slds-box slds-m-bottom_medium cs-section cs-discount-section">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Discount</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_small slds-grid_vertical-align-end">
+                            <div class="slds-col slds-size_1-of-1 cs-field">
+                                <span class="cs-label">Total Discount</span>
+                                <span class="cs-value cs-currency cs-discount">{fmtTotalDiscount}</span>
+                            </div>
+                        </div>
+
+                        <!-- Additional Discount Fields (1-6) -->
+                        <div class="slds-grid slds-wrap slds-gutters_small slds-m-top_small">
+                            <template for:each={discountFieldsList} for:item="df">
+                                <div key={df.key} class="slds-col slds-size_1-of-3 slds-m-bottom_x-small">
+                                    <lightning-input type="number"
+                                                     label={df.label}
+                                                     value={df.value}
+                                                     data-index={df.index}
+                                                     onchange={handleAdditionalDiscountChange}
+                                                     step="0.01" min="0"
+                                                     formatter="currency">
+                                    </lightning-input>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template if:true={isRecalculating}>
+                            <lightning-spinner alternative-text="Recalculating..." size="small"
+                                class="slds-m-top_small"></lightning-spinner>
+                        </template>
+                    </div>
+
+                    <!-- Taxes -->
+                    <div class="slds-box slds-m-bottom_medium cs-section">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Taxes</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <!--<span class="cs-label">GST ({fmtGstPct}%)</span>
+                                <span class="cs-value cs-currency">{fmtGstAmount}</span>-->
+                                <span class="cs-label">GST %</span>
+                                <span class="cs-value">{fmtGstPct}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <!--<span class="cs-label">Stamp Duty ({fmtStampPct}%)</span>
+                                <span class="cs-value cs-currency">{fmtStampDuty}</span>-->
+                                <span class="cs-label">Stamp Duty %</span>
+                                <span class="cs-value">{fmtStampPct}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 cs-field">
+                                <!--<span class="cs-label">Registration ({fmtRegPct}%)</span>
+                                <span class="cs-value cs-currency">{fmtRegistration}</span>-->
+                                <span class="cs-label">Registration %</span>
+                                <span class="cs-value">{fmtRegPct}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <!--<div class="slds-box slds-m-bottom_medium cs-totals-section">
+                        <div class="slds-grid slds-grid_align-spread">
+                            <div class="cs-field">
+                                <span class="cs-label">Agreement Value</span>
+                                <span class="cs-value cs-currency cs-large">{fmtAgreementValue}</span>
+                            </div>
+                            <div class="cs-field slds-text-align_right">
+                                <span class="cs-label">Net Payable</span>
+                                <span class="cs-value cs-currency cs-large cs-total">{fmtNetPayable}</span>
+                            </div>
+                        </div>
+                    </div>-->
+
+                    <div class="slds-m-top_medium slds-text-align_right">
+                        <lightning-button label="Back" onclick={goBackToUnit}
+                                          class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Next: Payment Milestones" variant="brand"
+                                          icon-name="utility:forward"
+                                          onclick={goToMilestones}></lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- STEP 3: Payment Milestones -->
+            <template if:true={isMilestonesStep}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        Payment Milestones - {selectedUnit.unitNumber}
+                    </h2>
+
+                    <!-- Approval badge -->
+                    <div class="slds-m-bottom_medium">
+                        <template if:true={needsApproval}>
+                            <lightning-badge label={approvalBadge}
+                                class="slds-badge_warning slds-m-right_small"></lightning-badge>
+                            <span class="slds-text-body_small slds-text-color_weak">
+                                (Discount applied or Custom payment plan)
+                            </span>
+                        </template>
+                        <template if:false={needsApproval}>
+                            <lightning-badge label={approvalBadge}
+                                class="slds-badge_success"></lightning-badge>
+                        </template>
+                    </div>
+
+                    <!-- Payment Plan Type -->
+                    <lightning-radio-group
+                        label="Payment Milestone Type"
+                        options={paymentPlanOptions}
+                        value={paymentPlanType}
+                        type="button"
+                        onchange={handlePlanTypeChange}
+                        class="slds-m-bottom_medium">
+                    </lightning-radio-group>
+
+                    <template if:true={isMilestonesLoading}>
+                        <lightning-spinner alternative-text="Loading milestones..."
+                            size="small"></lightning-spinner>
+                    </template>
+
+                    <!-- Milestone table -->
+                    <template if:true={hasMilestones}>
+                        <div class="slds-scrollable_y milestone-table">
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th style="width:3%">#</th>
+                                        <th style="width:22%">Milestone Name</th>
+                                        <th style="width:14%">Category</th>
+                                        <th style="width:10%">Payment %</th>
+                                        <th style="width:14%">Amount</th>
+                                        <th style="width:13%">Due Date</th>
+                                        <th style="width:14%">Status</th>
+                                        <th style="width:5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={milestones} for:item="m" for:index="idx">
+                                        <tr key={m.key}>
+                                            <td>{m.sequence}</td>
+                                            <td>
+                                                <template if:true={isCustom}>
+                                                    <lightning-input type="text" variant="label-hidden"
+                                                        value={m.milestoneName}
+                                                        data-index={idx} data-field="milestoneName"
+                                                        onchange={handleMilestoneChange}>
+                                                    </lightning-input>
+                                                </template>
+                                                <template if:false={isCustom}>
+                                                    {m.milestoneName}
+                                                </template>
+                                            </td>
+                                            <td>
+                                                <template if:true={isCustom}>
+                                                    <lightning-combobox variant="label-hidden"
+                                                        value={m.category}
+                                                        options={categoryOptions}
+                                                        data-index={idx} data-field="category"
+                                                        onchange={handleMilestoneChange}>
+                                                    </lightning-combobox>
+                                                </template>
+                                                <template if:false={isCustom}>
+                                                    {m.category}
+                                                </template>
+                                            </td>
+                                            <td>
+                                                <template if:true={isCustom}>
+                                                    <lightning-input type="number" variant="label-hidden"
+                                                        value={m.paymentPct} step="0.01"
+                                                        data-index={idx} data-field="paymentPct"
+                                                        onchange={handleMilestoneChange}>
+                                                    </lightning-input>
+                                                </template>
+                                                <template if:false={isCustom}>
+                                                    {m.paymentPct}%
+                                                </template>
+                                            </td>
+                                            <td class="cs-currency">{m.fmtAmount}</td>
+                                            <td>
+                                                <lightning-input type="date" variant="label-hidden"
+                                                    value={m.dueDate}
+                                                    min={todayDate}
+                                                    data-index={idx} data-field="dueDate"
+                                                    onchange={handleMilestoneChange}>
+                                                </lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-combobox variant="label-hidden"
+                                                    value={m.status}
+                                                    options={statusOptions}
+                                                    data-index={idx} data-field="status"
+                                                    onchange={handleMilestoneChange}>
+                                                </lightning-combobox>
+                                            </td>
+                                            <td>
+                                                <template if:true={isCustom}>
+                                                    <lightning-button-icon icon-name="utility:delete"
+                                                        alternative-text="Remove"
+                                                        variant="bare-inverse"
+                                                        data-index={idx}
+                                                        onclick={handleRemoveMilestone}>
+                                                    </lightning-button-icon>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="slds-text-align_right">
+                                            <strong>Total</strong>
+                                        </td>
+                                        <td>
+                                            <strong class={milestonePctClass}>
+                                                {totalMilestonePct}%
+                                            </strong>
+                                        </td>
+                                        <td colspan="4"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <template if:true={isCustom}>
+                            <lightning-button label="Add Milestone" variant="neutral"
+                                icon-name="utility:add"
+                                onclick={addCustomMilestone}
+                                class="slds-m-top_small">
+                            </lightning-button>
+                        </template>
+                    </template>
+
+                    <!-- Footer -->
+                    <div class="slds-m-top_large slds-text-align_right">
+                        <lightning-button label="Back" onclick={goBackToCostSheet}
+                                          class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Save Cost Sheet" variant="brand"
+                                          icon-name="utility:save"
+                                          disabled={disableSave}
+                                          onclick={handleSave}></lightning-button>
+                    </div>
+
+                    <template if:true={isSaving}>
+                        <div class="slds-p-around_medium slds-text-align_center">
+                            <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+                            <p class="slds-m-top_medium slds-text-body_regular">Saving cost sheet...</p>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </template>
+</template>

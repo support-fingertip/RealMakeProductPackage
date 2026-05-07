@@ -1,0 +1,466 @@
+<template>
+    <lightning-card title="Integration Mapping Designer" icon-name="custom:custom108">
+
+        <!-- ═══ Spinner ═══ -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </template>
+
+        <div class="designer-container slds-p-around_medium">
+
+            <!-- ═══ TOP BAR: Config List + New Button ═══ -->
+            <div class="config-list-panel">
+                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                    <h2 class="slds-text-heading_small">Integration Sources</h2>
+                    <lightning-button
+                        label="New Source Config"
+                        variant="brand"
+                        icon-name="utility:add"
+                        onclick={handleNewConfig}>
+                    </lightning-button>
+                </div>
+
+                <template if:true={sourceConfigs}>
+                    <div class="slds-grid slds-wrap slds-gutters_x-small">
+                        <template for:each={sourceConfigs} for:item="cfg">
+                            <div key={cfg.Id} class="slds-col slds-size_1-of-3 slds-m-bottom_x-small">
+                                <div class={cfg.cardClass} data-id={cfg.Id} onclick={handleSelectConfig}>
+                                    <div class="slds-grid slds-grid_align-spread">
+                                        <span class="field-name">{cfg.Source_Name__c}</span>
+                                        <template if:true={cfg.Is_Active__c}>
+                                            <lightning-badge label="Active" class="slds-theme_success"></lightning-badge>
+                                        </template>
+                                        <template if:false={cfg.Is_Active__c}>
+                                            <lightning-badge label="Inactive"></lightning-badge>
+                                        </template>
+                                    </div>
+                                    <div class="slds-m-top_xx-small">
+                                        <span class="field-type">{cfg.Target_Object__c}</span>
+                                        <template if:true={cfg.Version__c}>
+                                            <span class="badge-version slds-m-left_xx-small">v{cfg.Version__c}</span>
+                                        </template>
+                                    </div>
+                                    <template if:true={cfg.Endpoint_URL__c}>
+                                        <div class="endpoint-url-display slds-m-top_xx-small">
+                                            <lightning-icon icon-name="utility:link" size="xx-small" alternative-text="Endpoint" class="slds-m-right_xx-small"></lightning-icon>
+                                            <span class="endpoint-url-text" title={cfg.Endpoint_URL__c}>{cfg.Endpoint_URL__c}</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasConfigs}>
+                    <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
+                        No integration sources configured yet. Click "New Source Config" to get started.
+                    </div>
+                </template>
+            </div>
+
+            <!-- ═══ CONFIG FORM (show when editing/creating) ═══ -->
+            <template if:true={showConfigForm}>
+                <div class="config-form-section">
+                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                        <h2 class="slds-text-heading_small">
+                            <template if:true={isNewConfig}>New Integration Source</template>
+                            <template if:false={isNewConfig}>Edit: {selectedConfig.Source_Name__c}</template>
+                        </h2>
+                        <div>
+                            <template if:false={isNewConfig}>
+                                <lightning-button-icon
+                                    icon-name="utility:preview"
+                                    alternative-text="View API Documentation"
+                                    title="View API Documentation"
+                                    onclick={handleViewApiDoc}
+                                    class="slds-m-right_x-small">
+                                </lightning-button-icon>
+                                <lightning-button-icon
+                                    icon-name="utility:download"
+                                    alternative-text="Download PDF"
+                                    title="Download API Documentation PDF"
+                                    onclick={handleDownloadPdf}
+                                    class="slds-m-right_x-small">
+                                </lightning-button-icon>
+                            </template>
+                            <lightning-button label="Cancel" onclick={handleCancelConfig} class="slds-m-right_x-small"></lightning-button>
+                            <lightning-button label="Delete" variant="destructive" onclick={handleDeleteConfig}
+                                class="slds-m-right_x-small"
+                                if:false={isNewConfig}></lightning-button>
+                            <lightning-button label="Save Config" variant="brand" onclick={handleSaveConfig}></lightning-button>
+                        </div>
+                    </div>
+
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input
+                                label="Config Name"
+                                value={configForm.name}
+                                data-field="name"
+                                onchange={handleConfigFormChange}
+                                required>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input
+                                label="Source Name (Unique Key)"
+                                value={configForm.sourceName}
+                                data-field="sourceName"
+                                onchange={handleConfigFormChange}
+                                placeholder="e.g. CP_REGISTRATION"
+                                required>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-combobox
+                                label="Target Object"
+                                value={configForm.targetObject}
+                                options={targetObjectOptions}
+                                data-field="targetObject"
+                                onchange={handleConfigFormChange}
+                                required>
+                            </lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-m-top_small">
+                            <lightning-input
+                                type="number"
+                                label="Version"
+                                value={configForm.version}
+                                data-field="version"
+                                onchange={handleConfigFormChange}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-m-top_small">
+                            <lightning-input
+                                type="checkbox"
+                                label="Is Active"
+                                checked={configForm.isActive}
+                                data-field="isActive"
+                                onchange={handleConfigFormChange}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-m-top_small">
+                            <lightning-input
+                                type="checkbox"
+                                label="Enable Duplicate Check"
+                                checked={configForm.enableDuplicateCheck}
+                                data-field="enableDuplicateCheck"
+                                onchange={handleConfigFormChange}>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Endpoint URL (auto-generated, read-only display) -->
+                        <template if:true={configForm.endpointUrl}>
+                            <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                                <div class="endpoint-url-banner">
+                                    <div class="slds-grid slds-grid_vertical-align-center">
+                                        <lightning-icon icon-name="utility:link" size="x-small" alternative-text="API Endpoint" class="slds-m-right_small"></lightning-icon>
+                                        <div>
+                                            <span class="endpoint-label">API Endpoint (POST)</span>
+                                            <span class="endpoint-url-value" title={configForm.endpointUrl}>{configForm.endpointUrl}</span>
+                                        </div>
+                                        <lightning-button-icon
+                                            icon-name="utility:copy_to_clipboard"
+                                            alternative-text="Copy URL"
+                                            title="Copy endpoint URL"
+                                            onclick={handleCopyEndpointUrl}
+                                            class="slds-m-left_small">
+                                        </lightning-button-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                            <lightning-textarea
+                                label="Description"
+                                value={configForm.description}
+                                data-field="description"
+                                onchange={handleConfigFormChange}>
+                            </lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                            <lightning-textarea
+                                label="API Schema JSON"
+                                value={configForm.apiSchemaJson}
+                                data-field="apiSchemaJson"
+                                onchange={handleConfigFormChange}
+                                placeholder="Example: first_name, last_name, mobile, email">
+                            </lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-top_small">
+                            <lightning-textarea
+                                label="Validation Rules JSON"
+                                value={configForm.validationRulesJson}
+                                data-field="validationRulesJson"
+                                onchange={handleConfigFormChange}
+                                placeholder="Example: field, regex, message">
+                            </lightning-textarea>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ═══ MAPPING DESIGNER (3-Panel: API Fields | Mappings | SF Fields) ═══ -->
+            <template if:true={showMappingDesigner}>
+                <div class="config-form-section">
+                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                        <h2 class="slds-text-heading_small">Field Mappings: {selectedConfig.Source_Name__c}</h2>
+                        <lightning-button label="Save Mappings" variant="brand" onclick={handleSaveMappings}></lightning-button>
+                    </div>
+
+                    <div class="mapping-panels">
+
+                        <!-- LEFT: API Fields -->
+                        <div class="api-panel">
+                            <div class="panel-title">API Fields (Source)</div>
+                            <div class="search-box">
+                                <lightning-input
+                                    type="search"
+                                    placeholder="Search API fields..."
+                                    value={apiFieldSearch}
+                                    onchange={handleApiFieldSearch}>
+                                </lightning-input>
+                            </div>
+                            <template for:each={filteredApiFields} for:item="field">
+                                <div
+                                    key={field.name}
+                                    class={field.itemClass}
+                                    draggable="true"
+                                    data-field-name={field.name}
+                                    data-panel="api"
+                                    ondragstart={handleDragStart}
+                                    ondragend={handleDragEnd}>
+                                    <span class="field-name">{field.label}</span>
+                                    <span>
+                                        <template if:true={field.required}>
+                                            <span class="badge-required slds-m-right_xx-small">REQ</span>
+                                        </template>
+                                        <span class="field-type">{field.type}</span>
+                                    </span>
+                                </div>
+                            </template>
+                            <template if:false={hasApiFields}>
+                                <div class="slds-text-align_center slds-p-around_small slds-text-color_weak">
+                                    Paste API Schema JSON in the config form above to load API fields.
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- CENTER: Active Mappings -->
+                        <div class="mapping-center">
+                            <div class="panel-title">Active Mappings ({mappingCount})</div>
+
+                            <!-- Drop zone for new mappings -->
+                            <div
+                                class={dropZoneClass}
+                                ondragover={handleDragOver}
+                                ondragleave={handleDragLeave}
+                                ondrop={handleDrop}>
+                                Drop API field here to create mapping
+                            </div>
+                            <lightning-button
+                                label="Add Static Value"
+                                variant="neutral"
+                                icon-name="utility:add"
+                                onclick={handleAddStaticValue}
+                                class="slds-m-bottom_small">
+                            </lightning-button>
+
+                            <template for:each={mappingRules} for:item="rule">
+                                <div key={rule.tempId} class="mapping-row">
+                                    <span class="remove-btn" data-temp-id={rule.tempId} onclick={handleRemoveMapping}>&#10005;</span>
+                                    <div class="slds-grid slds-grid_vertical-align-center">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <template if:false={rule.isStatic}>
+                                                <div class="field-name" style="font-size:0.75rem">{rule.apiFieldLabel}</div>
+                                                <div class="field-type">{rule.apiFieldName}</div>
+                                            </template>
+                                            <template if:true={rule.isStatic}>
+                                                <span class="badge-static">STATIC</span>
+                                                <lightning-input
+                                                    label="Value"
+                                                    value={rule.defaultValue}
+                                                    data-temp-id={rule.tempId}
+                                                    data-field="defaultValue"
+                                                    onchange={handleRuleFieldChange}
+                                                    variant="label-stacked"
+                                                    placeholder="e.g. Website">
+                                                </lightning-input>
+                                            </template>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-12 mapping-arrow">&#8594;</div>
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <lightning-combobox
+                                                value={rule.sfFieldApiName}
+                                                options={sfFieldOptions}
+                                                data-temp-id={rule.tempId}
+                                                onchange={handleSfFieldChange}
+                                                variant="label-hidden"
+                                                placeholder="Select SF field">
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rule Options -->
+                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-m-top_xx-small">
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <lightning-combobox
+                                                label="Type"
+                                                value={rule.dataType}
+                                                options={dataTypeOptions}
+                                                data-temp-id={rule.tempId}
+                                                data-field="dataType"
+                                                onchange={handleRuleFieldChange}
+                                                variant="label-stacked">
+                                            </lightning-combobox>
+                                        </div>
+                                        <template if:false={rule.isStatic}>
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <lightning-input
+                                                    label="Default"
+                                                    value={rule.defaultValue}
+                                                    data-temp-id={rule.tempId}
+                                                    data-field="defaultValue"
+                                                    onchange={handleRuleFieldChange}
+                                                    variant="label-stacked">
+                                                </lightning-input>
+                                            </div>
+                                        </template>
+                                        <template if:true={rule.isStatic}>
+                                            <div class="slds-col slds-size_1-of-3"></div>
+                                        </template>
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <lightning-input
+                                                type="checkbox"
+                                                label="Required"
+                                                checked={rule.isRequired}
+                                                data-temp-id={rule.tempId}
+                                                data-field="isRequired"
+                                                onchange={handleRuleFieldChange}
+                                                class="slds-m-top_medium">
+                                            </lightning-input>
+                                        </div>
+                                    </div>
+
+                                    <!-- Transform -->
+                                    <div class="slds-m-top_xx-small">
+                                        <lightning-input
+                                            label="Transform"
+                                            value={rule.transformExpression}
+                                            data-temp-id={rule.tempId}
+                                            data-field="transformExpression"
+                                            onchange={handleRuleFieldChange}
+                                            placeholder="UPPERCASE, LOWERCASE, TRIM, PREFIX:+91"
+                                            variant="label-stacked">
+                                        </lightning-input>
+                                    </div>
+
+                                    <!-- Lookup Config (shown when dataType is Lookup) -->
+                                    <template if:true={rule.isLookupType}>
+                                        <div class="lookup-config slds-m-top_xx-small">
+                                            <div class="slds-text-title_bold slds-m-bottom_xx-small">Lookup Resolution</div>
+                                            <div class="slds-grid slds-wrap slds-gutters_xx-small">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-combobox
+                                                        label="Lookup Object"
+                                                        value={rule.lookupRule.lookupObject}
+                                                        options={targetObjectOptions}
+                                                        data-temp-id={rule.tempId}
+                                                        data-field="lookupObject"
+                                                        onchange={handleLookupFieldChange}
+                                                        variant="label-stacked">
+                                                    </lightning-combobox>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-input
+                                                        label="Match Field"
+                                                        value={rule.lookupRule.matchField}
+                                                        data-temp-id={rule.tempId}
+                                                        data-field="matchField"
+                                                        onchange={handleLookupFieldChange}
+                                                        placeholder="e.g. Project_Code__c"
+                                                        variant="label-stacked">
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-m-top_xx-small">
+                                                    <lightning-input
+                                                        label="Return Field"
+                                                        value={rule.lookupRule.returnField}
+                                                        data-temp-id={rule.tempId}
+                                                        data-field="returnField"
+                                                        onchange={handleLookupFieldChange}
+                                                        placeholder="Id"
+                                                        variant="label-stacked">
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-m-top_medium">
+                                                    <lightning-input
+                                                        type="checkbox"
+                                                        label="Fail on No Match"
+                                                        checked={rule.lookupRule.failOnNoMatch}
+                                                        data-temp-id={rule.tempId}
+                                                        data-field="failOnNoMatch"
+                                                        onchange={handleLookupFieldChange}>
+                                                    </lightning-input>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-1 slds-m-top_xx-small">
+                                                    <lightning-input
+                                                        label="Additional Filter"
+                                                        value={rule.lookupRule.additionalFilter}
+                                                        data-temp-id={rule.tempId}
+                                                        data-field="additionalFilter"
+                                                        onchange={handleLookupFieldChange}
+                                                        placeholder="Is_Active__c = true"
+                                                        variant="label-stacked">
+                                                    </lightning-input>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template if:false={hasMappings}>
+                                <div class="slds-text-align_center slds-p-around_small slds-text-color_weak">
+                                    Drag API fields from the left panel to create mappings.
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- RIGHT: Salesforce Fields -->
+                        <div class="sf-panel">
+                            <div class="panel-title">Salesforce Fields (Target: {selectedConfig.Target_Object__c})</div>
+                            <div class="search-box">
+                                <lightning-input
+                                    type="search"
+                                    placeholder="Search SF fields..."
+                                    value={sfFieldSearch}
+                                    onchange={handleSfFieldSearch}>
+                                </lightning-input>
+                            </div>
+                            <template for:each={filteredSfFields} for:item="field">
+                                <div
+                                    key={field.apiName}
+                                    class={field.itemClass}>
+                                    <span>
+                                        <span class="field-name">{field.label}</span>
+                                        <span style="font-size:0.6875rem;color:#706e6b"> ({field.apiName})</span>
+                                    </span>
+                                    <span>
+                                        <template if:true={field.isRequired}>
+                                            <span class="badge-required slds-m-right_xx-small">REQ</span>
+                                        </template>
+                                        <span class="field-type">{field.fieldType}</span>
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

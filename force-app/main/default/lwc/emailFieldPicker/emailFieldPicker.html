@@ -1,0 +1,101 @@
+<template>
+    <div class="slds-form-element">
+        <!--<label class="slds-form-element__label">
+            <template if:true={required}>
+                <abbr class="slds-required" title="required">*</abbr>
+            </template>
+            {label}
+        </label>-->
+        
+        <div class="slds-form-element__control">
+            <div class={dropdownClass}>
+                <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right">
+                    
+                    <!-- Selected Value Display -->
+                    <template if:true={hasSelection}>
+                        <div class="selected-value slds-grid slds-grid_vertical-align-center">
+                            <span class="slds-truncate slds-col">{displayValue}</span>
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                variant="bare"
+                                size="small"
+                                alternative-text="Clear"
+                                onclick={handleClear}
+                                class="clear-btn">
+                            </lightning-button-icon>
+                        </div>
+                    </template>
+                    
+                    <!-- Search Input -->
+                    <template if:false={hasSelection}>
+                        <input
+                            type="text"
+                            class={inputClass}
+                            placeholder={placeholder}
+                            value={searchTerm}
+                            disabled={disabled}
+                            onfocus={handleInputFocus}
+                            onblur={handleInputBlur}
+                            oninput={handleSearchChange}
+                            autocomplete="off"
+                        />
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_right">
+                            <lightning-icon 
+                                icon-name="utility:search" 
+                                size="x-small"
+                                alternative-text="Search">
+                            </lightning-icon>
+                        </span>
+                    </template>
+                </div>
+                
+                <!-- Dropdown List -->
+                <template if:true={showDropdown}>
+                    <div class="slds-dropdown slds-dropdown_length-7 slds-dropdown_fluid">
+                        <ul class="slds-listbox slds-listbox_vertical" role="listbox">
+                            
+                            <!-- Loading -->
+                            <template if:true={isLoading}>
+                                <li class="slds-listbox__item">
+                                    <div class="loading-container">
+                                        <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                                    </div>
+                                </li>
+                            </template>
+                            
+                            <!-- Fields List -->
+                            <template if:false={isLoading}>
+                                <template if:true={hasFields}>
+                                    <template for:each={filteredFields} for:item="field">
+                                        <li key={field.value} 
+                                            class="slds-listbox__item"
+                                            role="option"
+                                            data-value={field.value}
+                                            onclick={handleFieldSelect}>
+                                            <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small">
+                                                <span class="slds-media__body">
+                                                    <span class="slds-truncate field-label">{field.label}</span>
+                                                    <span class="slds-truncate field-api-name">{field.value}</span>
+                                                </span>
+                                                <template if:true={field.isEmail}>
+                                                    <span class="slds-badge slds-badge_lightest">Email</span>
+                                                </template>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </template>
+                                
+                                <!-- No Results -->
+                                <template if:false={hasFields}>
+                                    <li class="slds-listbox__item slds-p-around_small slds-text-align_center">
+                                        <span class="slds-text-color_weak">No fields found</span>
+                                    </li>
+                                </template>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

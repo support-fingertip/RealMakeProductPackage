@@ -1,0 +1,262 @@
+<template>
+    <!-- Header -->
+    <div class="approval-header">
+        <div class="header-row">
+            <div class="header-icon-wrap">
+                <lightning-icon icon-name="standard:approval" size="small"></lightning-icon>
+            </div>
+            <div class="header-text">
+                <h2 class="header-title">Submit for Approval</h2>
+                <p class="header-subtitle">Select a process, review approvers, and submit</p>
+            </div>
+        </div>
+    </div>
+
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <!-- No Processes -->
+        <template if:false={hasAnyProcesses}>
+            <div class="empty-state">
+                <div class="empty-icon-wrap">
+                    <lightning-icon icon-name="utility:warning" size="large" variant="warning"></lightning-icon>
+                </div>
+                <h3 class="empty-title">No Approval Processes</h3>
+                <p class="empty-desc">Contact your administrator to configure approval processes for this object.</p>
+            </div>
+        </template>
+
+        <template if:true={hasAnyProcesses}>
+            <div class="approval-body">
+
+                <!-- Status Cards: Completed / In Progress / Locked -->
+                <template if:true={hasStatusCards}>
+                    <div class="status-section">
+                        <template for:each={completedList} for:item="process">
+                            <div key={process.configId} class="status-card status-completed">
+                                <div class="status-card-icon">
+                                    <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
+                                </div>
+                                <div class="status-card-content">
+                                    <span class="status-card-label">{process.processLabel}</span>
+                                    <span class="status-card-msg">{process.statusMessage}</span>
+                                </div>
+                                <span class="status-badge badge-completed">Approved</span>
+                            </div>
+                        </template>
+
+                        <template for:each={inProgressList} for:item="process">
+                            <div key={process.configId} class="status-card status-progress">
+                                <div class="status-card-icon icon-progress">
+                                    <lightning-icon icon-name="utility:clock" size="xx-small" variant="inverse"></lightning-icon>
+                                </div>
+                                <div class="status-card-content">
+                                    <span class="status-card-label">{process.processLabel}</span>
+                                    <span class="status-card-msg">{process.statusMessage}</span>
+                                </div>
+                                <span class="status-badge badge-progress">Pending</span>
+                            </div>
+                        </template>
+
+                        <template for:each={lockedList} for:item="process">
+                            <div key={process.configId} class="status-card status-locked">
+                                <div class="status-card-icon icon-locked">
+                                    <lightning-icon icon-name="utility:lock" size="xx-small" variant="inverse"></lightning-icon>
+                                </div>
+                                <div class="status-card-content">
+                                    <span class="status-card-label">{process.processLabel}</span>
+                                    <span class="status-card-msg">{process.statusMessage}</span>
+                                </div>
+                                <span class="status-badge badge-locked">Locked</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Available Processes -->
+                <template if:true={hasAvailable}>
+                    <div class="section">
+                        <h3 class="section-title">Available for Submission</h3>
+                        <div class="process-list">
+                            <template for:each={availableList} for:item="process">
+                                <div key={process.configId} class={process.cardClass}
+                                     data-id={process.configId} onclick={handleProcessCardClick}>
+                                    <div class="process-card-left">
+                                        <div class={process.radioClass}></div>
+                                    </div>
+                                    <div class="process-card-center">
+                                        <span class="process-name">{process.processLabel}</span>
+                                        <template if:true={process.canResubmit}>
+                                            <span class="resubmit-badge">Resubmit</span>
+                                        </template>
+                                        <div class="process-meta">
+                                            <span class="process-steps">{process.numberOfSteps} Step(s)</span>
+                                            <template if:true={process.hasStepNames}>
+                                                <span class="process-flow">{process.stepFlow}</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="process-card-right">
+                                        <lightning-icon icon-name="utility:chevronright" size="xx-small"></lightning-icon>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Approver Preview -->
+                <template if:true={showApproverPreview}>
+                    <div class="section">
+                        <h3 class="section-title">Approval Steps</h3>
+                        <template if:true={isLoadingPreview}>
+                            <div class="loading-sm">
+                                <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                            </div>
+                        </template>
+                        <template if:false={isLoadingPreview}>
+                            <div class="steps-timeline">
+                                <template for:each={approverPreviews} for:item="preview">
+                                    <div key={preview.stepNumber} class="step-row">
+                                        <div class="step-indicator-col">
+                                            <div class={preview.dotClass}>{preview.stepNumber}</div>
+                                            <template if:false={preview.isLast}>
+                                                <div class="step-line"></div>
+                                            </template>
+                                        </div>
+                                        <div class="step-content">
+                                            <div class="step-header">
+                                                <span class="step-name">{preview.stepName}</span>
+                                            </div>
+                                            <template if:true={preview.isFound}>
+                                                <div class="approver-found">
+                                                    <lightning-icon icon-name="utility:user" size="xx-small"></lightning-icon>
+                                                    <span>{preview.approverName}</span>
+                                                </div>
+                                            </template>
+                                            <template if:false={preview.isFound}>
+                                                <div class="approver-missing">
+                                                    <span class="missing-msg">{preview.message}</span>
+                                                    <lightning-input label="Search approver" variant="label-hidden"
+                                                        placeholder="Search user by name..."
+                                                        data-step={preview.stepNumber}
+                                                        onchange={handleManualApproverSearch}
+                                                        class="approver-search-input">
+                                                    </lightning-input>
+                                                    <template if:true={preview.searchResults}>
+                                                        <div class="approver-dropdown">
+                                                            <template for:each={preview.searchResults} for:item="user">
+                                                                <div key={user.Id} class="approver-option"
+                                                                    data-step={preview.stepNumber}
+                                                                    data-user-id={user.Id}
+                                                                    data-user-name={user.Name}
+                                                                    onclick={handleSelectManualApprover}>
+                                                                    <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                                    {user.Name}
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Required Fields (Inline Editable) -->
+                    <template if:true={hasRequiredFields}>
+                        <div class="section">
+                            <h3 class="section-title">Required Fields</h3>
+                            <template if:true={isLoadingRequiredFields}>
+                                <div class="loading-sm">
+                                    <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                                </div>
+                            </template>
+                            <template if:false={isLoadingRequiredFields}>
+                                <div class="req-fields-edit-list">
+                                    <template for:each={requiredFieldStatuses} for:item="field">
+                                        <div key={field.fieldApiName} class={field.rowClass}>
+                                            <div class="req-field-status-icon">
+                                                <template if:true={field.isFilled}>
+                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="icon-green"></lightning-icon>
+                                                </template>
+                                                <template if:false={field.isFilled}>
+                                                    <lightning-icon icon-name="utility:error" size="xx-small" class="icon-red"></lightning-icon>
+                                                </template>
+                                            </div>
+                                            <div class="req-field-input-wrap">
+                                                <template if:true={field.isPicklist}>
+                                                    <lightning-combobox
+                                                        label={field.fieldLabel}
+                                                        value={field.currentValue}
+                                                        options={field.picklistValues}
+                                                        data-field={field.fieldApiName}
+                                                        onchange={handleRequiredFieldChange}
+                                                        required
+                                                        variant="label-stacked">
+                                                    </lightning-combobox>
+                                                </template>
+                                                <template if:true={field.isCheckbox}>
+                                                    <lightning-input
+                                                        type="checkbox"
+                                                        label={field.fieldLabel}
+                                                        checked={field.currentValue}
+                                                        data-field={field.fieldApiName}
+                                                        onchange={handleRequiredFieldChange}>
+                                                    </lightning-input>
+                                                </template>
+                                                <template if:true={field.isStandardInput}>
+                                                    <lightning-input
+                                                        type={field.fieldType}
+                                                        label={field.fieldLabel}
+                                                        value={field.currentValue}
+                                                        data-field={field.fieldApiName}
+                                                        onchange={handleRequiredFieldChange}
+                                                        required
+                                                        variant="label-stacked">
+                                                    </lightning-input>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <template if:true={hasUnfilledRequiredFields}>
+                                    <div class="req-warning">
+                                        <lightning-icon icon-name="utility:warning" size="xx-small" variant="warning"></lightning-icon>
+                                        <span>Fill all required fields before submitting</span>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Comments -->
+                    <div class="section">
+                        <lightning-textarea
+                            label="Comments (Optional)"
+                            value={comments}
+                            onchange={handleCommentsChange}
+                            placeholder="Add a note for the approvers..."
+                            max-length="500">
+                        </lightning-textarea>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </template>
+
+    <!-- Footer -->
+    <div class="approval-footer">
+        <lightning-button variant="neutral" label="Cancel" onclick={handleCancel}></lightning-button>
+        <lightning-button variant="brand" label="Submit for Approval"
+            icon-name="utility:approval" onclick={handleSubmit}
+            disabled={isSubmitDisabled}></lightning-button>
+    </div>
+</template>

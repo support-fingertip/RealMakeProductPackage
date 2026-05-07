@@ -1,0 +1,635 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="dc-loading">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- LIST VIEW -->
+    <template if:true={isListView}>
+        <div class="dc-list-container">
+            <div class="dc-list-header">
+                <div class="dc-list-header-left">
+                    <div class="dc-list-header-icon">
+                        <lightning-icon icon-name="standard:dashboard" size="small"></lightning-icon>
+                    </div>
+                    <div>
+                        <h1 class="dc-list-title">Dashboard Configurations</h1>
+                        <p class="dc-list-subtitle">{configurationsCount} dashboards configured</p>
+                    </div>
+                </div>
+                <lightning-button variant="brand" label="New Dashboard" icon-name="utility:add" onclick={handleNewConfig}></lightning-button>
+            </div>
+            <template if:true={hasConfigurations}>
+                <div class="dc-config-grid">
+                    <template for:each={configurations} for:item="config">
+                        <div key={config.Id} class="dc-config-card">
+                            <div class="dc-config-card-top">
+                                <div class="dc-config-icon-wrap">
+                                    <lightning-icon icon-name="standard:dashboard" size="small"></lightning-icon>
+                                </div>
+                                <template if:true={config.Active__c}>
+                                    <span class="dc-badge dc-badge-active">Active</span>
+                                </template>
+                                <template if:false={config.Active__c}>
+                                    <span class="dc-badge dc-badge-inactive">Inactive</span>
+                                </template>
+                            </div>
+                            <h3 class="dc-config-name">{config.Name}</h3>
+                            <p class="dc-config-desc">{config.Description__c}</p>
+                            <div class="dc-config-meta">
+                                <lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon>
+                                <lightning-formatted-date-time value={config.LastModifiedDate} year="numeric" month="short" day="numeric"></lightning-formatted-date-time>
+                            </div>
+                            <div class="dc-config-actions">
+                                <lightning-button-icon icon-name="utility:edit" alternative-text="Edit" data-id={config.Id} onclick={handleEditConfig} variant="border-filled" size="small"></lightning-button-icon>
+                                <lightning-button-icon icon-name="utility:copy" alternative-text="Clone" data-id={config.Id} onclick={handleCloneConfig} variant="border-filled" size="small"></lightning-button-icon>
+                                <lightning-button-icon icon-name="utility:delete" alternative-text="Delete" data-id={config.Id} onclick={handleDeleteConfig} variant="destructive" size="small"></lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <template if:false={hasConfigurations}>
+                <div class="dc-empty">
+                    <div class="dc-empty-emoji">📊</div>
+                    <h3 class="dc-empty-title">No Dashboards Yet</h3>
+                    <p class="dc-empty-desc">Create your first dashboard to get started.</p>
+                    <lightning-button variant="brand" label="Create Dashboard" icon-name="utility:add" onclick={handleNewConfig}></lightning-button>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <!-- BUILDER VIEW -->
+    <template if:true={isBuilderView}>
+        <div class="dc-builder">
+
+            <!-- Top Bar -->
+            <div class="dc-topbar">
+                <div class="dc-topbar-left">
+                    <lightning-button-icon icon-name="utility:back" alternative-text="Back"
+                        onclick={handleBackToList} variant="border-filled" size="small"></lightning-button-icon>
+                    <div class="dc-breadcrumb">
+                        <span class="dc-bc-parent">Dashboards</span>
+                        <span class="dc-bc-sep">›</span>
+                        <span class="dc-bc-current">{builderTitle}</span>
+                    </div>
+                    <div class="dc-step-tabs">
+                        <button class={step1TabClass} onclick={goToStep1}><span class="dc-stab-num">1</span>Basic Info</button>
+                        <button class={step2TabClass} onclick={goToStep2}><span class="dc-stab-num">2</span>Components</button>
+                        <button class={step3TabClass} onclick={goToStep3}><span class="dc-stab-num">3</span>Filters</button>
+                        <button class={step4TabClass} onclick={goToStep4}><span class="dc-stab-num">4</span>Visibility</button>
+                    </div>
+                </div>
+                <div class="dc-topbar-right">
+                    <lightning-button label="Cancel" onclick={handleBackToList}></lightning-button>
+                    <lightning-button label="Save Dashboard" variant="brand" icon-name="utility:save" onclick={handleSave}></lightning-button>
+                </div>
+            </div>
+
+            <!-- Two-Panel Body -->
+            <div class="dc-builder-body">
+
+                <!-- LEFT: Config Form -->
+                <div class="dc-left-panel">
+
+                    <!-- STEP 1 -->
+                    <template if:true={isStep1}>
+                        <div class="dc-form-panel">
+                            <div class="dc-form-section">
+                                <div class="dc-fs-title"><span class="dc-fs-emoji">ℹ️</span> Basic Information</div>
+                                <div class="dc-grid-2">
+                                    <div class="dc-span-2">
+                                        <lightning-input label="Dashboard Name" value={dashboardName} onchange={handleNameChange} required placeholder="e.g., Sales Analytics Board"></lightning-input>
+                                    </div>
+                                    <div class="dc-span-2">
+                                        <lightning-textarea label="Description" value={description} onchange={handleDescriptionChange} placeholder="What does this dashboard show?"></lightning-textarea>
+                                    </div>
+                                    <div class="dc-active-wrap">
+                                        <label class="dc-field-lbl">Status</label>
+                                        <div class="dc-toggle-row">
+                                            <lightning-input type="checkbox" label="" checked={isActive} onchange={handleActiveChange}></lightning-input>
+                                            <span class={activeStatusClass}>{activeStatusLabel}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dc-form-section dc-mt16">
+                                <div class="dc-fs-title dc-collapsible" onclick={toggleHeaderSection}>
+                                    <span><span class="dc-fs-emoji">🎨</span> Dashboard Header</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <span class="dc-opt-pill">Optional</span>
+                                        <span class="dc-chev">{headerChevron}</span>
+                                    </div>
+                                </div>
+                                <template if:true={showHeaderSection}>
+                                    <div class="dc-grid-2 dc-mt12">
+                                        <lightning-input label="Header Title" value={headerConfig.title} onchange={handleHeaderTitleChange} placeholder="e.g., Sales Analytics Board"></lightning-input>
+                                        <lightning-input label="Subtitle" value={headerConfig.subtitle} onchange={handleHeaderSubtitleChange} placeholder="e.g., Real-time Dashboard"></lightning-input>
+                                        <lightning-input type="color" label="Gradient Start" value={headerConfig.gradientStart} onchange={handleHeaderGradientStartChange}></lightning-input>
+                                        <lightning-input type="color" label="Gradient End" value={headerConfig.gradientEnd} onchange={handleHeaderGradientEndChange}></lightning-input>
+                                        <lightning-input type="color" label="Text Color" value={headerConfig.textColor} onchange={handleHeaderTextColorChange}></lightning-input>
+                                        <lightning-input type="checkbox" label="Show Today's Date" checked={headerConfig.showDate} onchange={handleHeaderShowDateChange}></lightning-input>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="dc-step-nav dc-mt16">
+                                <span></span>
+                                <lightning-button label="Next: Add Components →" variant="brand" onclick={goToStep2}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- STEP 2 -->
+                    <template if:true={isStep2}>
+                        <div class="dc-form-panel">
+                            <div class="dc-form-section">
+                                <div class="dc-fs-title">
+                                    <span><span class="dc-fs-emoji">📊</span> Components</span>
+                                    <span class="dc-count-pill">{components.length} added</span>
+                                </div>
+
+                                <!-- Quick-add type pills -->
+                                <div class="dc-quickadd-bar">
+                                    <span class="dc-qa-lbl">Quick add:</span>
+                                    <template for:each={componentTypeOptions} for:item="wt">
+                                        <button key={wt.value} class="dc-qa-pill" data-type={wt.value} onclick={handleQuickAddComponent}>{wt.emoji} {wt.label}</button>
+                                    </template>
+                                </div>
+
+                                <!-- Component rows -->
+                                <template if:true={hasComponents}>
+                                    <div class="dc-comp-list">
+                                        <template for:each={componentsList} for:item="comp">
+                                            <div key={comp.id} class={comp.rowClass}>
+
+                                                <!-- Row header - always visible -->
+                                                <div class="dc-comp-row-header" data-id={comp.id} onclick={handleSelectComp}>
+                                                    <div class="dc-comp-emoji-wrap" style={comp.iconBgStyle}>{comp.emojiIcon}</div>
+                                                    <div class="dc-comp-info-block">
+                                                        <div class="dc-comp-name">{comp.title}</div>
+                                                        <div class="dc-comp-meta">{comp.typeLabel} · {comp.object} · {comp.sizeLabel}</div>
+                                                    </div>
+                                                    <div class="dc-comp-dot" style={comp.colorDotStyle}></div>
+                                                    <div class="dc-comp-btns" onclick={stopProp}>
+                                                        <lightning-button-icon icon-name="utility:up" alternative-text="Up" data-id={comp.id} onclick={handleMoveComponentUp} size="small" variant="border-filled"></lightning-button-icon>
+                                                        <lightning-button-icon icon-name="utility:down" alternative-text="Down" data-id={comp.id} onclick={handleMoveComponentDown} size="small" variant="border-filled"></lightning-button-icon>
+                                                        <lightning-button-icon icon-name="utility:delete" alternative-text="Delete" data-id={comp.id} onclick={handleRemoveComponent} size="small" variant="destructive"></lightning-button-icon>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Inline Edit - expands when selected -->
+                                                <template if:true={comp.isSelected}>
+                                                    <div class="dc-inline-edit" onclick={stopProp}>
+
+                                                        <!-- Widget type visual grid -->
+                                                        <div class="dc-ie-field-group">
+                                                            <label class="dc-ie-lbl">Widget Type</label>
+                                                            <div class="dc-type-grid">
+                                                                <template for:each={componentTypeOptionsWithClass} for:item="wt">
+                                                                    <button key={wt.value} class={wt.btnClass} data-type={wt.value} onclick={handleInlineTypeChange}>
+                                                                        <span class="dc-tg-emoji">{wt.emoji}</span>
+                                                                        <span class="dc-tg-lbl">{wt.label}</span>
+                                                                    </button>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Title + Badge -->
+                                                        <div class="dc-ie-row2">
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Title</label>
+                                                                <input class="dc-ie-input" type="text" value={selectedCompTitle} placeholder="e.g., Total Revenue" data-field="title" oninput={handleInlineFieldChange}/>
+                                                            </div>
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Badge</label>
+                                                                <input class="dc-ie-input" type="text" value={selectedCompBadge} placeholder="e.g., LIVE, RANKED" data-field="badge" oninput={handleInlineFieldChange}/>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Object + Aggregation + Field -->
+                                                        <div class="dc-ie-row3">
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Object</label>
+                                                                <lightning-combobox value={selectedCompObject} options={objectOptions} onchange={handleInlineObjectChange} variant="label-hidden" placeholder="Select object"></lightning-combobox>
+                                                            </div>
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Aggregation</label>
+                                                                <lightning-combobox value={selectedCompAgg} options={aggregationOptions} onchange={handleInlineAggChange} variant="label-hidden"></lightning-combobox>
+                                                            </div>
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Field</label>
+                                                                <lightning-combobox value={selectedCompField} options={selectedCompFieldOptions} onchange={handleInlineFieldSelectChange} variant="label-hidden" placeholder="Select field"></lightning-combobox>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Group By (non-KPI) -->
+                                                        <template if:true={selectedCompNeedsGroupBy}>
+                                                            <div class="dc-ie-row2">
+                                                                <div class="dc-ie-field-group">
+                                                                    <label class="dc-ie-lbl">Group By Field</label>
+                                                                    <lightning-combobox value={selectedCompGroupBy} options={selectedCompAllFields} onchange={handleInlineGroupByChange} variant="label-hidden" placeholder="e.g., StageName"></lightning-combobox>
+                                                                </div>
+                                                                <div class="dc-ie-field-group">
+                                                                    <label class="dc-ie-lbl">Max Items</label>
+                                                                    <lightning-combobox value={selectedCompMaxGroups} options={maxGroupsOptions} onchange={handleInlineMaxGroupsChange} variant="label-hidden"></lightning-combobox>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- Width + Format -->
+                                                        <div class="dc-ie-row2">
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Card Width</label>
+                                                                <div class="dc-size-pills">
+                                                                    <template for:each={sizeOptionsWithClass} for:item="sz">
+                                                                        <button key={sz.value} class={sz.btnClass} data-size={sz.value} onclick={handleInlineSizeChange}>{sz.shortLabel}</button>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Format</label>
+                                                                <lightning-combobox value={selectedCompFormat} options={formatOptions} onchange={handleInlineFormatChange} variant="label-hidden"></lightning-combobox>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Bar Thickness (only for bar/progress types) -->
+                                                        <template if:true={selectedCompHasBars}>
+                                                            <div class="dc-ie-field-group">
+                                                                <label class="dc-ie-lbl">Bar Thickness — <span style="color:var(--dc-accent)">{selectedCompBarThicknessLabel}</span></label>
+                                                                <div class="dc-bar-thickness-row">
+                                                                    <span style="font-size:10px;color:var(--dc-text3)">Thin</span>
+                                                                    <input class="dc-bar-thickness-slider" type="range"
+                                                                        min="16" max="52" step="4"
+                                                                        value={selectedCompBarThickness}
+                                                                        oninput={handleInlineBarThicknessChange}/>
+                                                                    <span style="font-size:10px;color:var(--dc-text3)">Thick</span>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- Color Swatches -->
+                                                        <div class="dc-ie-field-group">
+                                                            <label class="dc-ie-lbl">Accent Color</label>
+                                                            <div class="dc-color-swatches">
+                                                                <template for:each={colorOptionsWithClass} for:item="col">
+                                                                    <button key={col.value} class={col.swatchClass} style={col.swatchStyle} title={col.label} data-color={col.value} onclick={handleInlineColorChange}></button>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- ★ ICON PICKER ★ -->
+                                                        <div class="dc-ie-field-group">
+                                                            <label class="dc-ie-lbl">Card Icon — currently: <span class="dc-current-icon">{selectedCompEmoji}</span></label>
+                                                            <div class="dc-icon-picker">
+                                                                <!-- Search + Category filters -->
+                                                                <div class="dc-icon-topbar">
+                                                                    <input class="dc-icon-search" type="text" placeholder="Search icons… star, money, chart, fire…" value={iconSearchQuery} oninput={handleIconSearch}/>
+                                                                </div>
+                                                                <div class="dc-icon-cats">
+                                                                    <template for:each={iconCategories} for:item="cat">
+                                                                        <button key={cat.key} class={cat.catBtnClass} data-cat={cat.key} onclick={handleIconCatFilter}>{cat.label}</button>
+                                                                    </template>
+                                                                </div>
+                                                                <!-- Icon grid -->
+                                                                <div class="dc-icon-grid">
+                                                                    <template for:each={filteredIconOptions} for:item="ico">
+                                                                        <button key={ico.key} class={ico.btnClass} title={ico.label} data-emoji={ico.emoji} onclick={handleIconSelect}>
+                                                                            <span class="dc-ico">{ico.emoji}</span>
+                                                                            <span class="dc-ico-lbl">{ico.label}</span>
+                                                                        </button>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Advanced toggle -->
+                                                        <div class="dc-ie-advanced-bar" onclick={toggleAdvanced}>
+                                                            <span>⚙ Advanced / Static Filters</span>
+                                                            <span>{advancedChevron}</span>
+                                                        </div>
+                                                        <template if:true={showAdvancedSection}>
+                                                            <template for:each={staticFiltersList} for:item="sf">
+                                                                <div key={sf.key} class="dc-sf-row">
+                                                                    <lightning-combobox value={sf.field} options={selectedCompAllFields} data-index={sf.index} onchange={handleStaticFilterFieldChange} variant="label-hidden" placeholder="Field"></lightning-combobox>
+                                                                    <lightning-combobox value={sf.operator} options={staticFilterOperatorOptions} data-index={sf.index} onchange={handleStaticFilterOperatorChange} variant="label-hidden"></lightning-combobox>
+                                                                    <input class="dc-ie-input" type="text" value={sf.value} data-index={sf.index} oninput={handleStaticFilterValueChange} placeholder="Value"/>
+                                                                    <lightning-button-icon icon-name="utility:delete" data-index={sf.index} onclick={handleRemoveStaticFilter} variant="destructive" size="small"></lightning-button-icon>
+                                                                </div>
+                                                            </template>
+                                                            <lightning-button label="Add Static Filter" variant="neutral" icon-name="utility:add" onclick={handleAddStaticFilter} size="small"></lightning-button>
+                                                        </template>
+
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <template if:false={hasComponents}>
+                                    <div class="dc-no-items">
+                                        <span class="dc-no-items-emoji">📊</span>
+                                        <p>No components yet. Use quick add above.</p>
+                                    </div>
+                                </template>
+
+                                <lightning-button label="Add Component" variant="neutral" icon-name="utility:add" onclick={handleAddComponent} class="dc-mt12"></lightning-button>
+                            </div>
+
+                            <div class="dc-step-nav dc-mt16">
+                                <lightning-button label="← Back" variant="neutral" onclick={goToStep1}></lightning-button>
+                                <lightning-button label="Next: Filters →" variant="brand" onclick={goToStep3}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- STEP 3 -->
+                    <template if:true={isStep3}>
+                        <div class="dc-form-panel">
+                            <div class="dc-form-section">
+                                <div class="dc-fs-title">
+                                    <span><span class="dc-fs-emoji">🔽</span> Dashboard Filters</span>
+                                    <span class="dc-count-pill">{filters.length}</span>
+                                </div>
+                                <p class="dc-section-desc">Let users filter data by date, owner, region, etc.</p>
+                                <div class="dc-quickadd-bar">
+                                    <span class="dc-qa-lbl">Quick add:</span>
+                                    <template for:each={filterTypeOptions} for:item="ft">
+                                        <button key={ft.value} class="dc-qa-pill" data-type={ft.value} onclick={handleQuickAddFilter}>{ft.emoji} {ft.label}</button>
+                                    </template>
+                                </div>
+                                <template if:true={hasFilters}>
+                                    <div class="dc-filters-list dc-mt12">
+                                        <template for:each={filtersList} for:item="filter">
+                                            <div key={filter.id} class="dc-filter-row">
+                                                <span class="dc-filter-emoji">{filter.typeEmoji}</span>
+                                                <div class="dc-filter-info">
+                                                    <div class="dc-filter-name">{filter.label}</div>
+                                                    <div class="dc-filter-meta">{filter.typeLabel} · {filter.object} · {filter.field}</div>
+                                                </div>
+                                                <lightning-button-icon icon-name="utility:edit" alternative-text="Edit" data-id={filter.id} onclick={handleEditFilter} size="small" variant="border-filled"></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:delete" alternative-text="Remove" data-id={filter.id} onclick={handleRemoveFilter} size="small" variant="destructive"></lightning-button-icon>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="dc-step-nav dc-mt16">
+                                <lightning-button label="← Back" variant="neutral" onclick={goToStep2}></lightning-button>
+                                <lightning-button label="Next: Visibility →" variant="brand" onclick={goToStep4}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- STEP 4 -->
+                    <template if:true={isStep4}>
+                        <div class="dc-form-panel">
+                            <div class="dc-form-section">
+                                <div class="dc-fs-title">
+                                    <span><span class="dc-fs-emoji">👥</span> Visibility Rules</span>
+                                    <span class="dc-count-pill">{visibilityRules.length}</span>
+                                </div>
+                                <p class="dc-section-desc">Control who can see this dashboard. Leave empty = everyone.</p>
+                                <template if:true={hasVisibilityRules}>
+                                    <div class="dc-rules-list dc-mt12">
+                                        <template for:each={visibilityRules} for:item="rule">
+                                            <div key={rule.key} class="dc-rule-row">
+                                                <span class="dc-rule-badge">{rule.ruleType}</span>
+                                                <span class="dc-rule-op">{rule.operator}</span>
+                                                <span class="dc-rule-val">{rule.value}</span>
+                                                <lightning-button-icon icon-name="utility:delete" data-key={rule.key} onclick={handleRemoveRule} size="small" variant="destructive"></lightning-button-icon>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <lightning-button label="Add Rule" onclick={handleAddRule} variant="neutral" icon-name="utility:add" class="dc-mt12"></lightning-button>
+                            </div>
+                            <div class="dc-step-nav dc-mt16">
+                                <lightning-button label="← Back" variant="neutral" onclick={goToStep3}></lightning-button>
+                                <lightning-button label="💾 Save Dashboard" variant="brand" onclick={handleSave}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+
+                <!-- RIGHT: Live Preview Panel -->
+                <div class="dc-right-panel">
+                    <div class="dc-preview-panel">
+                        <div class="dc-preview-topbar">
+                            <span class="dc-preview-label">👁 Live Preview</span>
+                            <span class="dc-preview-hint">Click any card to select and edit it</span>
+                        </div>
+                        <div class="dc-preview-scroll">
+
+                            <!-- Preview Header -->
+                            <template if:true={hasHeaderConfig}>
+                                <div class="dc-prev-header" style={previewHeaderStyle}>
+                                    <div class="dc-prev-header-title">{headerConfig.title}</div>
+                                    <template if:true={headerConfig.subtitle}>
+                                        <div class="dc-prev-header-sub">{headerConfig.subtitle}</div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template if:false={hasHeaderConfig}>
+                                <div class="dc-prev-header dc-prev-header-default">
+                                    <div class="dc-prev-header-title">{dashboardNameOrDefault}</div>
+                                    <div class="dc-prev-header-sub">Dashboard Preview</div>
+                                </div>
+                            </template>
+
+                            <!-- Cards Grid -->
+                            <div class="dc-prev-grid">
+                                <template if:true={hasComponents}>
+                                    <template for:each={previewComponents} for:item="pc">
+                                        <div key={pc.id} class={pc.colClass}>
+                                            <div class={pc.cardClass} data-id={pc.id} onclick={handleSelectCompFromPreview}>
+
+                                                <!-- Card Top Border accent -->
+                                                <div class="dc-prev-card-accent" style={pc.accentStyle}></div>
+
+                                                <!-- Card Header -->
+                                                <div class="dc-prev-card-hdr">
+                                                    <div class="dc-prev-card-hdr-left">
+                                                        <div class="dc-prev-icon-wrap" style={pc.iconBgStyle}>
+                                                            <span class="dc-prev-emoji">{pc.emojiIcon}</span>
+                                                        </div>
+                                                        <span class="dc-prev-card-title">{pc.title}</span>
+                                                    </div>
+                                                    <template if:true={pc.badge}>
+                                                        <span class="dc-prev-badge" style={pc.badgeStyle}>{pc.badge}</span>
+                                                    </template>
+                                                </div>
+
+                                                <!-- KPI -->
+                                                <template if:true={pc.isKpi}>
+                                                    <div class="dc-prev-kpi">
+                                                        <div class="dc-prev-kpi-icon" style={pc.iconBgStyle}>
+                                                            <span class="dc-prev-kpi-emoji">{pc.emojiIcon}</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="dc-prev-kpi-lbl">{pc.title}</div>
+                                                            <div class="dc-prev-kpi-val" style={pc.valueStyle}>—</div>
+                                                            <div class="dc-prev-kpi-sub">{pc.aggregation}({pc.field})</div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Non-KPI: Rich matching previews per type -->
+                                                <template if:false={pc.isKpi}>
+                                                    <div class="dc-prev-placeholder">
+                                                        <div class="dc-prev-ph-type">{pc.typeLabel}
+                                                            <template if:true={pc.object}> · {pc.object}</template>
+                                                        </div>
+
+                                                        <!-- BAR CHART / PROGRESS BARS / TARGET PROGRESS — thick colorful bars with labels -->
+                                                        <template if:true={pc.showMiniBars}>
+                                                            <div class="dc-mini-bars">
+                                                                <template for:each={pc.miniBars} for:item="mb">
+                                                                    <div key={mb.key} class="dc-mini-bar-row">
+                                                                        <span class="dc-mini-bar-lbl">{mb.label}</span>
+                                                                        <div class="dc-mini-bar-track">
+                                                                            <div class="dc-mini-bar-fill" style={mb.fillStyle}></div>
+                                                                        </div>
+                                                                        <span class="dc-mini-bar-val" style={mb.valStyle}>{mb.val}</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- RANKED LIST / TABLE / METRIC CARDS — rank badges + names + bars -->
+                                                        <template if:true={pc.showMiniRanked}>
+                                                            <div class="dc-mini-ranked">
+                                                                <template for:each={pc.miniRanked} for:item="mr">
+                                                                    <div key={mr.key} class="dc-mini-ranked-row">
+                                                                        <div class={mr.numClass}>{mr.n}</div>
+                                                                        <span class="dc-mini-rank-name">{mr.name}</span>
+                                                                        <span class="dc-mini-rank-val">{mr.val}</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- PIE / DONUT / ACHIEVEMENT — donut ring -->
+                                                        <template if:true={pc.showMiniDonut}>
+                                                            <div class="dc-mini-donut" style={pc.donutStyle}></div>
+                                                        </template>
+
+                                                        <!-- STATUS CARDS -->
+                                                        <template if:true={pc.showMiniStatus}>
+                                                            <div class="dc-mini-status-list">
+                                                                <template for:each={pc.miniStatus} for:item="ms">
+                                                                    <div key={ms.key} class="dc-mini-status-item" style={ms.style}>
+                                                                        <div class="dc-mini-status-name">{ms.name}</div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- LINE CHART — simple polyline preview -->
+                                                        <template if:true={pc.showMiniLine}>
+                                                            <div class="dc-mini-line-wrap">
+                                                                <svg viewBox="0 0 120 40" style="width:100%;height:40px;">
+                                                                    <polyline points={pc.miniLinePoints} fill="none" stroke={pc.color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+                                                                    <polygon points={pc.miniLineFill} fill={pc.color} opacity="0.1"/>
+                                                                </svg>
+                                                            </div>
+                                                        </template>
+
+                                                    </div>
+                                                </template>
+
+                                                <!-- Editing indicator -->
+                                                <template if:true={pc.isSelected}>
+                                                    <div class="dc-prev-editing-tag" style={pc.accentStyle}>✏️ Editing</div>
+                                                </template>
+
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:false={hasComponents}>
+                                    <div class="dc-prev-empty">
+                                        <div class="dc-prev-empty-emoji">📊</div>
+                                        <p>Add components on the left to see the preview here</p>
+                                    </div>
+                                </template>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- FILTER MODAL -->
+        <template if:true={showFilterModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open dc-modal">
+                <div class="slds-modal__container dc-modal-sm">
+                    <header class="slds-modal__header dc-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeFilterModal}>
+                            <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        </button>
+                        <h2 class="dc-modal-title">🔽 Configure Filter</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-input label="Filter Label" value={currentFilter.label} onchange={handleFilterLabelChange} required class="slds-m-bottom_small" placeholder="e.g., Date Range, Owner"></lightning-input>
+                        <div class="slds-m-bottom_small">
+                            <label class="dc-ie-lbl">Filter Type</label>
+                            <div class="dc-filter-type-row dc-mt8">
+                                <template for:each={filterTypeOptions} for:item="ft">
+                                    <button key={ft.value} class={ft.modalPillClass} data-type={ft.value} onclick={handleFilterTypeClick}>{ft.emoji} {ft.label}</button>
+                                </template>
+                            </div>
+                        </div>
+                        <lightning-combobox label="Salesforce Object" value={currentFilter.object} options={objectOptions} onchange={handleFilterObjectChange} placeholder="Select object" class="slds-m-bottom_small"></lightning-combobox>
+                        <lightning-combobox label="Field" value={currentFilter.field} options={currentFilterFields} onchange={handleFilterFieldChange} placeholder="Select field" class="slds-m-bottom_small"></lightning-combobox>
+                        <template if:true={showHierarchyMode}>
+                            <lightning-combobox label="Hierarchy Mode" value={currentFilter.hierarchyMode} options={hierarchyModeOptions} onchange={handleHierarchyModeChange} class="slds-m-bottom_small"></lightning-combobox>
+                        </template>
+                        <template if:true={showDateLiteralDefault}>
+                            <lightning-combobox label="Default Value" value={currentFilter.defaultValue} options={dateLiteralOptions} onchange={handleFilterDefaultChange} class="slds-m-bottom_small"></lightning-combobox>
+                        </template>
+                    </div>
+                    <footer class="slds-modal__footer dc-modal-footer">
+                        <lightning-button label="Cancel" onclick={closeFilterModal}></lightning-button>
+                        <lightning-button label="Save Filter" variant="brand" icon-name="utility:save" onclick={handleSaveFilter}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- VISIBILITY RULE MODAL -->
+        <template if:true={showRuleModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open dc-modal">
+                <div class="slds-modal__container dc-modal-sm">
+                    <header class="slds-modal__header dc-modal-header">
+                        <h2 class="dc-modal-title">👥 Add Visibility Rule</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-combobox label="Rule Type" value={currentRule.ruleType} options={ruleTypes} onchange={handleRuleTypeChange} class="slds-m-bottom_small"></lightning-combobox>
+                        <lightning-combobox label="Operator" value={currentRule.operator} options={ruleOperatorOptions} onchange={handleRuleOperatorChange} class="slds-m-bottom_small"></lightning-combobox>
+                        <template if:true={showProfilePicker}><lightning-combobox label="Profile" value={currentRule.value} options={profileOptions} onchange={handleRuleValueChange}></lightning-combobox></template>
+                        <template if:true={showRolePicker}><lightning-combobox label="Role" value={currentRule.value} options={roleOptions} onchange={handleRuleValueChange}></lightning-combobox></template>
+                        <template if:true={showUserPicker}>
+                            <lightning-input label="Search User" onchange={handleUserSearch} placeholder="Type name or email..."></lightning-input>
+                            <template if:true={hasUserOptions}><lightning-combobox label="Select User" value={currentRule.value} options={userOptions} onchange={handleRuleValueChange} class="slds-m-top_small"></lightning-combobox></template>
+                        </template>
+                    </div>
+                    <footer class="slds-modal__footer dc-modal-footer">
+                        <lightning-button label="Cancel" onclick={closeRuleModal}></lightning-button>
+                        <lightning-button label="Save Rule" variant="brand" onclick={handleSaveRule}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </template>
+</template>

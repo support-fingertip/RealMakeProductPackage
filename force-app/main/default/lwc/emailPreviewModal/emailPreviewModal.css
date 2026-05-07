@@ -1,0 +1,78 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    position: relative;
+}
+
+.preview-container {
+    background:  #ffffff;
+    border:  1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.email-header {
+    background:  #f8f9fa;
+}
+
+.header-label {
+    width: 80px;
+    font-weight: 600;
+    color:  #706e6b;
+    flex-shrink: 0;
+}
+
+.header-value {
+    flex: 1;
+    word-break: break-word;
+}
+
+.email-body {
+    min-height: 120px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.email-attachments {
+    background: #f8f9fa;
+}
+
+.attachment-item {
+    background: white;
+    border:  1px solid #e5e5e5;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.attachment-name {
+    flex: 1;
+}
+
+.recipient-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 24px;
+}
+
+.add-recipient-inline {
+    align-items: center;
+    max-width: 320px;
+}
+
+.add-recipient-inline .compact-input {
+    --sds-c-input-spacing-vertical: 0.25rem;
+}
+
+.empty-recipient-label {
+    font-style: italic;
+    font-size: 0.8125rem;
+    line-height: 24px;
+}
+
+/* Ensure pill container has proper minimum height for interaction area */
+.recipient-pills-container lightning-pill {
+    margin-bottom: 2px;
+}

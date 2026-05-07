@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Credit_Active_Status__c</fullName>
+    <defaultValue>&quot;Active&quot;</defaultValue>
+    <description>Status value for active CP credits.</description>
+    <externalId>false</externalId>
+    <label>Credit Active Status</label>
+    <length>100</length>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,191 @@
+/* Loading */
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #080707;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.section-desc {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+/* Config Grid */
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 12px;
+}
+
+.config-card {
+    background: white;
+    border: 1px solid #e1e5ea;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.config-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.config-card-active {
+    border-left: 4px solid #2e844a;
+}
+
+.config-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #f9fafb;
+}
+
+.config-title-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.config-project-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #080707;
+}
+
+.config-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.config-card-body {
+    padding: 14px 16px;
+}
+
+.config-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.config-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #080707;
+}
+
+.config-description {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-active { background: #2e844a; color: white; }
+.badge-inactive { background: #b0adab; color: white; }
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state h3 {
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.empty-state p {
+    margin-top: 8px;
+    font-size: 14px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Form */
+.form-container {
+    background: white;
+    border: 1px solid #e1e5ea;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.form-header {
+    padding: 16px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e1e5ea;
+}
+
+.form-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0;
+}
+
+.form-body {
+    padding: 20px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #e1e5ea;
+    background: #f9fafb;
+}
+
+@media (max-width: 768px) {
+    .config-grid { grid-template-columns: 1fr; }
+    .config-detail-grid { grid-template-columns: 1fr 1fr; }
+}

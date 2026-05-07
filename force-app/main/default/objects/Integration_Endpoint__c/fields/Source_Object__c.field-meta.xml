@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source_Object__c</fullName>
+    <description>The Salesforce object that provides data for outbound integrations or receives data for inbound integrations.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>API name of the Salesforce object (e.g., Account, Contact, Opportunity__c).</inlineHelpText>
+    <label>Source Object</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

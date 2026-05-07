@@ -1,0 +1,648 @@
+<template>
+    <div class="inventory-root">
+
+        <!-- ══ HERO HEADER ══════════════════════════════════════════ -->
+        <div class="hero-header">
+            <div class="hero-bg-overlay"></div>
+            <div class="hero-geo geo-1"></div>
+            <div class="hero-geo geo-2"></div>
+            <div class="hero-geo geo-3"></div>
+            <div class="hero-content">
+                <div class="hero-eyebrow">Real Estate Inventory</div>
+                <h1 class="hero-title">Property Dashboard</h1>
+                <p class="hero-sub">Browse projects, explore units, and manage bookings</p>
+            </div>
+            <!-- Stats Strip -->
+            <div class="stats-strip">
+                <div class="stat-chip">
+                    <span class="stat-chip__icon">&#9971;</span>
+                    <div class="stat-chip__info">
+                        <span class="stat-chip__num">{totalProjects}</span>
+                        <span class="stat-chip__lbl">Projects</span>
+                    </div>
+                </div>
+                <!-- Status-wise project counts -->
+                <template for:each={projectStatusSummary} for:item="sc">
+                    <div class="stat-divider-and-chip" key={sc.label}>
+                        <div class="stat-divider"></div>
+                        <div class="stat-chip">
+                            <div class="stat-chip__info">
+                                <span class="stat-chip__num">{sc.count}</span>
+                                <span class="stat-chip__lbl">{sc.label}</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- ══ PROJECT TYPE FILTER TABS ════════════════════════════ -->
+        <template if:true={showProjects}>
+            <div class="filter-bar">
+                <div class="filter-tabs">
+                    <template for:each={projectTypeOptions} for:item="opt">
+                        <button key={opt.value} class={opt.cssClass} data-value={opt.value} onclick={handleTypeFilter}>
+                            <span class="tab-icon">{opt.icon}</span>
+                            {opt.label}
+                            <span class="tab-count">{opt.count}</span>
+                        </button>
+                    </template>
+                </div>
+                <div class="filter-controls">
+                    <button class="new-project-btn" onclick={handleNewProject}>
+                        <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon>
+                        New Project
+                    </button>
+                    <lightning-combobox label="" value={selectedProjectStatus} placeholder="Project Status"
+                        options={projectStatusOptions} onchange={handleProjectStatusChange} variant="label-hidden"
+                        class="status-filter-combo">
+                    </lightning-combobox>
+                    <lightning-input type="search" label="" placeholder="Search projects..." value={searchTerm}
+                        onchange={handleSearch} variant="label-hidden" class="filter-search">
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="project-status-summary">
+                <template for:each={projectStatusSummary} for:item="stat">
+                    <div key={stat.label} class="project-status-chip">
+                        <span class="project-status-chip__count">{stat.count}</span>
+                        <span class="project-status-chip__label">{stat.label}</span>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ══ PROJECT BACKGROUND BANNER ════════════════════════════ -->
+        <template if:true={hasProjectBackground}>
+            <div class="project-bg-banner" style={projectBackgroundStyle}>
+                <img src={selectedProjectImage} alt={projectName} class="project-bg-banner__img" loading="lazy" />
+                <div class="project-bg-banner__overlay"></div>
+                <div class="project-bg-banner__content">
+                    <h2 class="project-bg-banner__title">{projectName}</h2>
+                </div>
+            </div>
+        </template>
+
+        <!-- ══ BREADCRUMB (Towers view) ═══════════════════════════ -->
+        <template if:true={showTowers}>
+            <div class="breadcrumb-bar">
+                <button class="back-btn" onclick={handleBack}>
+                    <lightning-icon icon-name="utility:chevronleft" size="x-small"></lightning-icon>
+                    All Projects
+                </button>
+                <span class="breadcrumb-sep">&rsaquo;</span>
+                <span class="breadcrumb-current">{projectName}</span>
+
+                <div class="breadcrumb-actions">
+                    <template if:true={isMixedProject}>
+                        <div class="property-tabs">
+                            <template for:each={propertyTypeTabs} for:item="ptab">
+                                <button key={ptab.value} class={ptab.tabClass} data-value={ptab.value}
+                                    onclick={handlePropertyTypeTab}>
+                                    {ptab.label}
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                    <button class="new-unit-btn" onclick={handleNewUnit}>
+                        <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon>
+                        New Unit
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ══ BREADCRUMB (Floor Grid view) ═══════════════════════ -->
+        <template if:true={showFloorGrid}>
+            <div class="breadcrumb-bar">
+                <button class="back-btn" onclick={handleBackToTowers}>
+                    <lightning-icon icon-name="utility:chevronleft" size="x-small"></lightning-icon>
+                    Towers
+                </button>
+                <span class="breadcrumb-sep">&rsaquo;</span>
+                <span class="breadcrumb-current">{selectedTowerName}</span>
+
+                <div class="breadcrumb-actions">
+                    <div class="floor-grid-filters">
+                    <lightning-combobox label="" value={filterBhk} placeholder="Filter BHK" options={bhkFilterOptions}
+                        onchange={handleBhkFilter} variant="label-hidden" class="bhk-filter-combo">
+                    </lightning-combobox>
+                    </div>
+                    <button class="new-unit-btn" onclick={handleNewUnit}>
+                        <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon>
+                        New Unit
+                    </button>
+                </div>
+            </div>
+
+            <div class="floor-summary-bar">
+                <template for:each={floorGridSummary} for:item="stat">
+                    <div key={stat.label} class={stat.cls}>
+                        <span class="summary-chip__count">{stat.count}</span>
+                        <span class="summary-chip__label">{stat.label}</span>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ══ BREADCRUMB (Units view) ══════════════════════════════ -->
+        <template if:true={showPlots}>
+            <template if:false={showTowers}>
+                <div class="breadcrumb-bar">
+                    <button class="back-btn" onclick={handleBack}>
+                        <lightning-icon icon-name="utility:chevronleft" size="x-small"></lightning-icon>
+                        All Projects
+                    </button>
+                    <span class="breadcrumb-sep">&rsaquo;</span>
+                    <span class="breadcrumb-current">{projectName}</span>
+
+                    <div class="breadcrumb-actions">
+                        <div class="unit-filter-chips">
+                            <template for:each={unitStatusOptions} for:item="opt">
+                                <button key={opt.value} class={opt.chipClass} data-value={opt.value}
+                                    onclick={handleUnitFilter}>
+                                    <span class="chip-dot" style={opt.dotStyle}></span>
+                                    {opt.label}
+                                    <span class="chip-count">{opt.count}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <button class="new-unit-btn" onclick={handleNewUnit}>
+                            <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon>
+                            New Unit
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </template>
+
+        <!-- ══ LOADING ══════════════════════════════════════════════ -->
+        <template if:true={isLoading}>
+            <div class="loading-state">
+                <lightning-spinner size="medium" alternative-text="Loading"></lightning-spinner>
+                <p class="loading-text">Loading data...</p>
+            </div>
+        </template>
+
+        <!-- ══ PROJECTS GRID ════════════════════════════════════════ -->
+        <template if:true={showProjects}>
+            <template if:false={isLoading}>
+                <div class="projects-grid">
+                    <template for:each={filteredProjects} for:item="prj">
+                        <div key={prj.Id} class="project-card">
+                            <!-- Image Section -->
+                            <div class="project-card__image" style={prj.cardStyle}>
+                                <img src={prj.imageUrl} alt={prj.Name} class="project-card__photo" loading="lazy" />
+                                <div class="project-card__image-overlay"></div>
+                                <div class="project-type-badge">{prj.primaryType}</div>
+                                <template if:true={prj.hasStatus}>
+                                    <div class="project-status-pill" style={prj.statusPillStyle}>{prj.Project_Status__c}</div>
+                                </template>
+                                <button class="project-card__upload-btn" data-id={prj.Id} data-name={prj.Name}
+                                    onclick={handleUploadImage} title="Upload project image">
+                                    <lightning-icon icon-name="utility:photo" size="xx-small"></lightning-icon>
+                                </button>
+                            </div>
+
+                            <!-- Content Section -->
+                            <div class="project-card__body">
+                                <h3 class="project-card__name">{prj.Name}</h3>
+                                <p class="project-card__location">
+                                    <lightning-icon icon-name="utility:location" size="xx-small"
+                                        class="loc-icon"></lightning-icon>
+                                    {prj.locationText}
+                                </p>
+
+                                <!-- Unit stats row -->
+                                <div class="unit-stats-row">
+                                    <div class="unit-stat unit-stat--available">
+                                        <span class="unit-stat__num">{prj.availableCount}</span>
+                                        <span class="unit-stat__lbl">Available</span>
+                                    </div>
+                                    <div class="unit-stat unit-stat--booked">
+                                        <span class="unit-stat__num">{prj.bookedTotal}</span>
+                                        <span class="unit-stat__lbl">Booked</span>
+                                    </div>
+                                    <div class="unit-stat unit-stat--notrel">
+                                        <span class="unit-stat__num">{prj.notReleasedCount}</span>
+                                        <span class="unit-stat__lbl">Held</span>
+                                    </div>
+                                    <div class="unit-stat unit-stat--total">
+                                        <span class="unit-stat__num">{prj.Total_Units__c}</span>
+                                        <span class="unit-stat__lbl">Total</span>
+                                    </div>
+                                </div>
+
+                                <!-- Progress bar -->
+                                <div class="progress-section">
+                                    <div class="progress-labels">
+                                        <span class="progress-label-text">Booking Progress</span>
+                                        <span class="progress-pct">{prj.progressPercentage}</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style={prj.progressStyle}></div>
+                                    </div>
+                                </div>
+
+                                <!-- Action -->
+                                <button class="view-units-btn" data-id={prj.Id} data-name={prj.Name}
+                                    onclick={handleLoadPlots}>
+                                    View Units
+                                    <lightning-icon icon-name="utility:arrowright" size="xx-small"></lightning-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <template if:true={noProjectsFound}>
+                    <div class="empty-state">
+                        <div class="empty-icon-wrap">
+                            <lightning-icon icon-name="standard:home" size="large"></lightning-icon>
+                        </div>
+                        <p class="empty-text">No projects match your filter</p>
+                        <p class="empty-sub">Try adjusting your search or filter criteria</p>
+                    </div>
+                </template>
+            </template>
+        </template>
+
+        <!-- ══ TOWERS GRID ══════════════════════════════════════════ -->
+        <template if:true={showTowers}>
+            <template if:false={isLoading}>
+                <template if:true={showTowerCards}>
+                    <div class="unit-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#22c55e"></span>Available
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#3b82f6"></span>Booked
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#ef4444"></span>Sold
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b"></span>Not Released
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#9ca3af"></span>Blocked
+                        </div>
+                    </div>
+
+                    <div class="towers-grid">
+                        <template for:each={allTowers} for:item="tower">
+                            <div key={tower.Id} class="tower-card" data-id={tower.Id} data-name={tower.Name}
+                                onclick={handleTowerClick}>
+                                <div class="tower-card__header">
+                                    <div class="tower-illustration">
+                                        <div class="tower-building" style={tower.buildingStyle}>
+                                            <div class="tower-windows"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tower-card__body">
+                                    <h3 class="tower-card__name">{tower.Name}</h3>
+                                    <div class="tower-meta">
+                                        <span class="tower-meta__item">{tower.Total_Floors__c} Floors</span>
+                                        <span class="tower-meta__sep"></span>
+                                        <span class="tower-meta__item">{tower.totalUnits} Units</span>
+                                    </div>
+
+                                    <div class="tower-donut-row">
+                                        <div class="tower-donut" style={tower.donutStyle}>
+                                            <div class="tower-donut__inner"></div>
+                                        </div>
+                                        <div class="tower-status-counts">
+                                            <span class="tsc tsc--available">{tower.availableCount} Available</span>
+                                            <span class="tsc tsc--booked">{tower.bookedCount} Booked</span>
+                                            <span class="tsc tsc--sold">{tower.soldCount} Sold</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="tower-cta">
+                                        <span>View Floor Plan</span>
+                                        <lightning-icon icon-name="utility:arrowright" size="xx-small"></lightning-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template if:true={noTowersFound}>
+                        <div class="empty-state">
+                            <div class="empty-icon-wrap">
+                                <lightning-icon icon-name="standard:account" size="large"></lightning-icon>
+                            </div>
+                            <p class="empty-text">No towers found for this project</p>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Unit grid tab for mixed projects -->
+                <template if:true={showUnitGridInTowers}>
+                    <div class="unit-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#22c55e"></span>Available
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#3b82f6"></span>Booked
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#ef4444"></span>Sold
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b"></span>Not Released
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#9ca3af"></span>Blocked
+                        </div>
+                    </div>
+
+                    <div class="units-grid">
+                        <template for:each={filteredPlots} for:item="plot">
+                            <div key={plot.Id} class={plot.unitCardClass}>
+                                <div class="unit-status-ribbon" style={plot.ribbonStyle}>
+                                    {plot.Status__c}
+                                </div>
+                                <div class="unit-name">{plot.Name}</div>
+                                <div class="unit-details">
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Tower</span>
+                                        <span class="udr-value">{plot.towerName}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Floor</span>
+                                        <span class="udr-value">{plot.Floor__c}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Type</span>
+                                        <span class="udr-value">{plot.BHK_Type__c}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Area</span>
+                                        <span class="udr-value">{plot.displayArea} sqft</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Rate/sqft</span>
+                                        <span class="udr-value udr-price">{plot.Price_Per_Sq_Ft__c}</span>
+                                    </div>
+                                </div>
+                                <div class="unit-actions">
+                                    <button class="unit-action-btn unit-action-btn--ghost" data-id={plot.Id}
+                                        onclick={handleNavigatePlot}>
+                                        View
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template if:true={noUnitsFound}>
+                        <div class="empty-state">
+                            <div class="empty-icon-wrap">
+                                <lightning-icon icon-name="standard:home" size="large"></lightning-icon>
+                            </div>
+                            <p class="empty-text">No units match the selected filter</p>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </template>
+
+        <!-- ══ FLOOR GRID ═══════════════════════════════════════════ -->
+        <template if:true={showFloorGrid}>
+            <template if:false={isLoading}>
+                <div class="unit-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:#22c55e"></span>Available
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:#3b82f6"></span>Booked
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:#ef4444"></span>Sold
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:#f59e0b"></span>Not Released
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:#9ca3af"></span>Blocked
+                    </div>
+                </div>
+
+                <div class="floor-grid-container">
+                    <template for:each={filteredFloorRows} for:item="floor">
+                        <div key={floor.floorNumber} class="floor-row">
+                            <div class="floor-label">{floor.floorLabel}</div>
+                            <div class="floor-units">
+                                <template for:each={floor.units} for:item="unit">
+                                    <div key={unit.Id} class={unit.cellClass} title={unit.tooltip} data-id={unit.Id}
+                                        onclick={handleUnitCellClick}>
+                                        <span class="unit-cell__name">{unit.Name}</span>
+                                        <span class="unit-cell__bhk">{unit.BHK_Type__c}</span>
+                                        <span class="unit-cell__area">{unit.displayArea}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <template if:true={noFloorUnits}>
+                    <div class="empty-state">
+                        <div class="empty-icon-wrap">
+                            <lightning-icon icon-name="standard:account" size="large"></lightning-icon>
+                        </div>
+                        <p class="empty-text">No units found for this tower</p>
+                    </div>
+                </template>
+            </template>
+        </template>
+
+        <!-- ══ UNITS GRID (flat) ════════════════════════════════════ -->
+        <template if:true={showPlots}>
+            <template if:false={showTowers}>
+                <template if:false={isLoading}>
+                    <div class="unit-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#22c55e"></span>Available
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#3b82f6"></span>Booked
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#ef4444"></span>Sold
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b"></span>Not Released
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#9ca3af"></span>Blocked
+                        </div>
+                    </div>
+
+                    <div class="units-grid">
+                        <template for:each={filteredPlots} for:item="plot">
+                            <div key={plot.Id} class={plot.unitCardClass}>
+                                <div class="unit-status-ribbon" style={plot.ribbonStyle}>
+                                    {plot.Status__c}
+                                </div>
+                                <div class="unit-name">{plot.Name}</div>
+                                <div class="unit-details">
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Tower</span>
+                                        <span class="udr-value">{plot.towerName}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Floor</span>
+                                        <span class="udr-value">{plot.Floor__c}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Type</span>
+                                        <span class="udr-value">{plot.BHK_Type__c}</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Area</span>
+                                        <span class="udr-value">{plot.displayArea} sqft</span>
+                                    </div>
+                                    <div class="unit-detail-row">
+                                        <span class="udr-label">Rate/sqft</span>
+                                        <span class="udr-value udr-price">{plot.Price_Per_Sq_Ft__c}</span>
+                                    </div>
+                                </div>
+                                <div class="unit-actions">
+                                    <button class="unit-action-btn unit-action-btn--ghost" data-id={plot.Id}
+                                        onclick={handleNavigatePlot}>
+                                        View
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template if:true={noUnitsFound}>
+                        <div class="empty-state">
+                            <div class="empty-icon-wrap">
+                                <lightning-icon icon-name="standard:home" size="large"></lightning-icon>
+                            </div>
+                            <p class="empty-text">No units match the selected filter</p>
+                            <p class="empty-sub">Try adjusting your filter criteria</p>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </template>
+
+        <!-- ══ NEW PROJECT MODAL ══════════════════════════════════ -->
+        <template if:true={showNewProjectModal}>
+            <section class="slds-modal slds-fade-in-open slds-modal_large" role="dialog" aria-modal="true">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCloseNewProjectModal}>
+                            <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-hyphenate">New Project</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <template if:false={newProjectRecordId}>
+                            <lightning-record-edit-form
+                                object-api-name="Project__c"
+                                onsuccess={handleNewProjectSuccess}
+                                columns="2">
+                                <lightning-messages></lightning-messages>
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Name" required></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Project_Code__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Project_Status__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="RERA_Number__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Property_Types__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Allowed_BHK_Types__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Address__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="City__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Description__c"></lightning-input-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input-field field-name="Is_Active__c"></lightning-input-field>
+                                    </div>
+                                </div>
+                                <div class="slds-m-top_medium slds-text-align_right">
+                                    <lightning-button label="Cancel" onclick={handleCloseNewProjectModal}
+                                        class="slds-m-right_small"></lightning-button>
+                                    <lightning-button type="submit" label="Save" variant="brand"></lightning-button>
+                                </div>
+                            </lightning-record-edit-form>
+                        </template>
+                        <template if:true={newProjectRecordId}>
+                            <div class="slds-text-heading_small slds-m-bottom_medium">
+                                Project created successfully! Upload an image (optional):
+                            </div>
+                            <lightning-file-upload
+                                label="Upload project image"
+                                name="newProjectImage"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                max-files="1"
+                                record-id={newProjectRecordId}
+                                onuploadfinished={handleNewProjectImageUploadFinished}>
+                            </lightning-file-upload>
+                            <div class="slds-m-top_medium">
+                                <lightning-button label="Done" variant="brand"
+                                    onclick={handleCloseNewProjectModal}></lightning-button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- ══ IMAGE UPLOAD MODAL (existing project cards) ════════ -->
+        <template if:true={showImageUploadModal}>
+            <section class="slds-modal slds-fade-in-open" role="dialog" aria-modal="true">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCloseImageUpload}>
+                            <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-hyphenate">Upload Image - {imageUploadProjectName}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-file-upload
+                            label="Upload project image (JPG, PNG)"
+                            name="projectImageUploader"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            max-files="1"
+                            record-id={imageUploadProjectId}
+                            onuploadfinished={handleImageUploadFinished}>
+                        </lightning-file-upload>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={handleCloseImageUpload}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </div>
+</template>

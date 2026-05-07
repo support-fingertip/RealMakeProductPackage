@@ -1,0 +1,232 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="utility:text_template">
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}
+                ></lightning-button>
+                <template if:false={compactMode}>
+                    <lightning-button
+                        label={autoRefreshLabel}
+                        icon-name={autoRefreshIcon}
+                        onclick={handleToggleAutoRefresh}
+                        variant={autoRefreshVariant}
+                    ></lightning-button>
+                </template>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-p-horizontal_medium">
+            <!-- Filters (hidden in compact mode) -->
+            <template if:false={compactMode}>
+                <lightning-layout multiple-rows="true" class="slds-m-bottom_small">
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <lightning-input
+                            type="search"
+                            label="Integration Key"
+                            placeholder="Filter by key..."
+                            value={filterIntegrationKey}
+                            onchange={handleKeyFilterChange}
+                        ></lightning-input>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="2" padding="around-small">
+                        <lightning-combobox
+                            label="Direction"
+                            value={filterDirection}
+                            options={directionOptions}
+                            onchange={handleDirectionChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="2" padding="around-small">
+                        <lightning-combobox
+                            label="Status"
+                            value={filterStatus}
+                            options={statusFilterOptions}
+                            onchange={handleStatusFilterChange}
+                        ></lightning-combobox>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="2" padding="around-small">
+                        <lightning-input
+                            type="date"
+                            label="From Date"
+                            value={filterFromDate}
+                            onchange={handleFromDateChange}
+                        ></lightning-input>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="2" padding="around-small">
+                        <lightning-input
+                            type="date"
+                            label="To Date"
+                            value={filterToDate}
+                            onchange={handleToDateChange}
+                        ></lightning-input>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="12" medium-device-size="1" padding="around-small" class="slds-grid slds-grid_vertical-align-end">
+                        <lightning-button-icon
+                            icon-name="utility:clear"
+                            alternative-text="Clear Filters"
+                            title="Clear Filters"
+                            onclick={handleClearFilters}
+                        ></lightning-button-icon>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </template>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <!-- Log Count -->
+                <div class="slds-m-bottom_x-small slds-text-body_small slds-text-color_weak">
+                    Showing {displayedLogCount} of {totalLogCount} logs
+                    <template if:true={isAutoRefreshOn}>
+                        <span class="slds-m-left_small">
+                            (Auto-refreshing every {autoRefreshInterval}s)
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Data Table -->
+                <template if:true={hasLogs}>
+                    <lightning-datatable
+                        key-field="Id"
+                        data={displayedLogs}
+                        columns={columns}
+                        sorted-by={sortedBy}
+                        sorted-direction={sortedDirection}
+                        onsort={handleSort}
+                        onrowaction={handleRowAction}
+                        hide-checkbox-column
+                        show-row-number-column
+                        wrap-text-max-lines="2"
+                    ></lightning-datatable>
+
+                    <!-- Pagination -->
+                    <template if:false={compactMode}>
+                        <div class="slds-grid slds-grid_align-center slds-m-top_medium slds-m-bottom_small">
+                            <lightning-button
+                                label="Previous"
+                                icon-name="utility:chevronleft"
+                                onclick={handlePreviousPage}
+                                disabled={isPreviousDisabled}
+                                class="slds-m-right_small"
+                            ></lightning-button>
+                            <span class="slds-align-middle slds-p-horizontal_medium slds-text-body_small">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <lightning-button
+                                label="Next"
+                                icon-name="utility:chevronright"
+                                icon-position="right"
+                                onclick={handleNextPage}
+                                disabled={isNextDisabled}
+                            ></lightning-button>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:false={hasLogs}>
+                    <div class="slds-p-vertical_large slds-align_absolute-center">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No integration logs found matching the current filters.
+                        </p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Log Detail Modal -->
+    <template if:true={showLogDetail}>
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-modal="true"
+            aria-labelledby="log-detail-heading"
+            class="slds-modal slds-fade-in-open slds-modal_large"
+        >
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={handleCloseDetail}
+                    ></lightning-button-icon>
+                    <h1 id="log-detail-heading" class="slds-modal__title slds-hyphenate">
+                        Log Detail: {selectedLog.Name}
+                    </h1>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={isLoadingDetail}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+                    <template if:false={isLoadingDetail}>
+                        <!-- Log Summary -->
+                        <lightning-layout multiple-rows="true">
+                            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                <dl class="slds-list_horizontal slds-wrap">
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Integration Key:</dt>
+                                    <dd class="slds-item_detail slds-truncate">{selectedLog.Integration_Key__c}</dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Correlation ID:</dt>
+                                    <dd class="slds-item_detail slds-truncate">{selectedLog.Correlation_Id__c}</dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Direction:</dt>
+                                    <dd class="slds-item_detail slds-truncate">{selectedLog.Direction__c}</dd>
+                                </dl>
+                            </lightning-layout-item>
+                            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                <dl class="slds-list_horizontal slds-wrap">
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Status Code:</dt>
+                                    <dd class="slds-item_detail slds-truncate">
+                                        <lightning-badge label={selectedLog.Response_Status_Code__c} class={statusCodeBadgeClass}></lightning-badge>
+                                    </dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Success:</dt>
+                                    <dd class="slds-item_detail slds-truncate">
+                                        <lightning-icon
+                                            icon-name={successIcon}
+                                            size="x-small"
+                                            alternative-text={successAltText}
+                                        ></lightning-icon>
+                                    </dd>
+                                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Execution Time:</dt>
+                                    <dd class="slds-item_detail slds-truncate">{selectedLog.Execution_Time_ms__c} ms</dd>
+                                </dl>
+                            </lightning-layout-item>
+                        </lightning-layout>
+
+                        <!-- Request / Response Bodies -->
+                        <lightning-tabset>
+                            <lightning-tab label="Request">
+                                <div class="slds-p-around_small">
+                                    <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;">
+                                        {selectedLog.formattedRequest}
+                                    </pre>
+                                </div>
+                            </lightning-tab>
+                            <lightning-tab label="Response">
+                                <div class="slds-p-around_small">
+                                    <pre class="slds-box slds-theme_shade slds-text-font_monospace slds-text-body_small" style="white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;">
+                                        {selectedLog.formattedResponse}
+                                    </pre>
+                                </div>
+                            </lightning-tab>
+                        </lightning-tabset>
+                    </template>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning-button label="Close" onclick={handleCloseDetail}></lightning-button>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+    </template>
+</template>

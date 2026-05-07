@@ -1,0 +1,36 @@
+.recipient-row {
+    background:  #fafafa;
+    align-items: center;
+    position: relative; /* For dropdown positioning */
+    z-index: 1;
+    overflow: visible; /* Allow dropdown to overflow */
+}
+
+.recipient-row:hover {
+    background: #f3f3f3;
+    z-index: 10; /* Bring to front on hover for dropdown visibility */
+}
+
+.row-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auto-label {
+    color: #706e6b;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+/* Checkbox styling */
+lightning-input[type="checkbox"] {
+    --slds-c-checkbox-sizing-border:  1px;
+}
+
+/* Ensure combobox dropdown appears above other content */
+lightning-combobox {
+    position: relative;
+    z-index: inherit;
+}

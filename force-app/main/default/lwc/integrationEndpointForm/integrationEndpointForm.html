@@ -1,0 +1,305 @@
+<template>
+    <!-- Modal Backdrop -->
+    <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        aria-labelledby="endpoint-form-heading"
+        class="slds-modal slds-fade-in-open slds-modal_large"
+    >
+        <div class="slds-modal__container">
+            <!-- Modal Header -->
+            <div class="slds-modal__header">
+                <lightning-button-icon
+                    icon-name="utility:close"
+                    alternative-text="Close"
+                    variant="bare-inverse"
+                    class="slds-modal__close"
+                    onclick={handleClose}
+                ></lightning-button-icon>
+                <h1 id="endpoint-form-heading" class="slds-modal__title slds-hyphenate">
+                    {modalTitle}
+                </h1>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="slds-modal__content slds-p-around_medium" style="min-height: 250px;">
+                <template if:true={isLoading}>
+                    <div class="loading-container">
+                        <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                    </div>
+                </template>
+
+                <template if:false={isLoading}>
+                    <!-- Accordion Sections -->
+                    <lightning-accordion allow-multiple-sections-open active-section-name={activeSections}>
+
+                        <!-- Basic Information -->
+                        <lightning-accordion-section name="basic" label="Basic Information">
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        label="Integration Key"
+                                        value={endpoint.Integration_Key__c}
+                                        field-name="Integration_Key__c"
+                                        onchange={handleFieldChange}
+                                        required
+                                        placeholder="e.g., PAYMENT_GATEWAY_V2"
+                                        message-when-value-missing="Integration Key is required"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-combobox
+                                        label="Category"
+                                        value={endpoint.Category__c}
+                                        field-name="Category__c"
+                                        options={categoryOptions}
+                                        onchange={handleFieldChange}
+                                        placeholder="Select Category"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        label="Owner Team"
+                                        value={endpoint.Owner_Team__c}
+                                        field-name="Owner_Team__c"
+                                        onchange={handleFieldChange}
+                                        placeholder="e.g., Payments Team"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-combobox
+                                        label="Execution Mode"
+                                        value={endpoint.Execution_Mode__c}
+                                        field-name="Execution_Mode__c"
+                                        options={executionModeOptions}
+                                        onchange={handleFieldChange}
+                                        placeholder="Select Mode"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" padding="around-small">
+                                    <lightning-textarea
+                                        label="Description"
+                                        value={endpoint.Description__c}
+                                        field-name="Description__c"
+                                        onchange={handleFieldChange}
+                                        placeholder="Describe the purpose of this integration endpoint..."
+                                        max-length="5000"
+                                    ></lightning-textarea>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        type="checkbox"
+                                        label="Active"
+                                        checked={endpoint.Active__c}
+                                        field-name="Active__c"
+                                        onchange={handleCheckboxChange}
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-accordion-section>
+
+                        <!-- URL Configuration -->
+                        <lightning-accordion-section name="url" label="URL Configuration">
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="12" medium-device-size="8" padding="around-small">
+                                    <lightning-input
+                                        label="Base URL"
+                                        type="url"
+                                        value={endpoint.Base_URL__c}
+                                        field-name="Base_URL__c"
+                                        onchange={handleFieldChange}
+                                        required
+                                        placeholder="https://api.example.com"
+                                        message-when-type-mismatch="Please enter a valid URL"
+                                        message-when-value-missing="Base URL is required"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="4" padding="around-small">
+                                    <lightning-combobox
+                                        label="HTTP Method"
+                                        value={endpoint.HTTP_Method__c}
+                                        field-name="HTTP_Method__c"
+                                        options={httpMethodOptions}
+                                        onchange={handleFieldChange}
+                                        required
+                                        placeholder="Select Method"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="8" padding="around-small">
+                                    <lightning-input
+                                        label="Path"
+                                        value={endpoint.Path__c}
+                                        field-name="Path__c"
+                                        onchange={handleFieldChange}
+                                        placeholder="/v2/resource/{id}"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="4" padding="around-small">
+                                    <lightning-combobox
+                                        label="Content Type"
+                                        value={endpoint.Content_Type__c}
+                                        field-name="Content_Type__c"
+                                        options={contentTypeOptions}
+                                        onchange={handleFieldChange}
+                                        placeholder="Select Content Type"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        label="Named Credential"
+                                        value={endpoint.Named_Credential__c}
+                                        field-name="Named_Credential__c"
+                                        onchange={handleFieldChange}
+                                        placeholder="Named Credential API name"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        label="Timeout (ms)"
+                                        type="number"
+                                        value={endpoint.Timeout__c}
+                                        field-name="Timeout__c"
+                                        onchange={handleFieldChange}
+                                        min="1000"
+                                        max="120000"
+                                        step="1000"
+                                        placeholder="30000"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-accordion-section>
+
+                        <!-- Headers and Parameters -->
+                        <lightning-accordion-section name="headers" label="Headers and Parameters">
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="custom-headers">
+                                            Custom Headers (JSON)
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <lightning-textarea
+                                                value={endpoint.Custom_Headers__c}
+                                                field-name="Custom_Headers__c"
+                                                onchange={handleFieldChange}
+                                                onblur={handleJsonValidation}
+                                                data-json-field="Custom_Headers__c"
+                                                placeholder="X-Custom-Header: value, Accept: application/json"
+                                                max-length="32000"
+                                            ></lightning-textarea>
+                                        </div>
+                                        <template if:true={headersJsonError}>
+                                            <div class="slds-text-color_error slds-text-body_small slds-m-top_xx-small">
+                                                {headersJsonError}
+                                            </div>
+                                        </template>
+                                        <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                            Enter valid JSON object for custom HTTP headers
+                                        </div>
+                                    </div>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="query-params">
+                                            Query Parameters (JSON)
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <lightning-textarea
+                                                value={endpoint.Query_Parameters__c}
+                                                field-name="Query_Parameters__c"
+                                                onchange={handleFieldChange}
+                                                onblur={handleJsonValidation}
+                                                data-json-field="Query_Parameters__c"
+                                                placeholder="page: 1, limit: 100"
+                                                max-length="32000"
+                                            ></lightning-textarea>
+                                        </div>
+                                        <template if:true={paramsJsonError}>
+                                            <div class="slds-text-color_error slds-text-body_small slds-m-top_xx-small">
+                                                {paramsJsonError}
+                                            </div>
+                                        </template>
+                                        <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                            Enter valid JSON object for query string parameters
+                                        </div>
+                                    </div>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-accordion-section>
+
+                        <!-- Authentication -->
+                        <lightning-accordion-section name="auth" label="Authentication">
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                    <lightning-input
+                                        label="Auth Profile"
+                                        value={endpoint.Auth_Profile__c}
+                                        field-name="Auth_Profile__c"
+                                        onchange={handleFieldChange}
+                                        placeholder="Auth Profile Name or ID"
+                                    ></lightning-input>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-accordion-section>
+
+                        <!-- Retry Configuration -->
+                        <lightning-accordion-section name="retry" label="Retry Configuration">
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="12" padding="around-small">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="retry-config">
+                                            Retry Configuration (JSON)
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <lightning-textarea
+                                                value={endpoint.Retry_Config__c}
+                                                field-name="Retry_Config__c"
+                                                onchange={handleFieldChange}
+                                                onblur={handleJsonValidation}
+                                                data-json-field="Retry_Config__c"
+                                                placeholder="maxRetries: 3, retryDelayMs: 1000, backoffMultiplier: 2"
+                                                max-length="32000"
+                                            ></lightning-textarea>
+                                        </div>
+                                        <template if:true={retryJsonError}>
+                                            <div class="slds-text-color_error slds-text-body_small slds-m-top_xx-small">
+                                                {retryJsonError}
+                                            </div>
+                                        </template>
+                                        <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                            Define retry behavior as JSON: maxRetries, retryDelayMs, backoffMultiplier, retryableStatusCodes
+                                        </div>
+                                    </div>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-accordion-section>
+                    </lightning-accordion>
+                </template>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="slds-modal__footer">
+                <lightning-button
+                    label="Cancel"
+                    onclick={handleClose}
+                    class="slds-m-right_small"
+                ></lightning-button>
+                <lightning-button
+                    label="Test Connection"
+                    icon-name="utility:debug"
+                    onclick={handleTestConnection}
+                    class="slds-m-right_small"
+                    disabled={isSaving}
+                ></lightning-button>
+                <lightning-button
+                    variant="brand"
+                    label={saveButtonLabel}
+                    onclick={handleSave}
+                    disabled={isSaving}
+                ></lightning-button>
+            </div>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+</template>

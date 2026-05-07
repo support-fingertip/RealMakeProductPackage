@@ -1,0 +1,147 @@
+:host {
+    display: block;
+}
+
+.lookup-container {
+    position: relative;
+}
+
+/* Search Input */
+.lookup-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    background: #fff;
+    padding: 0 0.5rem;
+    height: 2.125rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lookup-input-wrapper:focus-within {
+    border-color: #0176d3;
+    box-shadow: 0 0 3px 0 #0176d3;
+}
+
+.lookup-input-wrapper.slds-has-error {
+    border-color: #c23934;
+    box-shadow: 0 0 3px 0 #c23934;
+}
+
+.search-icon {
+    flex-shrink: 0;
+    margin-right: 0.375rem;
+    --sds-c-icon-color-foreground-default: #b0adab;
+}
+
+.lookup-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.8125rem;
+    color: #181818;
+    background: transparent;
+    min-width: 0;
+    height: 100%;
+}
+
+.lookup-input::placeholder {
+    color: #b0adab;
+}
+
+.search-spinner {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    position: relative;
+}
+
+/* Dropdown */
+.lookup-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: #fff;
+    border: 1px solid #dddbda;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.lookup-result-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    gap: 0.5rem;
+}
+
+.lookup-result-item:hover {
+    background: #f3f3f3;
+}
+
+.result-icon {
+    flex-shrink: 0;
+}
+
+.result-name {
+    font-size: 0.8125rem;
+    color: #181818;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Selected Pill */
+.selected-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: #eef4ff;
+    border: 1px solid #c9d8f0;
+    border-radius: 1rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.375rem;
+    max-width: 100%;
+    height: 1.75rem;
+}
+
+.pill-icon {
+    flex-shrink: 0;
+}
+
+.pill-label {
+    font-size: 0.8125rem;
+    color: #181818;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pill-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+    transition: background 0.1s;
+}
+
+.pill-remove:hover {
+    background: #d8e6f9;
+}
+
+.pill-remove lightning-icon {
+    --sds-c-icon-color-foreground-default: #706e6b;
+}

@@ -1,0 +1,71 @@
+/* Bulk Approval Manager Styles */
+
+/* Status indicator colors */
+.slds-text-color_warning {
+    color: #FFB75D !important;
+    font-weight: bold;
+}
+
+.slds-text-color_success {
+    color: #2E844A !important;
+    font-weight: bold;
+}
+
+.slds-text-color_error {
+    color: #EA001E !important;
+    font-weight: bold;
+}
+
+/* Empty state styling */
+.slds-illustration {
+    text-align: center;
+}
+
+/* Card body spacing */
+.slds-card__body_inner {
+    min-height: 200px;
+}
+
+/* Filter section styling */
+.slds-card__header {
+    padding: 1rem;
+    background-color: #F3F3F3;
+}
+
+/* Button group spacing */
+lightning-button-group {
+    margin-right: 0.5rem;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 768px) {
+    .slds-col {
+        padding-bottom: 0.5rem;
+    }
+    
+    lightning-button-group {
+        width: 100%;
+    }
+    
+    lightning-button {
+        flex: 1;
+    }
+}
+
+/* Loading spinner centering */
+.slds-align_absolute-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+/* Data table customization */
+lightning-datatable {
+    border-radius: 0.25rem;
+}
+
+/* Toast message positioning */
+.slds-notify_toast {
+    z-index: 10000;
+}

@@ -1,0 +1,95 @@
+<template>
+    <div class="recipient-row slds-grid slds-gutters slds-p-around_x-small slds-border_bottom">
+        <!-- Row Number -->
+        <div class="slds-col slds-size_1-of-12 row-number">
+            <span class="slds-badge">{rowNumber}</span>
+        </div>
+        
+        <!-- Recipient Type (To/CC/BCC) -->
+        <div class="slds-col slds-size_2-of-12">
+            <lightning-combobox
+                label="Type"
+                value={recipientType}
+                options={recipientTypeOptions}
+                variant="label-hidden"
+                onchange={handleRecipientTypeChange}>
+            </lightning-combobox>
+        </div>
+        
+        <!-- Source Type -->
+        <div class="slds-col slds-size_3-of-12">
+            <lightning-combobox
+                label="Source"
+                value={sourceType}
+                options={sourceTypeOptions}
+                variant="label-hidden"
+                onchange={handleSourceTypeChange}>
+            </lightning-combobox>
+        </div>
+        
+        <!-- Field/Email Based on Source Type -->
+        <div class="slds-col slds-size_3-of-12">
+            <!-- Field Picker -->
+            <template if:true={showFieldPicker}>
+                <c-email-field-picker
+                    object-name={objectApiName}
+                    field-type="email"
+                    placeholder="Select email field..."
+                    value={fieldApiName}
+                    onchange={handleFieldChange}>
+                </c-email-field-picker>
+            </template>
+            
+            <!-- Static Email -->
+            <template if:true={showStaticEmail}>
+                <lightning-input
+                    type="email"
+                    placeholder="Enter email address..."
+                    value={staticEmail}
+                    variant="label-hidden"
+                    onchange={handleStaticEmailChange}>
+                </lightning-input>
+            </template>
+            
+            <!-- Auto Label -->
+            <template if:true={showAutoLabel}>
+                <div class="auto-label slds-p-vertical_x-small">
+                    <lightning-icon icon-name="utility:user" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span>{autoLabelText}</span>
+                </div>
+            </template>
+        </div>
+        
+        <!-- Options -->
+        <div class="slds-col slds-size_2-of-12">
+            <div class="slds-grid slds-grid_vertical-align-center">
+                <lightning-input
+                    type="checkbox"
+                    label="Required"
+                    checked={isRequired}
+                    onchange={handleRequiredChange}
+                    class="slds-m-right_small">
+                </lightning-input>
+                <lightning-input
+                    type="checkbox"
+                    label="Editable"
+                    checked={isEditable}
+                    onchange={handleEditableChange}>
+                </lightning-input>
+            </div>
+        </div>
+        
+        <!-- Delete Button -->
+        <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+            <!-- Changed:  Use getter showDeleteButton -->
+            <template if:true={showDeleteButton}>
+                <lightning-button-icon
+                    icon-name="utility:delete"
+                    variant="bare"
+                    alternative-text="Delete"
+                    onclick={handleDelete}>
+                </lightning-button-icon>
+            </template>
+        </div>
+    </div>
+</template>

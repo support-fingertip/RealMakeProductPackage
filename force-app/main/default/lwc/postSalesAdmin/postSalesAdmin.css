@@ -1,0 +1,356 @@
+/* ========================================
+   POST SALES ADMIN - CENTRALIZED HUB
+   ======================================== */
+
+/* Loading */
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+/* Container */
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+    background: #f4f6f9;
+    min-height: 100vh;
+}
+
+/* Header */
+.admin-header {
+    background: linear-gradient(135deg, #1589EE 0%, #0B5CAB 100%);
+    padding: 24px 32px;
+    color: white;
+    margin-bottom: 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-icon {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 4px 0 0 0;
+}
+
+/* Tab Content */
+.tab-content {
+    padding: 24px;
+    min-height: 500px;
+}
+
+.embedded-component {
+    padding: 0;
+}
+
+.tab-refresh-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 4px 12px;
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #080707;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* Config Grid */
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+/* Config Card */
+.config-card {
+    background: white;
+    border: 1px solid #e1e5ea;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.config-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.config-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e1e5ea;
+}
+
+.config-type-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: #1589EE;
+    color: white;
+}
+
+.badge-success {
+    background: #2e844a;
+}
+
+.badge-inactive {
+    background: #999;
+}
+
+.config-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.config-card-body {
+    padding: 14px 16px;
+}
+
+.config-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.config-row:last-child {
+    border-bottom: none;
+}
+
+.config-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+}
+
+.config-value {
+    font-size: 13px;
+    color: #080707;
+    font-weight: 500;
+    text-align: right;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state h3 {
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.empty-state p {
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+/* Form */
+.form-container {
+    background: white;
+    border: 1px solid #e1e5ea;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.form-header {
+    background: #f9fafb;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e1e5ea;
+}
+
+.form-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0;
+}
+
+.form-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.form-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #1589EE;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    background: #f9fafb;
+    border-top: 1px solid #e1e5ea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 16px 20px;
+    }
+
+    .header-title {
+        font-size: 18px;
+    }
+
+    .tab-content {
+        padding: 16px;
+    }
+
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .form-section {
+        padding: 16px;
+    }
+}
+
+/* ========================================
+   DEMAND REMINDER CARDS
+   ======================================== */
+.reminder-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.reminder-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.reminder-header {
+    padding: 10px 14px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.reminder-header-1 { background: #2563eb; }
+.reminder-header-2 { background: #f59e0b; }
+.reminder-header-3 { background: #ea580c; }
+.reminder-header-4 { background: #b91c1c; }
+
+.reminder-title {
+    display: block;
+}
+
+.reminder-body {
+    padding: 14px;
+}
+
+.reminder-card .na-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 12px;
+    color: #9ca3af;
+    font-size: 13px;
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .reminder-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 550px) {
+    .reminder-grid {
+        grid-template-columns: 1fr;
+    }
+}

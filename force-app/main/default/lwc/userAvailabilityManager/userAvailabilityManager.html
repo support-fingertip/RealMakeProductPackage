@@ -1,0 +1,309 @@
+<template>
+    <lightning-card title="User Availability Manager" icon-name="standard:user">
+
+        <!-- Spinner -->
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <div class="slds-p-around_medium">
+
+            <!-- No Config Warning -->
+            <template lwc:if={hasNoConfig}>
+                <div class="slds-p-around_large slds-align_absolute-center">
+                    <div class="slds-text-align_center">
+                        <lightning-icon icon-name="utility:warning" size="large" variant="warning"
+                            class="slds-m-bottom_small"></lightning-icon>
+                        <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                            No profile configuration found for your profile ({currentProfile}).
+                            Contact your administrator to set up User Availability Profile Config.
+                        </p>
+                    </div>
+                </div>
+            </template>
+
+            <template lwc:if={hasConfig}>
+
+                <!-- Filter Bar -->
+                <div class="filter-section slds-m-bottom_medium">
+                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-end slds-wrap">
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12">
+                            <lightning-combobox
+                                label="Filter by Profile"
+                                value={selectedProfile}
+                                options={profileOptions}
+                                onchange={handleProfileChange}
+                                placeholder="-- All Profiles --">
+                            </lightning-combobox>
+                        </div>
+                        <template lwc:if={hasShiftFilter}>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-m-left_small">
+                                <lightning-combobox
+                                    label="Filter by Shift"
+                                    value={selectedShiftFilter}
+                                    options={shiftFilterOptions}
+                                    onchange={handleShiftFilterChange}
+                                    placeholder="-- All Shifts --">
+                                </lightning-combobox>
+                            </div>
+                        </template>
+                        <div class="slds-col slds-shrink-none slds-m-left_small slds-grid slds-grid_vertical-align-end slds-gutters_xx-small">
+                            <div class="slds-col">
+                                <lightning-button-icon
+                                    icon-name="utility:clock"
+                                    variant={timeTrackingButtonVariant}
+                                    alternative-text="Toggle time tracking"
+                                    title="Toggle Time Tracking"
+                                    onclick={handleToggleTimeTracking}>
+                                </lightning-button-icon>
+                            </div>
+                            <template lwc:if={showTimeTracking}>
+                                <div class="slds-col">
+                                    <lightning-input
+                                        type="date"
+                                        label="Date"
+                                        variant="label-hidden"
+                                        value={selectedDate}
+                                        max={maxDateValue}
+                                        onchange={handleDateChange}>
+                                    </lightning-input>
+                                </div>
+                            </template>
+                            <div class="slds-col">
+                                <lightning-button-icon
+                                    icon-name="utility:refresh"
+                                    variant="border-filled"
+                                    alternative-text="Refresh user list"
+                                    title="Refresh"
+                                    onclick={handleRefresh}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <template lwc:if={hasUsers}>
+                    <div class="table-container">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                            aria-label="User Availability Table">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col" class="slds-text-title_caps">
+                                        <div class="slds-truncate" title="User Name">User Name</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps">
+                                        <div class="slds-truncate" title="Username">Username</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps">
+                                        <div class="slds-truncate" title="Manager">Manager</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps">
+                                        <div class="slds-truncate" title="Profile">Profile</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps" style="width: 140px;">
+                                        <div class="slds-truncate" title="Shift">Shift</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps" style="width: 120px;">
+                                        <div class="slds-truncate" title="Working Status">Working</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title_caps" style="width: 120px;">
+                                        <div class="slds-truncate" title="Availability">Available</div>
+                                    </th>
+                                    <template lwc:if={showTimeTracking}>
+                                        <th scope="col" class="slds-text-title_caps" style="width: 110px;">
+                                            <div class="slds-truncate" title="Available Time">Avail. Time</div>
+                                        </th>
+                                        <th scope="col" class="slds-text-title_caps" style="width: 110px;">
+                                            <div class="slds-truncate" title="Offline Time">Offline Time</div>
+                                        </th>
+                                        <th scope="col" class="slds-text-title_caps" style="width: 110px;">
+                                            <div class="slds-truncate" title="Session Time">Session Time</div>
+                                        </th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={processedUsers} for:item="user">
+                                    <tr key={user.id} class={user.rowClass}>
+                                        <td data-label="User Name">
+                                            <div class="slds-truncate" title={user.name}>
+                                                <template lwc:if={user.isCurrentUser}>
+                                                    <lightning-icon icon-name="utility:user" size="xx-small"
+                                                        class="slds-m-right_xx-small"
+                                                        alternative-text="Current user"></lightning-icon>
+                                                </template>
+                                                {user.name}
+                                            </div>
+                                        </td>
+                                        <td data-label="Username">
+                                            <div class="slds-truncate" title={user.username}>
+                                                {user.username}
+                                            </div>
+                                        </td>
+                                        <td data-label="Manager">
+                                            <div class="slds-truncate" title={user.managerName}>
+                                                {user.managerName}
+                                            </div>
+                                        </td>
+                                        <td data-label="Profile">
+                                            <div class="slds-truncate" title={user.profileName}>
+                                                {user.profileName}
+                                            </div>
+                                        </td>
+                                        <td data-label="Shift">
+                                            <div class="slds-truncate shift-cell" title={user.shiftDisplay}>
+                                                <span class="shift-badge">{user.shiftDisplay}</span>
+                                                <lightning-button-icon
+                                                    icon-name="utility:edit"
+                                                    variant="bare"
+                                                    size="small"
+                                                    alternative-text="Edit shift"
+                                                    data-user-id={user.id}
+                                                    onclick={handleEditShift}
+                                                    class="shift-edit-btn">
+                                                </lightning-button-icon>
+                                            </div>
+                                        </td>
+                                        <td data-label="Working Status">
+                                            <lightning-input
+                                                type="toggle"
+                                                label="Working Status"
+                                                variant="label-hidden"
+                                                checked={user.isWorking}
+                                                data-user-id={user.id}
+                                                onchange={handleWorkingToggle}
+                                                message-toggle-active="Working"
+                                                message-toggle-inactive="On Leave">
+                                            </lightning-input>
+                                        </td>
+                                        <td data-label="Availability">
+                                            <lightning-input
+                                                type="toggle"
+                                                label="Availability"
+                                                variant="label-hidden"
+                                                checked={user.isAvailable}
+                                                disabled={user.availabilityDisabled}
+                                                data-user-id={user.id}
+                                                onchange={handleAvailabilityToggle}
+                                                message-toggle-active="Available"
+                                                message-toggle-inactive="Offline">
+                                            </lightning-input>
+                                        </td>
+                                        <template lwc:if={showTimeTracking}>
+                                            <td data-label="Available Time">
+                                                <div class="slds-truncate time-available">{user.availableTime}</div>
+                                            </td>
+                                            <td data-label="Offline Time">
+                                                <div class="slds-truncate time-offline">{user.offlineTime}</div>
+                                            </td>
+                                            <td data-label="Session Time">
+                                                <div class="slds-truncate time-session">{user.sessionTime}</div>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Bar -->
+                    <div class="slds-grid slds-grid_align-center slds-grid_vertical-align-center slds-m-top_medium pagination-bar">
+                        <lightning-button
+                            label="First"
+                            icon-name="utility:jump_to_left"
+                            onclick={handleFirst}
+                            disabled={isFirstPage}
+                            variant="neutral"
+                            class="slds-m-right_xx-small">
+                        </lightning-button>
+                        <lightning-button
+                            label="Previous"
+                            icon-name="utility:chevronleft"
+                            onclick={handlePrevious}
+                            disabled={isFirstPage}
+                            variant="neutral"
+                            class="slds-m-right_xx-small">
+                        </lightning-button>
+                        <span class="slds-m-horizontal_small page-info">{pageInfo}</span>
+                        <lightning-button
+                            label="Next"
+                            icon-name="utility:chevronright"
+                            icon-position="right"
+                            onclick={handleNext}
+                            disabled={isLastPage}
+                            variant="neutral"
+                            class="slds-m-left_xx-small">
+                        </lightning-button>
+                        <lightning-button
+                            label="Last"
+                            icon-name="utility:jump_to_right"
+                            icon-position="right"
+                            onclick={handleLast}
+                            disabled={isLastPage}
+                            variant="neutral"
+                            class="slds-m-left_xx-small">
+                        </lightning-button>
+                    </div>
+                </template>
+
+                <!-- Empty State -->
+                <template lwc:if={hasNoUsers}>
+                    <div class="slds-p-around_large slds-align_absolute-center">
+                        <div class="slds-text-align_center">
+                            <lightning-icon icon-name="utility:info" size="large"
+                                class="slds-m-bottom_small"></lightning-icon>
+                            <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                                No users found for the selected filters.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Shift Edit Modal -->
+    <template lwc:if={showShiftEditModal}>
+        <section role="dialog" tabindex="-1"
+            class="slds-modal slds-fade-in-open"
+            aria-modal="true"
+            aria-labelledby="shift-edit-modal-heading">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={handleCancelShiftEdit}>
+                        <lightning-icon icon-name="utility:close" size="small"
+                            variant="inverse"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="shift-edit-modal-heading" class="slds-modal__title">
+                        Change Shift for {editShiftUserName}
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-combobox
+                        label="Shift"
+                        value={editShiftValue}
+                        options={shiftOptions}
+                        onchange={handleEditShiftChange}>
+                    </lightning-combobox>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancelShiftEdit}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Update Shift"
+                        variant="brand"
+                        onclick={handleConfirmShiftEdit}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

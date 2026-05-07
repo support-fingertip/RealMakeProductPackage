@@ -1,0 +1,237 @@
+<template>
+    <lightning-card title="Aging Analysis" icon-name="standard:report">
+        <!-- Toolbar -->
+        <div slot="actions" class="toolbar">
+            <lightning-combobox label="Project" value={selectedProject}
+                options={projectOptions} onchange={handleProjectChange}
+                variant="label-hidden" placeholder="All Projects"
+                class="project-filter"></lightning-combobox>
+            <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                onclick={handleRefresh} variant="border-filled" class="slds-m-left_small"></lightning-button-icon>
+        </div>
+
+        <div class="report-container">
+            <!-- Tabs -->
+            <lightning-tabset variant="scoped" active-tab-value={activeTab} onchange={handleTabChange}>
+                <lightning-tab label="Demand Aging" value="demands" icon-name="utility:money">
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+                    <template if:false={isLoading}>
+                        <template if:true={demandReport}>
+                            <!-- Summary KPIs -->
+                            <div class="kpi-row">
+                                <div class="kpi-card kpi-total">
+                                    <span class="kpi-value">{demandReport.totalRecords}</span>
+                                    <span class="kpi-label">Overdue Demands</span>
+                                </div>
+                                <div class="kpi-card kpi-amount">
+                                    <span class="kpi-value">{formattedDemandTotal}</span>
+                                    <span class="kpi-label">Total Outstanding</span>
+                                </div>
+                            </div>
+
+                            <!-- Aging Buckets -->
+                            <div class="bucket-row">
+                                <template for:each={demandReport.buckets} for:item="bucket">
+                                    <div key={bucket.label} class="bucket-card">
+                                        <div class={bucket.headerClass}>
+                                            <span class="bucket-label">{bucket.label}</span>
+                                        </div>
+                                        <div class="bucket-body">
+                                            <span class="bucket-count">{bucket.count}</span>
+                                            <span class="bucket-amount">{bucket.formattedAmount}</span>
+                                        </div>
+                                        <template if:true={bucket.percentage}>
+                                            <div class="bucket-bar-container">
+                                                <div class={bucket.barClass} style={bucket.barStyle}></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Project Breakdown -->
+                            <template if:true={demandReport.projectBreakdown.length}>
+                                <h3 class="section-subtitle">Project-wise Breakdown</h3>
+                                <template for:each={demandReport.projectBreakdown} for:item="project">
+                                    <div key={project.projectId} class="project-section">
+                                        <div class="project-header" onclick={handleToggleProject}
+                                            data-project={project.projectId} data-type="demands">
+                                            <lightning-icon icon-name={project.expandIcon}
+                                                size="xx-small"></lightning-icon>
+                                            <span class="project-name">{project.projectName}</span>
+                                            <span class="project-count">{project.totalCount} records</span>
+                                            <template if:true={project.totalAmount}>
+                                                <span class="project-amount">{project.formattedTotal}</span>
+                                            </template>
+                                        </div>
+                                        <template if:true={project.expanded}>
+                                            <div class="project-buckets">
+                                                <template for:each={project.buckets} for:item="pb">
+                                                    <div key={pb.label} class="mini-bucket">
+                                                        <span class="mini-label">{pb.label}</span>
+                                                        <span class="mini-count">{pb.count}</span>
+                                                        <span class="mini-amount">{pb.formattedAmount}</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <template if:true={project.records.length}>
+                                                <lightning-datatable
+                                                    key-field="recordId"
+                                                    data={project.records}
+                                                    columns={demandColumns}
+                                                    hide-checkbox-column
+                                                    show-row-number-column></lightning-datatable>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                    </template>
+                </lightning-tab>
+
+                <lightning-tab label="Complaint Aging" value="complaints" icon-name="utility:warning">
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+                    <template if:false={isLoading}>
+                        <template if:true={complaintReport}>
+                            <div class="kpi-row">
+                                <div class="kpi-card kpi-total">
+                                    <span class="kpi-value">{complaintReport.totalRecords}</span>
+                                    <span class="kpi-label">Open Complaints</span>
+                                </div>
+                            </div>
+
+                            <div class="bucket-row">
+                                <template for:each={complaintReport.buckets} for:item="bucket">
+                                    <div key={bucket.label} class="bucket-card">
+                                        <div class={bucket.headerClass}>
+                                            <span class="bucket-label">{bucket.label}</span>
+                                        </div>
+                                        <div class="bucket-body">
+                                            <span class="bucket-count">{bucket.count}</span>
+                                        </div>
+                                        <template if:true={bucket.percentage}>
+                                            <div class="bucket-bar-container">
+                                                <div class={bucket.barClass} style={bucket.barStyle}></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <template if:true={complaintReport.projectBreakdown.length}>
+                                <h3 class="section-subtitle">Project-wise Breakdown</h3>
+                                <template for:each={complaintReport.projectBreakdown} for:item="project">
+                                    <div key={project.projectId} class="project-section">
+                                        <div class="project-header" onclick={handleToggleProject}
+                                            data-project={project.projectId} data-type="complaints">
+                                            <lightning-icon icon-name={project.expandIcon}
+                                                size="xx-small"></lightning-icon>
+                                            <span class="project-name">{project.projectName}</span>
+                                            <span class="project-count">{project.totalCount} records</span>
+                                        </div>
+                                        <template if:true={project.expanded}>
+                                            <div class="project-buckets">
+                                                <template for:each={project.buckets} for:item="pb">
+                                                    <div key={pb.label} class="mini-bucket">
+                                                        <span class="mini-label">{pb.label}</span>
+                                                        <span class="mini-count">{pb.count}</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <template if:true={project.records.length}>
+                                                <lightning-datatable
+                                                    key-field="recordId"
+                                                    data={project.records}
+                                                    columns={complaintColumns}
+                                                    hide-checkbox-column
+                                                    show-row-number-column></lightning-datatable>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                    </template>
+                </lightning-tab>
+
+                <lightning-tab label="Snag Aging" value="snags" icon-name="utility:bug">
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+                    <template if:false={isLoading}>
+                        <template if:true={snagReport}>
+                            <div class="kpi-row">
+                                <div class="kpi-card kpi-total">
+                                    <span class="kpi-value">{snagReport.totalRecords}</span>
+                                    <span class="kpi-label">Open Snags</span>
+                                </div>
+                            </div>
+
+                            <div class="bucket-row">
+                                <template for:each={snagReport.buckets} for:item="bucket">
+                                    <div key={bucket.label} class="bucket-card">
+                                        <div class={bucket.headerClass}>
+                                            <span class="bucket-label">{bucket.label}</span>
+                                        </div>
+                                        <div class="bucket-body">
+                                            <span class="bucket-count">{bucket.count}</span>
+                                        </div>
+                                        <template if:true={bucket.percentage}>
+                                            <div class="bucket-bar-container">
+                                                <div class={bucket.barClass} style={bucket.barStyle}></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <template if:true={snagReport.projectBreakdown.length}>
+                                <h3 class="section-subtitle">Project-wise Breakdown</h3>
+                                <template for:each={snagReport.projectBreakdown} for:item="project">
+                                    <div key={project.projectId} class="project-section">
+                                        <div class="project-header" onclick={handleToggleProject}
+                                            data-project={project.projectId} data-type="snags">
+                                            <lightning-icon icon-name={project.expandIcon}
+                                                size="xx-small"></lightning-icon>
+                                            <span class="project-name">{project.projectName}</span>
+                                            <span class="project-count">{project.totalCount} records</span>
+                                        </div>
+                                        <template if:true={project.expanded}>
+                                            <div class="project-buckets">
+                                                <template for:each={project.buckets} for:item="pb">
+                                                    <div key={pb.label} class="mini-bucket">
+                                                        <span class="mini-label">{pb.label}</span>
+                                                        <span class="mini-count">{pb.count}</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <template if:true={project.records.length}>
+                                                <lightning-datatable
+                                                    key-field="recordId"
+                                                    data={project.records}
+                                                    columns={snagColumns}
+                                                    hide-checkbox-column
+                                                    show-row-number-column></lightning-datatable>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                    </template>
+                </lightning-tab>
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>

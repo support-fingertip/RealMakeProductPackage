@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Type__c</fullName>
+    <label>Payment Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Booking Advance</fullName>
+                <default>false</default>
+                <label>Booking Advance</label>
+            </value>
+            <value>
+                <fullName>Milestone Payment</fullName>
+                <default>false</default>
+                <label>Milestone Payment</label>
+            </value>
+            <value>
+                <fullName>Additional Charge</fullName>
+                <default>false</default>
+                <label>Additional Charge</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Count_Threshold__c</fullName>
+    <defaultValue>1</defaultValue>
+    <description>Minimum count of related records required for this rule to match (used with Operator to compare). Default is 1.</description>
+    <externalId>false</externalId>
+    <label>Count Threshold</label>
+    <precision>8</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

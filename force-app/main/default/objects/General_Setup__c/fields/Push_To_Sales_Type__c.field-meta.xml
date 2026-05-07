@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Push_To_Sales_Type__c</fullName>
+    <label>Push To Sales Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Manual</fullName>
+                <default>false</default>
+                <label>Manual</label>
+            </value>
+            <value>
+                <fullName>Automation /On Site-Visit Creation</fullName>
+                <default>false</default>
+                <label>Automation /On Site-Visit Creation</label>
+            </value>
+            <value>
+                <fullName>Automation /On Site-Visit Completion</fullName>
+                <default>false</default>
+                <label>Automation /On Site-Visit Completion</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

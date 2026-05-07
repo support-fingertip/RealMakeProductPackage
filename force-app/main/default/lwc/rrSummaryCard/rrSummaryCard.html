@@ -1,0 +1,87 @@
+<template>
+    <div class="slds-box slds-theme_default">
+        <div class="slds-text-heading_medium slds-m-bottom_medium slds-border_bottom slds-p-bottom_x-small">
+            Configuration Review
+        </div>
+
+        <!-- SECTION 1: BASIC INFO -->
+        <div class="slds-grid slds-gutters slds-m-bottom_large">
+            <div class="slds-col slds-size_1-of-1">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Basic Information</h3>
+                <div class="slds-box slds-box_x-small slds-theme_shade">
+                    <div class="slds-list_horizontal slds-wrap">
+                        <div class="slds-item_label slds-text-color_weak slds-truncate" title="Rule Name">Rule Name:</div>
+                        <div class="slds-item_detail slds-truncate"><strong>{ruleName}</strong></div>
+                    </div>
+
+                    <template for:each={populatedFields} for:item="field">
+                        <div key={field.key} class="slds-list_horizontal slds-wrap slds-m-top_xx-small">
+                            <div class="slds-item_label slds-text-color_weak slds-truncate">{field.label}:</div>
+                            <div class="slds-item_detail slds-truncate">{field.value}</div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: DYNAMIC FILTERS -->
+        <template if:true={hasFilters}>
+            <div class="slds-grid slds-gutters slds-m-bottom_large">
+                <div class="slds-col slds-size_1-of-1">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Filter Criteria</h3>
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col" style="width: 4rem;"><div class="slds-truncate">Priority</div></th>
+                                <th scope="col"><div class="slds-truncate">Field</div></th>
+                                <th scope="col"><div class="slds-truncate">Value</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={sortedFilters} for:item="filter">
+                                <tr key={filter.id}>
+                                    <td><lightning-badge label={filter.preferenceOrder}></lightning-badge></td>
+                                    <td><strong>{filter.fieldLabel}</strong></td>
+                                    <td>{filter.value}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+
+        <!-- SECTION 3: TEAMS -->
+        <div class="slds-grid slds-gutters">
+            <div class="slds-col slds-size_1-of-1">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Team Distribution</h3>
+
+                <template if:true={hasTeams}>
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col"><div class="slds-truncate" title="Team Role">Team Role</div></th>
+                                <th scope="col"><div class="slds-truncate" title="Assigned Members">Assigned Members</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={teamSummary} for:item="team">
+                                <tr key={team.role} class="slds-hint-parent">
+                                    <td><strong>{team.role}</strong></td>
+                                    <td><span class="slds-badge slds-theme_success">{team.count} Users</span></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+
+                <template if:false={hasTeams}>
+                    <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
+                        <span class="slds-assistive-text">warning</span>
+                        <h2>No users assigned to any team.</h2>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

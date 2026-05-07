@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enable_Reminder_1__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enable or disable 1st demand reminder for this project.</description>
+    <inlineHelpText>Enable 1st demand reminder</inlineHelpText>
+    <label>Enable 1st Reminder</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

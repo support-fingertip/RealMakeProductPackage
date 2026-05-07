@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sub_Status__c</fullName>
+    <label>Sub Status</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Assigned to CRM Team</fullName>
+                <default>false</default>
+                <label>Assigned to CRM Team</label>
+            </value>
+            <value>
+                <fullName>Awaiting Customer Response</fullName>
+                <default>false</default>
+                <label>Awaiting Customer Response</label>
+            </value>
+            <value>
+                <fullName>Issue Fixed</fullName>
+                <default>false</default>
+                <label>Issue Fixed</label>
+            </value>
+            <value>
+                <fullName>Closed Successfully</fullName>
+                <default>false</default>
+                <label>Closed Successfully</label>
+            </value>
+            <value>
+                <fullName>Reopened by Customer</fullName>
+                <default>false</default>
+                <label>Reopened by Customer</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

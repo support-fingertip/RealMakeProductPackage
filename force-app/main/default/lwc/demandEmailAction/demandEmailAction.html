@@ -1,0 +1,62 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="slds-align_absolute-center" style="height:150px;">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <!-- Success State -->
+        <template if:true={emailSent}>
+            <div class="slds-p-around_medium slds-text-align_center">
+                <lightning-icon icon-name="action:email" size="large"></lightning-icon>
+                <h2 class="slds-text-heading_medium slds-m-top_small">Email Sent Successfully</h2>
+                <p class="slds-text-body_regular slds-m-top_x-small slds-text-color_weak">
+                    Demand email with document attachment has been sent.
+                </p>
+                <div class="slds-m-top_medium">
+                    <lightning-button label="Close" variant="brand" onclick={handleClose}></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Form State -->
+        <template if:true={showForm}>
+            <div class="slds-p-around_medium">
+                <p class="slds-text-body_regular slds-m-bottom_medium">
+                    Send demand email with PDF document attachment. Templates are pre-selected from Post Sales Admin configuration.
+                </p>
+
+                <div class="slds-form-element slds-m-bottom_small">
+                    <lightning-combobox label="Email Template"
+                        value={selectedEmailTemplateId}
+                        options={emailTemplateOptions}
+                        onchange={handleEmailTemplateChange}
+                        placeholder="Select email template..."></lightning-combobox>
+                </div>
+
+                <div class="slds-form-element slds-m-bottom_medium">
+                    <lightning-combobox label="Document Template (PDF Attachment)"
+                        value={selectedDocumentTemplateId}
+                        options={documentTemplateOptions}
+                        onchange={handleDocumentTemplateChange}
+                        placeholder="Select document template..."
+                        field-level-help="PDF generated from this template will be attached to the email"></lightning-combobox>
+                </div>
+
+                <template if:true={errorMessage}>
+                    <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                        <span>{errorMessage}</span>
+                    </div>
+                </template>
+
+                <div class="slds-text-align_right">
+                    <lightning-button label="Cancel" onclick={handleClose} class="slds-m-right_x-small"></lightning-button>
+                    <lightning-button label="Send Email" variant="brand"
+                        icon-name="utility:email" onclick={handleSend}
+                        disabled={sendDisabled}></lightning-button>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>

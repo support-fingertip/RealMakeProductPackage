@@ -1,0 +1,354 @@
+/* ── Container ── */
+.viewer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ── Header ── */
+.viewer-header {
+    background: linear-gradient(135deg, #1b96ff 0%, #0b5cab 100%);
+    border-radius: 8px 8px 0 0;
+    padding: 24px 32px;
+    margin-bottom: 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-icon-badge {
+    --sds-c-icon-color-foreground-default: #fff;
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.header-subtitle {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 4px 0 0;
+}
+
+/* ── Report List ── */
+.report-list-container {
+    background: #fff;
+    border-radius: 0 0 8px 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.report-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.report-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: #fff;
+}
+
+.report-card:hover {
+    border-color: #1b96ff;
+    box-shadow: 0 2px 8px rgba(27, 150, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.report-card-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f7ff;
+    border-radius: 8px;
+}
+
+.report-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.report-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #181818;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-card-description {
+    font-size: 0.8rem;
+    color: #706e6b;
+    margin: 4px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-card-action {
+    flex-shrink: 0;
+    color: #b0adab;
+}
+
+/* ── Empty State ── */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: #706e6b;
+}
+
+.empty-state h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+/* ── Report View Header ── */
+.report-view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: #f3f3f3;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.report-view-header-center {
+    flex: 1;
+    text-align: center;
+}
+
+.report-view-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #181818;
+    margin: 0;
+}
+
+.report-view-subtitle {
+    font-size: 0.8rem;
+    color: #706e6b;
+    margin: 2px 0 0;
+}
+
+/* ── Report Sections ── */
+.report-sections-container {
+    background: #fff;
+    border-radius: 0 0 8px 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.report-section {
+    margin-bottom: 32px;
+}
+
+.report-section:last-child {
+    margin-bottom: 0;
+}
+
+.report-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #f8f8f8, #f0f0f0);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.report-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #181818;
+    margin: 0;
+}
+
+.report-section-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.section-type-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #e1f0ff;
+    color: #0b5cab;
+    border-radius: 12px;
+}
+
+.section-count-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: #e8e8e8;
+    color: #3e3e3c;
+    border-radius: 12px;
+}
+
+/* ── Report Table ── */
+.report-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.report-table thead {
+    background: #fafaf9;
+}
+
+.report-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #3e3e3c;
+    border-bottom: 2px solid #e5e5e5;
+    white-space: nowrap;
+}
+
+.th-content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.report-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.report-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+.report-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.report-table td {
+    padding: 8px 14px;
+    color: #3e3e3c;
+}
+
+.cell-text {
+    display: block;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cell-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: #0b5cab;
+}
+
+/* ── Error & Empty ── */
+.report-error {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #fef1ee;
+    border: 1px solid #ea001e;
+    border-radius: 6px;
+    color: #ea001e;
+    font-size: 0.85rem;
+}
+
+.section-empty {
+    text-align: center;
+    padding: 32px;
+    color: #706e6b;
+    font-size: 0.85rem;
+    background: #fafaf9;
+    border-radius: 6px;
+}
+
+/* ── Sortable Headers ── */
+.th-sortable {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+}
+
+.th-sortable:hover {
+    color: #0176d3;
+}
+
+.sort-icon {
+    flex-shrink: 0;
+}
+
+.th-sorted {
+    background: #f0f7ff;
+}
+
+/* ── Pagination ── */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid #e5e5e5;
+    background: #fafaf9;
+    border-radius: 0 0 6px 6px;
+}
+
+.pagination-info {
+    font-size: 0.8rem;
+    color: #706e6b;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-page {
+    font-size: 0.8rem;
+    color: #3e3e3c;
+    font-weight: 500;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* ── Export Buttons ── */
+.export-btn {
+    margin-left: 8px;
+}
+
+.report-view-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

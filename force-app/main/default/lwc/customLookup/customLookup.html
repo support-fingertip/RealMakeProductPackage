@@ -1,0 +1,74 @@
+<template>
+    <div class="slds-form-element">
+        <template if:false={isLabelHidden}>
+            <label class="slds-form-element__label">
+                <template if:true={required}>
+                    <abbr class="slds-required" title="required">*</abbr>
+                </template>
+                {label}
+            </label>
+        </template>
+
+        <div class="slds-form-element__control">
+            <div class={containerClass}>
+                <!-- Selected Record Pill -->
+                <template if:true={selectedRecord}>
+                    <div class="selected-pill">
+                        <lightning-icon icon-name={selectedRecord.iconName} size="x-small"
+                            class="pill-icon"></lightning-icon>
+                        <span class="pill-label" title={selectedRecord.name}>{selectedRecord.name}</span>
+                        <template if:false={disabled}>
+                            <button class="pill-remove" onclick={handleRemoveSelection}
+                                title="Remove selection" type="button">
+                                <lightning-icon icon-name="utility:close" size="xx-small"
+                                    alternative-text="Remove"></lightning-icon>
+                            </button>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Search Input -->
+                <template if:false={selectedRecord}>
+                    <div class="lookup-input-wrapper">
+                        <lightning-icon icon-name="utility:search" size="x-small"
+                            class="search-icon"></lightning-icon>
+                        <input type="text"
+                            class="lookup-input"
+                            placeholder={inputPlaceholder}
+                            value={searchTerm}
+                            oninput={handleSearchInput}
+                            onfocus={handleInputFocus}
+                            onblur={handleInputBlur}
+                            disabled={disabled}
+                            role="combobox"
+                            aria-expanded={showDropdown}
+                            aria-haspopup="listbox"
+                            autocomplete="off" />
+                        <template if:true={isSearching}>
+                            <div class="search-spinner">
+                                <lightning-spinner alternative-text="Searching" size="x-small"></lightning-spinner>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Dropdown Results -->
+                <template if:true={showDropdown}>
+                    <div class="lookup-dropdown" role="listbox">
+                        <template for:each={searchResults} for:item="result">
+                            <div key={result.recordId}
+                                class="lookup-result-item"
+                                data-id={result.recordId}
+                                onclick={handleResultSelect}
+                                role="option">
+                                <lightning-icon icon-name={result.iconName} size="x-small"
+                                    class="result-icon"></lightning-icon>
+                                <span class="result-name">{result.name}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

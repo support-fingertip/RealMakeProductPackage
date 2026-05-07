@@ -1,0 +1,423 @@
+<template>
+    <lightning-card icon-name="standard:settings">
+        <h1 slot="title" class="slds-text-heading_medium card-title">
+            General Setup
+        </h1>
+
+        <div class="slds-p-around_medium">
+            <!-- Step Indicator -->
+            <lightning-progress-indicator current-step={currentStep} type="base" variant="base">
+                <lightning-progress-step label="Select Setup" value="1"></lightning-progress-step>
+                <lightning-progress-step label="Configure Mappings" value="2"></lightning-progress-step>
+                <lightning-progress-step label="Review & Save" value="3"></lightning-progress-step>
+            </lightning-progress-indicator>
+
+            <!-- ============ STEP 1: Setup Selection / Creation ============ -->
+            <template if:true={isStep1}>
+                <div class="slds-m-top_large">
+                    <div class="slds-grid slds-gutters slds-grid_align-spread slds-m-bottom_medium">
+                        <div class="slds-col">
+                            <h2 class="slds-text-heading_small section-heading">General Setup Configuration</h2>
+                        </div>
+                        <div class="slds-col slds-no-flex">
+                            <lightning-button
+                                label="New Setup"
+                                variant="brand"
+                                icon-name="utility:add"
+                                onclick={handleNewSetup}>
+                            </lightning-button>
+                        </div>
+                    </div>
+
+                    <!-- Existing Setups Table -->
+                    <template if:true={hasSetups}>
+                        <div class="slds-scrollable_x">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped setup-table">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col"><div class="slds-truncate">Setup Name</div></th>
+                                        <th scope="col"><div class="slds-truncate">Push To Sales Type</div></th>
+                                        <th scope="col"><div class="slds-truncate">Active</div></th>
+                                        <th scope="col"><div class="slds-truncate">Description</div></th>
+                                        <th scope="col"><div class="slds-truncate">Actions</div></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={generalSetups} for:item="setup">
+                                        <tr key={setup.Id}>
+                                            <td>
+                                                <a onclick={handleSelectSetup} data-id={setup.Id} class="setup-link">
+                                                    {setup.Name}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <lightning-badge label={setup.Push_To_Sales_Type__c}
+                                                    class={setup.badgeClass}>
+                                                </lightning-badge>
+                                            </td>
+                                            <td>
+                                                <template if:true={setup.Is_Active__c}>
+                                                    <lightning-icon icon-name="utility:success" size="x-small"
+                                                        alternative-text="Active" variant="success">
+                                                    </lightning-icon>
+                                                </template>
+                                                <template if:false={setup.Is_Active__c}>
+                                                    <lightning-icon icon-name="utility:clear" size="x-small"
+                                                        alternative-text="Inactive" variant="error">
+                                                    </lightning-icon>
+                                                </template>
+                                            </td>
+                                            <td><div class="slds-truncate" title={setup.Description__c}>{setup.Description__c}</div></td>
+                                            <td>
+                                                <lightning-button-group>
+                                                    <lightning-button-icon
+                                                        icon-name="utility:edit"
+                                                        alternative-text="Edit"
+                                                        title="Edit Setup"
+                                                        data-id={setup.Id}
+                                                        onclick={handleEditSetup}
+                                                        variant="border-filled">
+                                                    </lightning-button-icon>
+                                                    <lightning-button-icon
+                                                        icon-name="utility:delete"
+                                                        alternative-text="Delete"
+                                                        title="Delete Setup"
+                                                        data-id={setup.Id}
+                                                        onclick={handleDeleteSetup}
+                                                        variant="border-filled">
+                                                    </lightning-button-icon>
+                                                </lightning-button-group>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+                    <!--
+
+                    <template if:false={hasSetups}>
+                        <div class="slds-illustration slds-illustration_small slds-p-vertical_large">
+                            <div class="slds-text-align_center">
+                                <p class="slds-text-body_regular slds-text-color_weak">
+                                    No General Setup configurations found. Click "New Setup" to create one.
+                                </p>
+                            </div>
+                        </div>
+                    </template>
+                -->
+                </div>
+            </template>
+
+            <!-- ============ STEP 2: Setup Form + Field Mappings ============ -->
+            <template if:true={isStep2}>
+                <div class="slds-m-top_large">
+                    <!-- Setup Details Form -->
+                    <div class="slds-box slds-theme_shade slds-m-bottom_medium setup-form">
+                        <h2 class="slds-text-heading_small slds-m-bottom_medium section-heading">
+                            <lightning-icon icon-name="utility:settings" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                            Setup Details
+                        </h2>
+                        <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input
+                                    label="Setup Name"
+                                    value={setupName}
+                                    onchange={handleSetupNameChange}
+                                    required
+                                    placeholder="e.g., Default Pre-Sales to Sales Config">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox
+                                    name="pushToSalesType"
+                                    label="Push To Sales Type"
+                                    value={pushToSalesType}
+                                    options={pushToSalesTypeOptions}
+                                    onchange={handlePushToSalesTypeChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox
+                                    name="leadDuplicationType"
+                                    label="Lead Duplication Type"
+                                    value={leadDuplicationType}
+                                    options={leadDuplicationTypeOptions}
+                                    onchange={handleLeadDuplicationTypeChange}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-textarea
+                                    label="Description"
+                                    value={setupDescription}
+                                    onchange={handleDescriptionChange}
+                                    placeholder="Describe the purpose of this configuration...">
+                                </lightning-textarea>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small slds-grid slds-grid_vertical-align-end">
+                                <lightning-input
+                                    type="toggle"
+                                    label="Active"
+                                    checked={setupIsActive}
+                                    onchange={handleIsActiveChange}
+                                    message-toggle-active="Active"
+                                    message-toggle-inactive="Inactive">
+                                </lightning-input>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field Mappings Section
+                    <div class="slds-box slds-m-bottom_medium mapping-section">
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_medium">
+                            <h2 class="slds-text-heading_small section-heading">
+                                <lightning-icon icon-name="utility:routing_offline" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Field Mappings (Pre-Sales → Sales)
+                            </h2>
+                            <lightning-button
+                                label="Add Mapping"
+                                variant="brand"
+                                icon-name="utility:add"
+                                onclick={handleAddMapping}>
+                            </lightning-button>
+                        </div>
+
+                         Column Headers 
+                        <template if:true={hasMappings}>
+                            <div class="slds-grid slds-gutters slds-m-bottom_x-small header-row">
+                                <div class="slds-col slds-size_1-of-12 slds-text-title_caps">#</div>
+                                <div class="slds-col slds-size_4-of-12 slds-text-title_caps">Source Field (Pre-Sales)</div>
+                                <div class="slds-col slds-size_4-of-12 slds-text-title_caps">Target Field (Sales)</div>
+                                <div class="slds-col slds-size_1-of-12 slds-text-title_caps">Active</div>
+                                <div class="slds-col slds-size_2-of-12 slds-text-title_caps">Actions</div>
+                            </div>
+
+                            <template for:each={fieldMappings} for:item="mapping">
+                                <div key={mapping.key} class="slds-grid slds-gutters slds-grid_vertical-align-center mapping-row">
+                                    <div class="slds-col slds-size_1-of-12">
+                                        <span class="sequence-badge">{mapping.sequence}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <lightning-combobox
+                                            name="sourceField"
+                                            variant="label-hidden"
+                                            value={mapping.sourceField}
+                                            placeholder="Select Source Field"
+                                            options={sourceFieldOptions}
+                                            data-key={mapping.key}
+                                            onchange={handleSourceFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <lightning-combobox
+                                            name="targetField"
+                                            variant="label-hidden"
+                                            value={mapping.targetField}
+                                            placeholder="Select Target Field"
+                                            options={targetFieldOptions}
+                                            data-key={mapping.key}
+                                            onchange={handleTargetFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-12 slds-text-align_center">
+                                        <lightning-input
+                                            type="checkbox"
+                                            checked={mapping.isActive}
+                                            data-key={mapping.key}
+                                            onchange={handleMappingActiveChange}
+                                            variant="label-hidden"
+                                            label="Active">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-12">
+                                        <lightning-button-group>
+                                            <lightning-button-icon
+                                                icon-name="utility:arrowup"
+                                                alternative-text="Move Up"
+                                                title="Move Up"
+                                                data-key={mapping.key}
+                                                onclick={handleMoveUp}
+                                                variant="border-filled"
+                                                disabled={mapping.isFirst}>
+                                            </lightning-button-icon>
+                                            <lightning-button-icon
+                                                icon-name="utility:arrowdown"
+                                                alternative-text="Move Down"
+                                                title="Move Down"
+                                                data-key={mapping.key}
+                                                onclick={handleMoveDown}
+                                                variant="border-filled"
+                                                disabled={mapping.isLast}>
+                                            </lightning-button-icon>
+                                            <lightning-button-icon
+                                                icon-name="utility:delete"
+                                                alternative-text="Remove"
+                                                title="Remove Mapping"
+                                                data-key={mapping.key}
+                                                onclick={handleRemoveMapping}
+                                                variant="bare"
+                                                class="delete-btn">
+                                            </lightning-button-icon>
+                                        </lightning-button-group>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+
+                        <template if:false={hasMappings}>
+                            <div class="slds-text-align_center slds-p-vertical_large slds-text-color_weak">
+                                <lightning-icon icon-name="utility:info" size="small" class="slds-m-bottom_small"></lightning-icon>
+                                <p>No field mappings configured. Click "Add Mapping" to define which fields copy from Pre-Sales to Sales.</p>
+                            </div>
+                        </template>
+                     
+                    </div>
+                       -->
+
+                    <!-- Navigation Buttons -->
+                    <div class="slds-grid slds-grid_align-spread slds-m-top_medium">
+                        <lightning-button
+                            label="Back"
+                            onclick={handleBack}
+                            icon-name="utility:back">
+                        </lightning-button>
+                        <lightning-button
+                            label="Review & Save"
+                            variant="brand"
+                            onclick={handleGoToReview}
+                            icon-name="utility:forward"
+                            icon-position="right">
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ============ STEP 3: Review & Save ============ -->
+            <template if:true={isStep3}>
+                <div class="slds-m-top_large">
+                    <!-- Setup Summary -->
+                    <div class="slds-m-bottom_medium summary-review-card">
+                        <h2 class="slds-text-heading_small slds-m-bottom_medium section-heading">
+                            <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                            Setup Summary
+                        </h2>
+
+                        <div class="slds-grid slds-gutters summary-row">
+                            <div class="slds-col slds-size_4-of-12 summary-label">Setup Name</div>
+                            <div class="slds-col slds-size_8-of-12 summary-value">
+                                <strong>{setupName}</strong>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters summary-row">
+                            <div class="slds-col slds-size_4-of-12 summary-label">Push To Sales Type</div>
+                            <div class="slds-col slds-size_8-of-12 summary-value">
+                                <lightning-badge label={pushToSalesType}></lightning-badge>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters summary-row">
+                            <div class="slds-col slds-size_4-of-12 summary-label">Lead Duplication Type</div>
+                            <div class="slds-col slds-size_8-of-12 summary-value">
+                                <lightning-badge label={leadDuplicationType}></lightning-badge>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters summary-row">
+                            <div class="slds-col slds-size_4-of-12 summary-label">Status</div>
+                            <div class="slds-col slds-size_8-of-12 summary-value">
+                                <template if:true={setupIsActive}>
+                                    <lightning-badge label="Active" class="badge-active"></lightning-badge>
+                                </template>
+                                <template if:false={setupIsActive}>
+                                    <lightning-badge label="Inactive" class="badge-inactive"></lightning-badge>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters summary-row summary-row_last">
+                            <div class="slds-col slds-size_4-of-12 summary-label">Description</div>
+                            <div class="slds-col slds-size_8-of-12 summary-value">
+                                <template if:true={setupDescription}>
+                                    {setupDescription}
+                                </template>
+                                <template if:false={setupDescription}>
+                                    <span class="slds-text-color_weak">--</span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mappings Summary 
+                    <div class="slds-box slds-m-bottom_medium">
+                        <h2 class="slds-text-heading_small slds-m-bottom_medium section-heading">
+                            Field Mappings ({mappingCount})
+                        </h2>
+                        <template if:true={hasMappings}>
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col"><div class="slds-truncate">#</div></th>
+                                        <th scope="col"><div class="slds-truncate">Source Field</div></th>
+                                        <th scope="col"><div class="slds-truncate">Target Field</div></th>
+                                        <th scope="col"><div class="slds-truncate">Active</div></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={fieldMappings} for:item="mapping">
+                                        <tr key={mapping.key}>
+                                            <td>{mapping.sequence}</td>
+                                            <td>{mapping.sourceFieldLabel}</td>
+                                            <td>{mapping.targetFieldLabel}</td>
+                                            <td>
+                                                <template if:true={mapping.isActive}>
+                                                    <lightning-icon icon-name="utility:success" size="x-small"
+                                                        variant="success" alternative-text="Active">
+                                                    </lightning-icon>
+                                                </template>
+                                                <template if:false={mapping.isActive}>
+                                                    <lightning-icon icon-name="utility:clear" size="x-small"
+                                                        variant="error" alternative-text="Inactive">
+                                                    </lightning-icon>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                        <template if:false={hasMappings}>
+                            <p class="slds-text-color_weak slds-text-align_center slds-p-vertical_medium">
+                                No field mappings configured.
+                            </p>
+                        </template>
+                    </div>
+                    -->
+
+                    <!-- Navigation Buttons -->
+                    <div class="slds-grid slds-grid_align-spread slds-m-top_medium">
+                        <lightning-button
+                            label="Back to Edit"
+                            onclick={handleBackToEdit}
+                            icon-name="utility:back">
+                        </lightning-button>
+                        <lightning-button
+                            label="Save Configuration"
+                            variant="brand"
+                            onclick={handleSave}
+                            icon-name="utility:save"
+                            disabled={isSaving}>
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </template>
+    </lightning-card>
+</template>

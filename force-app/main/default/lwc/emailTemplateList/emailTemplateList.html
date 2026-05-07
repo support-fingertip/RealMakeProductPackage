@@ -1,0 +1,701 @@
+<template>
+    <!-- MAIN VIEW:  Template List -->
+    <template if:false={showBuilder}>
+        <lightning-card>
+            <!-- Header -->
+            <div slot="title" class="slds-grid slds-grid_vertical-align-center">
+                <lightning-icon icon-name="custom:custom18" size="small" class="slds-m-right_small"></lightning-icon>
+                <span>Email Templates</span>
+            </div>
+            
+            <div slot="actions">
+                <lightning-button 
+                    label="New Template" 
+                    variant="brand" 
+                    icon-name="utility:add"
+                    onclick={handleNewTemplate}>
+                </lightning-button>
+            </div>
+            
+            <!-- Loading -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Filters -->
+            <div class="slds-p-horizontal_medium slds-p-top_small">
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                        <lightning-input
+                            type="search"
+                            label="Search Templates"
+                            placeholder="Search by name or object..."
+                            value={searchTerm}
+                            onchange={handleSearchChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                        <lightning-combobox
+                            label="Filter by Object"
+                            value={selectedObjectFilter}
+                            options={objectOptions}
+                            onchange={handleObjectFilter}>
+                        </lightning-combobox>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Template Count -->
+            <div class="slds-p-horizontal_medium slds-p-vertical_x-small">
+                <span class="slds-text-body_small slds-text-color_weak">
+                    {templateCount} template(s) found
+                </span>
+            </div>
+            
+            <!-- Data Table -->
+            <template if:true={hasTemplates}>
+                <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped compact-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Template Name</th>
+                                <th scope="col">Object</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Default</th>
+                                <th scope="col">Created Date</th>
+                                <th scope="col" class="action-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={filteredTemplates} for:item="tpl">
+                                <tr key={tpl.id}>
+                                    <td><strong>{tpl.name}</strong></td>
+                                    <td>{tpl.objectApiName}</td>
+                                    <td>
+                                        <template if:true={tpl.isActive}>
+                                            <span class="slds-badge slds-theme_success">Active</span>
+                                        </template>
+                                        <template if:false={tpl.isActive}>
+                                            <span class="slds-badge">Inactive</span>
+                                        </template>
+                                    </td>
+                                    <td>
+                                        <template if:true={tpl.isDefault}>
+                                            <lightning-icon icon-name="utility:check" size="x-small" variant="success"></lightning-icon>
+                                        </template>
+                                    </td>
+                                    <td>{tpl.createdDateFormatted}</td>
+                                    <td class="action-col">
+                                        <lightning-button-icon icon-name="utility:edit"
+                                            alternative-text="Edit" data-id={tpl.id}
+                                            onclick={handleEditRow} variant="bare"
+                                            size="small" class="slds-m-right_xx-small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:copy"
+                                            alternative-text="Clone" data-id={tpl.id}
+                                            onclick={handleCloneRow} variant="bare"
+                                            size="small" class="slds-m-right_xx-small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:delete"
+                                            alternative-text="Delete" data-id={tpl.id} data-name={tpl.name}
+                                            onclick={handleDeleteRow} variant="bare"
+                                            size="small"></lightning-button-icon>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+            
+            <!-- No Templates -->
+            <template if:false={hasTemplates}>
+                <template if:false={isLoading}>
+                    <div class="slds-p-around_large slds-text-align_center">
+                        <div class="slds-illustration slds-illustration_small">
+                            <lightning-icon icon-name="utility:email" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                            <h3 class="slds-text-heading_medium">No Templates Found</h3>
+                            <p class="slds-text-body_regular slds-m-top_small">
+                                Create your first email template to get started. 
+                            </p>
+                            <lightning-button 
+                                label="Create Template" 
+                                variant="brand" 
+                                class="slds-m-top_medium"
+                                onclick={handleNewTemplate}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </lightning-card>
+        
+        <!-- Delete Confirmation Modal -->
+        <template if:true={showDeleteModal}>
+            <section class="slds-modal slds-fade-in-open slds-modal_small" role="dialog">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header slds-theme_error slds-theme_alert-texture">
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            variant="inverse"
+                            class="slds-modal__close"
+                            onclick={closeDeleteModal}>
+                        </lightning-button-icon>
+                        <h2 class="slds-modal__title">Delete Template</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium slds-text-align_center">
+                        <lightning-icon icon-name="utility:warning" variant="error" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                        <p>Are you sure you want to delete</p>
+                        <p class="slds-text-heading_small slds-m-top_x-small"><strong>{deleteTemplateName}</strong>?</p>
+                        <p class="slds-text-color_error slds-m-top_medium">This action cannot be undone.</p>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={closeDeleteModal}></lightning-button>
+                        <lightning-button label="Delete" variant="destructive" onclick={confirmDelete}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </template>
+    
+    <!-- BUILDER VIEW: Create/Edit Template -->
+    <template if:true={showBuilder}>
+        <div class="template-builder-container">
+            <div class="template-builder">
+                <!-- Header -->
+                <header class="slds-modal__header header-gradient">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <div class="slds-col slds-grow">
+                            <h2 class="slds-modal__title slds-text-color_inverse">
+                                <lightning-icon icon-name="custom:custom18" size="small" class="slds-m-right_small" inverse></lightning-icon>
+                                {builderTitle}
+                            </h2>
+                        </div>
+                        <div class="slds-col slds-no-flex">
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                variant="bare-inverse"
+                                alternative-text="Close"
+                                onclick={handleBuilderCancel}>
+                            </lightning-button-icon>
+                        </div>
+                    </div>
+                </header>
+                
+                <!-- Loading State -->
+                <template if:true={isBuilderLoading}>
+                    <div class="slds-modal__content loading-container">
+                        <div class="loading-content">
+                            <div class="slds-align_absolute-center slds-p-around_large">
+                                <div class="loading-box">
+                                    
+                                    <h3 class="slds-text-heading_small slds-m-top_medium">Loading Template Builder</h3>
+                                    <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                                        Fetching objects and configurations...
+                                    </p>
+                                    <div class="loading-progress slds-m-top_medium">
+                                        <div class="loading-progress-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={handleBuilderCancel}></lightning-button>
+                    </footer>
+                </template>
+                
+                <!-- Builder Content -->
+                <template if:false={isBuilderLoading}>
+                    <!-- Progress Path -->
+                    <div class="slds-p-around_medium slds-border_bottom path-container">
+                        <nav class="slds-path">
+                            <ol class="slds-path__nav">
+                                <template for:each={stepsWithStatus} for:item="step">
+                                    <li key={step.value} class={step.class} role="presentation">
+                                        <a class="slds-path__link" 
+                                           data-step={step.value}
+                                           onclick={handleStepClick}
+                                           role="option"
+                                           tabindex="0">
+                                            <span class="slds-path__stage">
+                                                <template if:true={step.isCompleted}>
+                                                    <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                                                </template>
+                                                <template if:false={step.isCompleted}>
+                                                    <lightning-icon icon-name="utility:record" size="x-small"></lightning-icon>
+                                                </template>
+                                            </span>
+                                            <span class="slds-path__title">{step.label}</span>
+                                        </a>
+                                    </li>
+                                </template>
+                            </ol>
+                        </nav>
+                    </div>
+                    
+                    <!-- Content Area -->
+                    <div class="slds-modal__content slds-p-around_medium content-area">
+                        
+                        <!-- STEP 1: Basic Info -->
+                        <template if:true={isStep1}>
+                            <div class="step-content">
+                                <div class="step-header slds-m-bottom_medium">
+                                    <lightning-icon icon-name="utility:info" size="small" class="slds-m-right_small"></lightning-icon>
+                                    <h3 class="slds-text-heading_small">Basic Information</h3>
+                                </div>
+                                
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-input
+                                            label="Template Name"
+                                            value={templateName}
+                                            required
+                                            placeholder="e.g., Booking Confirmation Email"
+                                            onchange={handleTemplateNameChange}>
+                                        </lightning-input>
+                                    </div>
+                                    
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                        <lightning-combobox
+                                            label="Object"
+                                            value={selectedObject}
+                                            options={objects}
+                                            required
+                                            placeholder="Select an object..."
+                                            onchange={handleObjectChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                        <lightning-textarea
+                                            label="Description"
+                                            value={description}
+                                            placeholder="Describe when this template should be used..."
+                                            max-length="500"
+                                            onchange={handleDescriptionChange}>
+                                        </lightning-textarea>
+                                    </div>
+                                    
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col">
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    label="Active"
+                                                    checked={isActive}
+                                                    onchange={handleActiveChange}>
+                                                </lightning-input>
+                                            </div>
+                                            <div class="slds-col">
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    label="Set as Default"
+                                                    checked={isDefault}
+                                                    onchange={handleDefaultChange}>
+                                                </lightning-input>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- STEP 2: Recipients -->
+                        <template if:true={isStep2}>
+                            <div class="step-content">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
+                                    <div class="slds-col slds-grow step-header">
+                                        <lightning-icon icon-name="utility:user" size="small" class="slds-m-right_small"></lightning-icon>
+                                        <h3 class="slds-text-heading_small">Recipients ({recipientCount})</h3>
+                                    </div>
+                                    <div class="slds-col slds-no-flex">
+                                        <lightning-button
+                                            label="Add Recipient"
+                                            icon-name="utility:add"
+                                            variant="neutral"
+                                            onclick={addRecipientRow}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Recipient Header -->
+                                <div class="slds-grid slds-gutters slds-p-around_x-small recipient-header">
+                                    <div class="slds-col slds-size_1-of-12"><strong>#</strong></div>
+                                    <div class="slds-col slds-size_2-of-12"><strong>Type</strong></div>
+                                    <div class="slds-col slds-size_3-of-12"><strong>Source</strong></div>
+                                    <div class="slds-col slds-size_3-of-12"><strong>Field / Email</strong></div>
+                                    <div class="slds-col slds-size_2-of-12"><strong>Options</strong></div>
+                                    <div class="slds-col slds-size_1-of-12"></div>
+                                </div>
+                                
+                                <!-- Recipient Rows -->
+                                <!-- Recipient Rows - UPDATED:  Removed scroll container -->
+<template if:true={hasRecipients}>
+    <div class="recipient-rows-container">
+        <template for:each={recipients} for:item="recipient">
+            <c-email-recipient-row
+                key={recipient.id}
+                index={recipient.index}
+                object-api-name={selectedObject}
+                recipient-data={recipient}
+                can-delete
+                onchange={handleRecipientChange}
+                ondelete={handleRecipientDelete}>
+            </c-email-recipient-row>
+        </template>
+    </div>
+</template>
+                                
+                                <!-- No Recipients -->
+                                <template if:false={hasRecipients}>
+                                    <div class="slds-p-around_medium slds-text-align_center empty-state">
+                                        <lightning-icon icon-name="utility:user" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                        <p class="slds-text-color_weak">No recipients added.  Click "Add Recipient" to add one.</p>
+                                    </div>
+                                </template>
+                                
+                                <!-- Additional Options -->
+                                <div class="slds-m-top_medium slds-p-top_medium slds-border_top">
+                                    <lightning-input
+                                        type="checkbox"
+                                        label="Allow users to add additional recipients when sending"
+                                        checked={allowAdditionalRecipients}
+                                        onchange={handleAllowAdditionalRecipientsChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- STEP 3: Content -->
+                        <!-- STEP 3: Content -->
+<template if:true={isStep3}>
+    <div class="step-content">
+        <div class="step-header slds-m-bottom_medium">
+            <lightning-icon icon-name="utility:email" size="small" class="slds-m-right_small"></lightning-icon>
+            <h3 class="slds-text-heading_small">Email Content</h3>
+        </div>
+        
+        <div class="slds-grid slds-wrap slds-gutters">
+            <!-- From Address -->
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-combobox
+                    label="From Address"
+                    value={fromAddress}
+                    options={orgWideEmails}
+                    placeholder="Select org-wide email..."
+                    onchange={handleFromAddressChange}>
+                </lightning-combobox>
+            </div>
+            
+            <!-- Reply To -->
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                <lightning-input
+                    type="email"
+                    label="Reply To"
+                    value={replyTo}
+                    placeholder="reply@company.com"
+                    onchange={handleReplyToChange}>
+                </lightning-input>
+            </div>
+            
+            <!-- ============ NEW SECTION: Merge Field Display Box ============ -->
+            <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
+                <div class="slds-grid slds-grid_vertical-align-end slds-gutters">
+                    <div class="slds-col slds-grow">
+                        <lightning-input
+                            label="Selected Merge Field"
+                            value={selectedMergeField}
+                            placeholder="Select a field to copy..."
+                            field-level-help="Click 'Insert Field' to select a merge field, then copy and paste it into your Subject or Body">
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-no-flex">
+                        <c-email-merge-field-picker
+                            object-api-name={selectedObject}
+                            button-label="Insert Field"
+                            oninsert={handleInsertMergeField}>
+                        </c-email-merge-field-picker>
+                    </div>
+                </div>
+            </div>
+            <!-- ============ END NEW SECTION ============ -->
+            
+            <!-- Subject -->
+            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                <lightning-input
+                    label="Subject"
+                    value={subject}
+                    required
+                    placeholder="e.g., Your Booking {! Name} is Confirmed!"
+                    onchange={handleSubjectChange}>
+                </lightning-input>
+            </div>
+            
+            <!-- Body -->
+            <div class="slds-col slds-size_1-of-1">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label">
+                        <abbr class="slds-required" title="required">*</abbr>
+                        Email Body
+                    </label>
+                    <lightning-input-rich-text
+                        value={emailBody}
+                        placeholder="Write your email content here..."
+                        onchange={handleBodyChange}>
+                    </lightning-input-rich-text>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+                        
+                        <!-- STEP 4:  Attachments -->
+                        <template if:true={isStep4}>
+                            <div class="step-content">
+                                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
+                                    <div class="slds-col slds-grow step-header">
+                                        <lightning-icon icon-name="utility:attach" size="small" class="slds-m-right_small"></lightning-icon>
+                                        <h3 class="slds-text-heading_small">Attachments ({attachmentCount})</h3>
+                                    </div>
+                                    <div class="slds-col slds-no-flex">
+                                        <lightning-button
+                                            label="Add Attachment"
+                                            icon-name="utility:add"
+                                            variant="neutral"
+                                            onclick={addAttachmentRow}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Attachment Rows -->
+                                <template if:true={hasAttachments}>
+                                    <div class="attachment-rows">
+                                        <template for:each={attachments} for:item="attachment">
+                                            <c-email-attachment-row
+                                                key={attachment.id}
+                                                index={attachment.index}
+                                                object-api-name={selectedObject}
+                                                attachment-data={attachment}
+                                                can-delete
+                                                onchange={handleAttachmentChange}
+                                                ondelete={handleAttachmentDelete}>
+                                            </c-email-attachment-row>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <!-- No Attachments -->
+                                <template if:false={hasAttachments}>
+                                    <div class="slds-p-around_medium slds-text-align_center empty-state">
+                                        <lightning-icon icon-name="utility:attach" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                        <p class="slds-text-color_weak">No attachments added. Click "Add Attachment" to add VF pages or documents.</p>
+                                    </div>
+                                </template>
+                                
+                                <!-- Additional Options -->
+                                <div class="slds-m-top_medium slds-p-top_medium slds-border_top">
+                                    <lightning-input
+                                        type="checkbox"
+                                        label="Allow users to upload additional files when sending"
+                                        checked={allowFileUpload}
+                                        onchange={handleAllowFileUploadChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- STEP 5: Actions & Matching -->
+                        <template if:true={isStep5}>
+                            <div class="step-content">
+                                <div class="step-header slds-m-bottom_medium">
+                                    <lightning-icon icon-name="utility:rules" size="small" class="slds-m-right_small"></lightning-icon>
+                                    <h3 class="slds-text-heading_small">Actions &amp; Matching Criteria</h3>
+                                </div>
+
+                                <!-- Action Binding -->
+                                <div class="slds-m-bottom_large">
+                                    <h4 class="slds-text-heading_x-small slds-m-bottom_small">Action Binding</h4>
+                                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                                        Select which system actions should use this email template. When an action is triggered, this template will be automatically used.
+                                    </p>
+                                    <lightning-dual-listbox
+                                        label="Bound Actions"
+                                        source-label="Available Actions"
+                                        selected-label="Selected Actions"
+                                        options={actionBindingOptions}
+                                        value={actionBindingValues}
+                                        onchange={handleActionBindingChange}>
+                                    </lightning-dual-listbox>
+                                </div>
+
+                                <!-- Matching Criteria -->
+                                <div class="slds-m-top_large">
+                                    <c-config-matching-criteria
+                                        object-api-name={selectedObject}
+                                        criteria-json={matchingCriteria}
+                                        label="Record Matching Criteria"
+                                        help-text="Define conditions to control when this email template applies. For example, match only records where Project Type equals 'Residential'. If no conditions are set, this template applies to all records of the selected object."
+                                        oncriteriachange={handleMatchingCriteriaChange}>
+                                    </c-config-matching-criteria>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="slds-modal__footer slds-grid slds-grid_align-spread">
+                        <div class="slds-col">
+                            <lightning-button
+                                label="Cancel"
+                                onclick={handleBuilderCancel}>
+                            </lightning-button>
+                        </div>
+                        <div class="slds-col slds-no-flex">
+                            <template if:true={showPrevious}>
+                                <lightning-button
+                                    label="Previous"
+                                    icon-name="utility:chevronleft"
+                                    onclick={handlePrevious}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                            </template>
+                            
+                            <template if:true={showNext}>
+                                <lightning-button
+                                    label="Next"
+                                    variant="brand"
+                                    icon-name="utility:chevronright"
+                                    icon-position="right"
+                                    onclick={handleNext}>
+                                </lightning-button>
+                            </template>
+                            
+                            <template if:false={showNext}>
+                                <lightning-button
+                                    label="Preview"
+                                    icon-name="utility:preview"
+                                    onclick={handlePreview}
+                                    class="slds-m-right_small">
+                                </lightning-button>
+                                <lightning-button
+                                    label="Save Template"
+                                    variant="brand"
+                                    icon-name="utility:save"
+                                    onclick={handleSave}
+                                    disabled={isSaving}>
+                                </lightning-button>
+                            </template>
+                        </div>
+                    </footer>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Preview Modal -->
+        <template if:true={showPreviewModal}>
+            <section class="slds-modal slds-fade-in-open slds-modal_large" role="dialog" style="z-index: 9002;">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            class="slds-modal__close"
+                            alternative-text="Close"
+                            onclick={closePreviewModal}>
+                        </lightning-button-icon>
+                        <h2 class="slds-modal__title">
+                            <lightning-icon icon-name="utility:preview" size="small" class="slds-m-right_small"></lightning-icon>
+                            Preview Email
+                        </h2>
+                    </header>
+                    
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <!-- Record Selection -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                            <div class="slds-col slds-size_2-of-3">
+                                <lightning-combobox
+                                    label="Select a Sample Record"
+                                    placeholder="Search for a record..."
+                                    options={previewRecordOptions}
+                                    value={previewRecordId}
+                                    onchange={handlePreviewRecordSelect}>
+                                </lightning-combobox>
+                                <lightning-input
+                                    type="search"
+                                    placeholder="Type to search..."
+                                    value={previewSearchTerm}
+                                    onchange={handlePreviewRecordSearch}
+                                    class="slds-m-top_x-small">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-grid slds-grid_vertical-align-end">
+                                <lightning-button
+                                    label="Load Preview"
+                                    variant="brand"
+                                    onclick={handleLoadPreview}
+                                    disabled={isPreviewLoading}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                        
+                        <!-- Loading -->
+                        <template if:true={isPreviewLoading}>
+                            <div class="slds-p-around_large slds-text-align_center">
+                                <lightning-spinner alternative-text="Loading preview..." size="medium"></lightning-spinner>
+                            </div>
+                        </template>
+                        
+                        <!-- Preview Content -->
+                        <template if:true={hasPreviewData}>
+                            <div class="preview-container slds-border_top slds-p-top_medium">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                        <strong>From: </strong> {previewData.fromAddressLabel}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                        <strong>To:</strong> {previewToAddresses}
+                                    </div>
+                                    <template if:true={previewCcAddresses}>
+                                        <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                            <strong>CC:</strong> {previewCcAddresses}
+                                        </div>
+                                    </template>
+                                    <template if:true={previewBccAddresses}>
+                                        <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                                            <strong>BCC:</strong> {previewBccAddresses}
+                                        </div>
+                                    </template>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
+                                        <strong>Subject: </strong> {previewData.subject}
+                                    </div>
+                                </div>
+                                
+                                <div class="email-body-preview slds-border_top slds-p-top_medium">
+                                    <lightning-formatted-rich-text value={previewData.body}></lightning-formatted-rich-text>
+                                </div>
+                                
+                                <!-- Attachments -->
+                                <template if:true={hasPreviewAttachments}>
+                                    <div class="slds-border_top slds-p-top_medium slds-m-top_medium">
+                                        <strong>Attachments: </strong>
+                                        <ul class="slds-list_dotted slds-m-top_small">
+                                            <template for:each={previewData.attachments} for:item="att">
+                                                <li key={att.id}>{att.fileName}</li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Close" onclick={closePreviewModal}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open" style="z-index:  9001;"></div>
+        </template>
+    </template>
+</template>

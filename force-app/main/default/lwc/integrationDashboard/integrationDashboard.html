@@ -1,0 +1,118 @@
+<template>
+    <lightning-card title="Integration Orchestration Platform" icon-name="custom:custom63">
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefreshAll}
+                ></lightning-button>
+                <lightning-button
+                    label="Settings"
+                    icon-name="utility:settings"
+                    onclick={handleOpenSettings}
+                ></lightning-button>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-p-around_small">
+            <!-- Summary Monitor Cards -->
+            <c-integration-monitor-cards
+                time-range={selectedTimeRange}
+                onmetricclick={handleMetricClick}
+            ></c-integration-monitor-cards>
+
+            <!-- Time Range Filter -->
+            <div class="slds-grid slds-grid_align-end slds-m-top_small slds-m-bottom_x-small">
+                <lightning-combobox
+                    label="Time Range"
+                    value={selectedTimeRange}
+                    options={timeRangeOptions}
+                    onchange={handleTimeRangeChange}
+                    variant="label-hidden"
+                    class="slds-size_2-of-12"
+                ></lightning-combobox>
+            </div>
+
+            <!-- Tabbed Navigation -->
+            <lightning-tabset active-tab-value={activeTab} onactive={handleTabChange}>
+                <!-- Dashboard Tab -->
+                <lightning-tab label="Dashboard" value="dashboard" icon-name="utility:chart">
+                    <div class="slds-p-around_x-small">
+                        <lightning-layout multiple-rows="true">
+                            <!-- Recent Activity -->
+                            <lightning-layout-item size="12" medium-device-size="8" padding="around-small">
+                                <div class="section-box">
+                                    <div class="section-title">
+                                        <lightning-icon icon-name="utility:activity" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        Recent Integration Activity
+                                    </div>
+                                    <c-integration-log-viewer
+                                        compact-mode
+                                        limit-count="10"
+                                        time-range={selectedTimeRange}
+                                    ></c-integration-log-viewer>
+                                </div>
+                            </lightning-layout-item>
+                            <!-- Error Summary -->
+                            <lightning-layout-item size="12" medium-device-size="4" padding="around-small">
+                                <div class="section-box">
+                                    <div class="section-title">
+                                        <lightning-icon icon-name="utility:error" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        Active Errors
+                                    </div>
+                                    <c-integration-error-panel
+                                        compact-mode
+                                        limit-count="5"
+                                    ></c-integration-error-panel>
+                                </div>
+                            </lightning-layout-item>
+                        </lightning-layout>
+                    </div>
+                </lightning-tab>
+
+                <!-- Endpoints Tab -->
+                <lightning-tab label="Endpoints" value="endpoints" icon-name="utility:connected_apps">
+                    <div class="slds-p-around_x-small">
+                        <c-integration-endpoint-list
+                            onviewlogs={handleViewEndpointLogs}
+                            ontest={handleTestEndpoint}
+                        ></c-integration-endpoint-list>
+                    </div>
+                </lightning-tab>
+
+                <!-- Logs Tab -->
+                <lightning-tab label="Logs" value="logs" icon-name="utility:text_template">
+                    <div class="slds-p-around_x-small">
+                        <c-integration-log-viewer
+                            time-range={selectedTimeRange}
+                        ></c-integration-log-viewer>
+                    </div>
+                </lightning-tab>
+
+                <!-- Errors Tab -->
+                <lightning-tab label="Errors" value="errors" icon-name="utility:error">
+                    <div class="slds-p-around_x-small">
+                        <c-integration-error-panel
+                            time-range={selectedTimeRange}
+                        ></c-integration-error-panel>
+                    </div>
+                </lightning-tab>
+
+                <!-- Field Mappings Tab -->
+                <lightning-tab label="Field Mappings" value="mappings" icon-name="utility:flow">
+                    <div class="slds-p-around_x-small">
+                        <c-integration-field-mapping-grid></c-integration-field-mapping-grid>
+                    </div>
+                </lightning-tab>
+
+                <!-- Test Console Tab -->
+                <lightning-tab label="Test Console" value="test" icon-name="utility:debug">
+                    <div class="slds-p-around_x-small">
+                        <c-integration-test-console></c-integration-test-console>
+                    </div>
+                </lightning-tab>
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>

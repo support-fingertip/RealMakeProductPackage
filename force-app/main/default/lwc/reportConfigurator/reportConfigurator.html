@@ -1,0 +1,849 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+    </template>
+
+    <!-- ═══════════ LIST VIEW ═══════════ -->
+    <template if:true={isListView}>
+        <lightning-card>
+            <div slot="title">
+                <span class="slds-text-heading_medium">Report Configurations</span>
+            </div>
+            <lightning-button slot="actions" label="+ Create New Report" variant="brand"
+                onclick={handleNewReport}></lightning-button>
+
+            <template if:true={hasConfigurations}>
+                <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                    <div class="config-cards-grid">
+                        <template for:each={configurations} for:item="config">
+                            <div key={config.Id} class="config-card">
+                                <div class="config-card-top">
+                                    <div class="config-card-name">
+                                        <a data-id={config.Id} onclick={handleEditReport}>{config.Name}</a>
+                                    </div>
+                                    <template if:true={config.Active__c}>
+                                        <span class="active-badge">Active</span>
+                                    </template>
+                                    <template if:false={config.Active__c}>
+                                        <span class="inactive-badge">Inactive</span>
+                                    </template>
+                                </div>
+                                <template if:true={config.Description__c}>
+                                    <p class="config-card-desc">{config.Description__c}</p>
+                                </template>
+                                <div class="config-card-footer">
+                                    <span class="config-card-date">{config.LastModifiedDate}</span>
+                                    <div class="config-card-actions">
+                                        <lightning-button-icon icon-name="utility:edit" alternative-text="Edit"
+                                            data-id={config.Id} onclick={handleEditReport}
+                                            variant="bare" size="small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:copy" alternative-text="Clone"
+                                            data-id={config.Id} onclick={handleCloneReport}
+                                            variant="bare" size="small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:delete" alternative-text="Delete"
+                                            data-id={config.Id} onclick={handleDeleteReport}
+                                            variant="bare" size="small"></lightning-button-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={hasConfigurations}>
+                <div class="slds-p-around_large slds-text-align_center">
+                    <p class="slds-text-color_weak">No report configurations yet. Click "Create New Report" to get started.</p>
+                </div>
+            </template>
+        </lightning-card>
+    </template>
+
+    <!-- ═══════════ BUILDER VIEW ═══════════ -->
+    <template if:true={isBuilderView}>
+        <div class="builder-container">
+            <!-- Builder Header -->
+            <div class="builder-header">
+                <lightning-button label="Back to List" variant="base"
+                    icon-name="utility:back" onclick={handleBackToList}></lightning-button>
+                <h2 class="builder-title">
+                    <template if:true={editingConfigId}>Edit Report</template>
+                    <template if:false={editingConfigId}>New Report</template>
+                </h2>
+            </div>
+
+            <!-- Step Navigation Bar -->
+            <div class="step-nav">
+                <template for:each={stepItems} for:item="step">
+                    <div key={step.num} class={step.cls} data-step={step.num} onclick={handleStepClick}>
+                        <div class="step-num">
+                            <template if:true={step.isDone}>
+                                <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
+                            </template>
+                            <template if:false={step.isDone}>
+                                {step.num}
+                            </template>
+                        </div>
+                        <span class="step-label">{step.label}</span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ─── STEP 1: Primary Object ─── -->
+            <template if:true={isStep1}>
+                <div class="step-panel">
+                    <div class="step-panel-header">
+                        <h3 class="step-panel-title">Basic Information & Primary Object</h3>
+                        <p class="step-panel-help">Enter the report name and select the primary Salesforce object to query.</p>
+                    </div>
+                    <div class="step-panel-body">
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                <lightning-input label="Report Name" value={reportName}
+                                    onchange={handleReportNameChange} required></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                <lightning-combobox label="Primary Object" value={primaryObject}
+                                    options={objectOptions} placeholder="Select an object..."
+                                    onchange={handlePrimaryObjectChange} required></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                <lightning-textarea label="Description" value={reportDescription}
+                                    onchange={handleReportDescriptionChange}
+                                    max-length="500"></lightning-textarea>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1">
+                                <lightning-input type="checkbox" label="Active" checked={reportActive}
+                                    onchange={handleReportActiveChange}></lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ─── STEP 2: Parent Columns ─── -->
+            <template if:true={isStep2}>
+                <div class="step-panel">
+                    <div class="step-panel-header">
+                        <h3 class="step-panel-title">Parent Columns</h3>
+                        <p class="step-panel-help">Select fields from the primary object to display as columns. You can customize the column labels.</p>
+                    </div>
+                    <div class="step-panel-body">
+                        <div class="slds-p-bottom_small">
+                            <lightning-combobox label="Add Column" placeholder="Select a field to add..."
+                                options={parentFieldOptions}
+                                onchange={handleAddParentColumn}></lightning-combobox>
+                        </div>
+
+                        <template if:true={hasParentColumns}>
+                            <table class="config-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Field API Name</th>
+                                        <th>Column Label</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={parentColumnDisplay} for:item="col">
+                                        <tr key={col.key}>
+                                            <td>{col.index}</td>
+                                            <td><span class="api-name-pill">{col.field}</span></td>
+                                            <td>
+                                                <lightning-input variant="label-hidden" value={col.label}
+                                                    data-index={col.index}
+                                                    onchange={handleParentColumnLabelChange}></lightning-input>
+                                            </td>
+                                            <td>
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Remove" data-index={col.index}
+                                                    onclick={handleRemoveParentColumn}
+                                                    variant="bare" size="small"></lightning-button-icon>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+
+                        <template if:false={hasParentColumns}>
+                            <div class="empty-section-guide">
+                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_small"></lightning-icon>
+                                No columns added yet. Select fields from the dropdown above.
+                            </div>
+                        </template>
+
+                        <!-- Lookup / Parent Object Fields -->
+                        <template if:true={hasLookupFields}>
+                            <div class="collapsible-section slds-m-top_medium">
+                                <div class="collapsible-header" onclick={handleToggleLookupFields}>
+                                    <lightning-icon icon-name={lookupFieldsToggleIcon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="config-sub-title">Lookup / Parent Object Fields</span>
+                                </div>
+                                <template if:true={showLookupFieldsSection}>
+                                    <div class="collapsible-body">
+                                        <p class="field-help-text slds-p-bottom_x-small">Select a lookup relationship, then pick fields from the parent object to include in your report.</p>
+                                        <div class="slds-grid slds-gutters_small slds-p-bottom_x-small">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-combobox label="Select Lookup" placeholder="Choose a lookup field..."
+                                                    options={lookupRelationshipOptions} value={selectedLookupField}
+                                                    onchange={handleLookupRelationshipChange}
+                                                    dropdown-alignment="bottom-left"></lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <template if:true={hasLookupObjectFields}>
+                                                    <lightning-combobox label="Add Parent Field" placeholder="Select a field..."
+                                                        options={lookupObjectFieldOptions}
+                                                        onchange={handleAddLookupField}
+                                                        dropdown-alignment="bottom-left"></lightning-combobox>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ─── STEP 3: Child Objects ─── -->
+            <template if:true={isStep3}>
+                <div class="step-panel">
+                    <div class="step-panel-header">
+                        <h3 class="step-panel-title">Child Objects</h3>
+                        <p class="step-panel-help">Add related child objects. Configure display mode (horizontal, vertical, aggregate, hybrid), columns, aggregates, and filters for each.</p>
+                    </div>
+                    <div class="step-panel-body">
+                        <div class="slds-p-bottom_small">
+                            <lightning-button label="+ Add Child Object" variant="neutral"
+                                icon-name="utility:add" onclick={handleAddChildObject}></lightning-button>
+                        </div>
+
+                        <template if:true={hasChildObjects}>
+                            <div class="child-object-cards">
+                                <template for:each={childObjectDisplay} for:item="child">
+                                    <div key={child.key} class="child-object-card">
+                                        <div class="child-object-card-header">
+                                            <span class="child-obj-label">{child.displayLabel}</span>
+                                            <span class="child-obj-mode-badge">{child.displayMode}</span>
+                                            <span class="section-object-pill">{child.objectApiName}</span>
+                                        </div>
+                                        <div class="child-object-card-detail">
+                                            <span>Relationship: {child.relationshipName}</span>
+                                        </div>
+                                        <div class="child-object-card-actions">
+                                            <lightning-button label="Edit" variant="neutral"
+                                                icon-name="utility:edit" data-index={child.index}
+                                                onclick={handleEditChildObject} size="small"></lightning-button>
+                                            <lightning-button label="Remove" variant="text-destructive"
+                                                icon-name="utility:delete" data-index={child.index}
+                                                onclick={handleRemoveChildObject} size="small"></lightning-button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={hasChildObjects}>
+                            <div class="empty-section-guide">
+                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_small"></lightning-icon>
+                                No child objects added yet. Click "+ Add Child Object" to include related data.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ─── STEP 4: Filters & Sort ─── -->
+            <template if:true={isStep4}>
+                <div class="step-panel">
+                    <div class="step-panel-header">
+                        <h3 class="step-panel-title">Filters & Sort</h3>
+                        <p class="step-panel-help">Add filters on the primary object and configure sort order and record limit.</p>
+                    </div>
+                    <div class="step-panel-body">
+                        <!-- Sort & Limit -->
+                        <div class="config-sub-section">
+                            <h4 class="config-sub-title">Sort & Limit</h4>
+                            <div class="slds-grid slds-wrap slds-gutters_small slds-p-top_small">
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-combobox label="Sort Field" value={sortField}
+                                        options={parentFieldOptions}
+                                        onchange={handleSortFieldChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-combobox label="Sort Order" value={sortOrder}
+                                        options={sortOrderOptions}
+                                        onchange={handleSortOrderChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-input type="number" label="Record Limit" value={recordLimit}
+                                        min="1" max="2000"
+                                        onchange={handleRecordLimitChange}></lightning-input>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parent Filters -->
+                        <div class="config-sub-section slds-m-top_medium">
+                            <div class="config-sub-header">
+                                <h4 class="config-sub-title">Parent Filters</h4>
+                                <lightning-button label="+ Add Filter" variant="neutral"
+                                    icon-name="utility:add" onclick={handleAddParentFilter}
+                                    size="small"></lightning-button>
+                            </div>
+
+                            <template if:true={hasParentFilters}>
+                                <div class="filter-cards">
+                                    <template for:each={parentFilterDisplay} for:item="filter">
+                                        <div key={filter.id} class="visibility-card">
+                                            <div class="visibility-card-info">
+                                                <span class="api-name-pill">{filter.field}</span>
+                                                <span class="visibility-operator">{filter.operator}</span>
+                                                <span class="visibility-value">{filter.value}</span>
+                                            </div>
+                                            <div class="visibility-card-actions">
+                                                <lightning-button-icon icon-name="utility:edit"
+                                                    alternative-text="Edit" data-index={filter.index}
+                                                    onclick={handleEditParentFilter}
+                                                    variant="bare" size="small"></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Remove" data-index={filter.index}
+                                                    onclick={handleRemoveParentFilter}
+                                                    variant="bare" size="small"></lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template if:false={hasParentFilters}>
+                                <div class="empty-section-guide">
+                                    <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_small"></lightning-icon>
+                                    No filters applied. Data will not be filtered.
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ─── STEP 5: Sharing & Save ─── -->
+            <template if:true={isStep5}>
+                <div class="step-panel">
+                    <div class="step-panel-header">
+                        <h3 class="step-panel-title">Sharing & Save</h3>
+                        <p class="step-panel-help">Control who can see this report. System Administrators always have access. If no rules are defined, the report is visible to all users.</p>
+                    </div>
+                    <div class="step-panel-body">
+                        <div class="slds-p-bottom_small">
+                            <lightning-button label="+ Add Visibility Rule" variant="neutral"
+                                icon-name="utility:add" onclick={handleAddVisibilityRule}></lightning-button>
+                        </div>
+
+                        <template if:true={hasVisibilityRules}>
+                            <div class="visibility-cards">
+                                <template for:each={visibilityRuleDisplay} for:item="rule">
+                                    <div key={rule.key} class="visibility-card">
+                                        <div class="visibility-card-info">
+                                            <span class="visibility-type-pill">{rule.ruleType}</span>
+                                            <span class="visibility-operator">{rule.operator}</span>
+                                            <span class="visibility-value">{rule.value}</span>
+                                        </div>
+                                        <div class="visibility-card-actions">
+                                            <lightning-button-icon icon-name="utility:edit"
+                                                alternative-text="Edit" data-index={rule.index}
+                                                onclick={handleEditVisibilityRule}
+                                                variant="bare" size="small"></lightning-button-icon>
+                                            <lightning-button-icon icon-name="utility:delete"
+                                                alternative-text="Remove" data-index={rule.index}
+                                                onclick={handleRemoveVisibilityRule}
+                                                variant="bare" size="small"></lightning-button-icon>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={hasVisibilityRules}>
+                            <div class="empty-section-guide">
+                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_small"></lightning-icon>
+                                No visibility rules. This report will be visible to all users.
+                            </div>
+                        </template>
+
+                        <div class="builder-actions slds-m-top_large">
+                            <lightning-button label="Preview Report" variant="neutral"
+                                icon-name="utility:preview" onclick={handlePreviewReport}
+                                class="slds-m-right_small"></lightning-button>
+                            <lightning-button label="Save Report" variant="brand"
+                                icon-name="utility:save" onclick={handleSaveReport}></lightning-button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step Navigation Buttons -->
+            <div class="step-buttons">
+                <template if:true={canGoPrev}>
+                    <lightning-button label="Previous" variant="neutral"
+                        icon-name="utility:back" onclick={handlePrev}></lightning-button>
+                </template>
+                <template if:false={canGoPrev}>
+                    <div></div>
+                </template>
+                <template if:true={canGoNext}>
+                    <lightning-button label="Next" variant="brand"
+                        icon-name="utility:forward" icon-position="right"
+                        onclick={handleNext}></lightning-button>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ PREVIEW VIEW ═══════════ -->
+    <template if:true={isPreviewView}>
+        <div class="builder-container">
+            <div class="builder-header">
+                <lightning-button label="Back to Builder" variant="base"
+                    icon-name="utility:back" onclick={handleBackToBuilder}></lightning-button>
+                <h2 class="builder-title">Preview: {reportName}</h2>
+            </div>
+
+            <template if:true={hasPreviewSections}>
+                <template for:each={previewResult.sections} for:item="sec">
+                    <div key={sec.sectionId} class="preview-section">
+                        <div class="preview-section-title">
+                            <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_small"></lightning-icon>
+                            <strong>{sec.sectionTitle}</strong>
+                        </div>
+                        <template if:true={sec.hasRows}>
+                            <div class="table-scroll-container">
+                                <table class="config-table">
+                                    <thead>
+                                        <tr>
+                                            <template for:each={sec.columns} for:item="col">
+                                                <th key={col.fieldName}>{col.label}</th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={sec.processedRows} for:item="row">
+                                            <tr key={row.key}>
+                                                <template for:each={row.cells} for:item="cell">
+                                                    <td key={cell.key}>
+                                                        <template if:true={cell.isNumber}>
+                                                            <span class="cell-number">{cell.value}</span>
+                                                        </template>
+                                                        <template if:false={cell.isNumber}>
+                                                            {cell.value}
+                                                        </template>
+                                                    </td>
+                                                </template>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                        <template if:false={sec.hasRows}>
+                            <div class="empty-section-guide">No data returned.</div>
+                        </template>
+                    </div>
+                </template>
+            </template>
+
+            <template if:true={previewError}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_medium" role="alert">
+                    <span>{previewError}</span>
+                </div>
+            </template>
+
+            <template if:false={hasPreviewSections}>
+                <template if:false={previewError}>
+                    <div class="empty-section-guide slds-m-top_medium">No preview data available.</div>
+                </template>
+            </template>
+        </div>
+    </template>
+
+    <!-- ═══════════ MODALS ═══════════ -->
+
+    <!-- Child Object Modal -->
+    <template if:true={showChildObjectModal}>
+        <section class="slds-modal slds-fade-in-open slds-modal_medium" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCancelChildObject}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">
+                        <template if:true={currentChildObjectIndex}>Edit Child Object</template>
+                        <template if:false={currentChildObjectIndex}>Add Child Object</template>
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" style="max-height: 70vh; overflow-y: auto;">
+                    <!-- Basic Config -->
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                            <lightning-combobox label="Child Relationship" value={currentChildObject.relationshipName}
+                                options={childRelationshipOptions} placeholder="Select a relationship..."
+                                onchange={handleChildObjectRelChange} required></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                            <lightning-input label="Display Label" value={currentChildObject.displayLabel}
+                                onchange={handleChildObjDisplayLabelChange} required></lightning-input>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                            <lightning-combobox label="Display Mode" value={currentChildObject.displayMode}
+                                options={displayModeOptions}
+                                onchange={handleChildObjDisplayModeChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-4 slds-p-bottom_x-small">
+                            <lightning-combobox label="Sort Field" value={currentChildObject.sortField}
+                                options={childObjectFields} placeholder="Optional..."
+                                onchange={handleChildObjSortFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-4 slds-p-bottom_x-small">
+                            <lightning-combobox label="Sort Direction" value={currentChildObject.sortDirection}
+                                options={sortOrderOptions}
+                                onchange={handleChildObjSortDirChange}></lightning-combobox>
+                        </div>
+                    </div>
+                    <template if:true={childDisplayModeHelp}>
+                        <p class="field-help-text slds-p-bottom_x-small">{childDisplayModeHelp}</p>
+                    </template>
+
+                    <!-- Columns (collapsible) -->
+                    <div class="collapsible-section">
+                        <div class="collapsible-header" onclick={handleToggleChildColumns} data-section="columns">
+                            <lightning-icon icon-name={childColumnsToggleIcon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                            <span class="config-sub-title">Columns</span>
+                            <template if:true={currentChildObjectHasColumns}>
+                                <span class="slds-badge slds-m-left_x-small">{currentChildObject.columns.length}</span>
+                            </template>
+                        </div>
+                        <template if:true={showChildColumnsSection}>
+                            <div class="collapsible-body">
+                                <div class="slds-p-bottom_x-small">
+                                    <lightning-combobox label="Add Column" placeholder="Select a field..."
+                                        options={childObjectFields}
+                                        onchange={handleAddChildColumn}></lightning-combobox>
+                                </div>
+                                <template if:true={currentChildObjectHasColumns}>
+                                    <table class="config-table config-table-compact">
+                                        <thead>
+                                            <tr>
+                                                <th>Field</th>
+                                                <th>Label</th>
+                                                <th style="width: 50px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={childObjectDisplayColumns} for:item="col">
+                                                <tr key={col.key}>
+                                                    <td><span class="api-name-pill">{col.field}</span></td>
+                                                    <td>
+                                                        <lightning-input variant="label-hidden" value={col.label}
+                                                            data-index={col.index}
+                                                            onchange={handleChildColumnLabelChange}></lightning-input>
+                                                    </td>
+                                                    <td>
+                                                        <lightning-button-icon icon-name="utility:delete"
+                                                            alternative-text="Remove" data-index={col.index}
+                                                            onclick={handleRemoveChildColumn}
+                                                            variant="bare" size="small"></lightning-button-icon>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Aggregates (collapsible) -->
+                    <div class="collapsible-section">
+                        <div class="collapsible-header" onclick={handleToggleChildAggregates} data-section="aggregates">
+                            <lightning-icon icon-name={childAggregatesToggleIcon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                            <span class="config-sub-title">Aggregates</span>
+                            <template if:true={currentChildObjectHasAggregates}>
+                                <span class="slds-badge slds-m-left_x-small">{currentChildObject.aggregates.length}</span>
+                            </template>
+                            <lightning-button label="+ Add" variant="neutral"
+                                icon-name="utility:add" onclick={handleAddChildAggregate}
+                                size="small" class="slds-m-left_auto"></lightning-button>
+                        </div>
+                        <template if:true={showChildAggregatesSection}>
+                            <div class="collapsible-body">
+                                <template if:true={currentChildObjectHasAggregates}>
+                                    <div class="filter-cards">
+                                        <template for:each={childObjectAggregateDisplay} for:item="agg">
+                                            <div key={agg.key} class="visibility-card">
+                                                <div class="visibility-card-info">
+                                                    <span class="section-type-pill">{agg.aggregation}</span>
+                                                    <span class="api-name-pill">{agg.field}</span>
+                                                    <span class="visibility-value">{agg.label}</span>
+                                                </div>
+                                                <div class="visibility-card-actions">
+                                                    <lightning-button-icon icon-name="utility:edit"
+                                                        alternative-text="Edit" data-index={agg.index}
+                                                        onclick={handleEditChildAggregate}
+                                                        variant="bare" size="small"></lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:delete"
+                                                        alternative-text="Remove" data-index={agg.index}
+                                                        onclick={handleRemoveChildAggregate}
+                                                        variant="bare" size="small"></lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Filters (collapsible) -->
+                    <div class="collapsible-section">
+                        <div class="collapsible-header" onclick={handleToggleChildFilters} data-section="filters">
+                            <lightning-icon icon-name={childFiltersToggleIcon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                            <span class="config-sub-title">Filters</span>
+                            <template if:true={currentChildObjectHasFilters}>
+                                <span class="slds-badge slds-m-left_x-small">{currentChildObject.filters.length}</span>
+                            </template>
+                            <lightning-button label="+ Add" variant="neutral"
+                                icon-name="utility:add" onclick={handleAddChildFilter}
+                                size="small" class="slds-m-left_auto"></lightning-button>
+                        </div>
+                        <template if:true={showChildFiltersSection}>
+                            <div class="collapsible-body">
+                                <template if:true={currentChildObjectHasFilters}>
+                                    <div class="filter-cards">
+                                        <template for:each={childObjectFilterDisplay} for:item="filter">
+                                            <div key={filter.key} class="visibility-card">
+                                                <div class="visibility-card-info">
+                                                    <span class="api-name-pill">{filter.field}</span>
+                                                    <span class="visibility-operator">{filter.operator}</span>
+                                                    <span class="visibility-value">{filter.value}</span>
+                                                </div>
+                                                <div class="visibility-card-actions">
+                                                    <lightning-button-icon icon-name="utility:edit"
+                                                        alternative-text="Edit" data-index={filter.index}
+                                                        onclick={handleEditChildFilter}
+                                                        variant="bare" size="small"></lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:delete"
+                                                        alternative-text="Remove" data-index={filter.index}
+                                                        onclick={handleRemoveChildFilter}
+                                                        variant="bare" size="small"></lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelChildObject}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Child Object" variant="brand"
+                        onclick={handleSaveChildObject}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Child Aggregate Modal -->
+    <template if:true={showChildAggregateModal}>
+        <section class="slds-modal slds-fade-in-open modal-stacked" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCancelChildAggregate}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Configure Aggregate</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Label" value={currentChildAggregate.label}
+                                onchange={handleChildAggLabelChange} required
+                                placeholder="e.g., Total Amount"></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Aggregation" value={currentChildAggregate.aggregation}
+                                options={aggregationOptions}
+                                onchange={handleChildAggAggregationChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Field" value={currentChildAggregate.field}
+                                options={filteredChildAggregateFields}
+                                onchange={handleChildAggFieldChange} required></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Filter Group (Optional)" value={currentChildAggregate.filterGroup}
+                                onchange={handleChildAggFilterGroupChange}
+                                placeholder="e.g., Active Only"></lightning-input>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelChildAggregate}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Aggregate" variant="brand"
+                        onclick={handleSaveChildAggregate}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open modal-backdrop-stacked"></div>
+    </template>
+
+    <!-- Child Filter Modal -->
+    <template if:true={showChildFilterModal}>
+        <section class="slds-modal slds-fade-in-open modal-stacked" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCancelChildFilter}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Configure Filter</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Field" value={currentChildFilter.field}
+                                options={childObjectFields}
+                                onchange={handleChildFilterFieldChange} required></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Operator" value={currentChildFilter.operator}
+                                options={operatorOptions}
+                                onchange={handleChildFilterOperatorChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-input label="Value" value={currentChildFilter.value}
+                                onchange={handleChildFilterValueChange} required></lightning-input>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelChildFilter}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Filter" variant="brand"
+                        onclick={handleSaveChildFilter}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open modal-backdrop-stacked"></div>
+    </template>
+
+    <!-- Parent Filter Modal -->
+    <template if:true={showParentFilterModal}>
+        <section class="slds-modal slds-fade-in-open" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCancelParentFilter}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Configure Parent Filter</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Field" value={currentParentFilter.field}
+                                options={parentFieldOptions}
+                                onchange={handleParentFilterFieldChange} required></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Operator" value={currentParentFilter.operator}
+                                options={operatorOptions}
+                                onchange={handleParentFilterOperatorChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-input label="Value" value={currentParentFilter.value}
+                                onchange={handleParentFilterValueChange} required></lightning-input>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelParentFilter}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Filter" variant="brand"
+                        onclick={handleSaveParentFilter}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Visibility Rule Modal -->
+    <template if:true={showVisibilityModal}>
+        <section class="slds-modal slds-fade-in-open" role="dialog">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCancelVisibilityRule}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Visibility Rule</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Type" value={currentVisibilityRule.ruleType}
+                                options={visibilityRuleTypeOptions}
+                                onchange={handleVisibilityRuleTypeChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <lightning-combobox label="Operator" value={currentVisibilityRule.operator}
+                                options={visibilityOperatorOptions}
+                                onchange={handleVisibilityOperatorChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                            <!-- Profile or Role: combobox -->
+                            <template if:true={isVisibilityRuleTypeProfile}>
+                                <lightning-combobox label="Value" value={currentVisibilityRule.value}
+                                    options={profileOptions} placeholder="Select profile..."
+                                    onchange={handleVisibilityValueChange}></lightning-combobox>
+                            </template>
+                            <template if:true={isVisibilityRuleTypeRole}>
+                                <lightning-combobox label="Value" value={currentVisibilityRule.value}
+                                    options={roleOptions} placeholder="Select role..."
+                                    onchange={handleVisibilityValueChange}></lightning-combobox>
+                            </template>
+                            <!-- User: search -->
+                            <template if:true={isVisibilityRuleTypeUser}>
+                                <lightning-input label="Search User" value={userSearchTerm}
+                                    onchange={handleUserSearchTermChange}
+                                    placeholder="Type to search..."></lightning-input>
+                                <template if:true={userSearchResults.length}>
+                                    <lightning-combobox label="Select User" value={currentVisibilityRule.value}
+                                        options={userSearchResults}
+                                        onchange={handleUserSelect}></lightning-combobox>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelVisibilityRule}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Rule" variant="brand"
+                        onclick={handleSaveVisibilityRule}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

@@ -1,0 +1,78 @@
+:host {
+    display: block;
+}
+
+.filter-section {
+    background: #f7f9fb;
+    border-radius: 8px;
+    border: 1px solid #d8dde6;
+    padding: 1rem;
+}
+
+.table-container {
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.current-user-row {
+    background-color: #e3f2fd !important;
+}
+
+.pagination-bar {
+    padding: 0.75rem 0;
+}
+
+.page-info {
+    font-weight: 600;
+    color: #032d60;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.time-available {
+    color: #2e844a;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 0.8125rem;
+}
+
+.time-offline {
+    color: #ba0517;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 0.8125rem;
+}
+
+.time-session {
+    color: #032d60;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 0.8125rem;
+}
+
+/* ── Shift Column ── */
+.shift-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shift-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #032d60;
+    background-color: #eef4ff;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.75rem;
+    white-space: nowrap;
+}
+
+.shift-edit-btn {
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+
+tr:hover .shift-edit-btn {
+    opacity: 1;
+}

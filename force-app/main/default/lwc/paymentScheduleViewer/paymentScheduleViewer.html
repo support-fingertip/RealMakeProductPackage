@@ -1,0 +1,237 @@
+<template>
+    <!-- ==================== MAIN PAYMENT SCHEDULES VIEW ==================== -->
+    <template if:true={showMainModal}>
+        <div class="modal-container">
+            <section role="dialog" tabindex="-1" aria-modal="true"
+                     class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container custom-modal-container">
+
+                    <!-- Header -->
+                    <header class="slds-modal__header custom-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close custom-close-btn"
+                                title="Close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" alternative-text="Close"
+                                          variant="inverse" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-text-heading_medium">
+                            <lightning-icon icon-name="standard:schedule_objective"
+                                          variant="inverse" size="small"></lightning-icon>
+                            Payment Schedule Overview
+                        </h2>
+                    </header>
+
+                    <!-- Content -->
+                    <div class="slds-modal__content slds-p-around_medium custom-modal-content">
+
+                        <!-- Loading -->
+                        <template if:true={isLoading}>
+                            <div class="loading-container">
+                                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <!-- Error -->
+                        <template if:true={hasError}>
+                            <template if:false={isLoading}>
+                                <div class="slds-notify slds-notify_alert slds-theme_error" role="alert">
+                                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    <span>{errorMessage}</span>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- Main Content -->
+                        <template if:false={isLoading}>
+                            <template if:false={hasError}>
+
+                                <!-- Booking Info -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Booking</div>
+                                            <div class="info-value slds-truncate">{bookingName}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Project</div>
+                                            <div class="info-value slds-truncate">{projectName}</div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <div class="info-box">
+                                            <div class="info-label">Unit</div>
+                                            <div class="info-value slds-truncate">{unitName}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Schedules Table -->
+                                <template if:true={hasSchedules}>
+                                    <h3 class="section-divider">Payment Schedules</h3>
+                                    <div class="table-scroll">
+                                        <table class="slds-table slds-table_bordered slds-table_striped slds-table_cell-buffer">
+                                            <thead>
+                                                <tr class="slds-text-title_caps">
+                                                    <th scope="col"><div class="slds-truncate">Name</div></th>
+                                                    <th scope="col"><div class="slds-truncate">Milestone</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Amount</div></th>
+                                                    <th scope="col" class="slds-text-align_center"><div class="slds-truncate">%</div></th>
+                                                    <th scope="col" class="slds-text-align_center"><div class="slds-truncate">Status</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Pending</div></th>
+                                                    <th scope="col" class="slds-text-align_right"><div class="slds-truncate">Interest</div></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={schedules} for:item="schedule">
+                                                    <tr key={schedule.id}>
+                                                        <td><div class="slds-truncate">{schedule.name}</div></td>
+                                                        <td><div class="slds-truncate">{schedule.milestoneName}</div></td>
+                                                        <td class="slds-text-align_right"><span class="amount-text">{schedule.formattedAmount}</span></td>
+                                                        <td class="slds-text-align_center"><span class="slds-badge">{schedule.percentage}%</span></td>
+                                                        <td class="slds-text-align_center">
+                                                            <template if:true={schedule.isPaid}>
+                                                                <span class="status-badge status-paid">{schedule.status}</span>
+                                                            </template>
+                                                            <template if:true={schedule.isCompleted}>
+                                                                <span class="status-badge status-completed">{schedule.status}</span>
+                                                            </template>
+                                                            <template if:false={schedule.isCompleted}>
+                                                                <template if:false={schedule.isPaid}>
+                                                                    <span class="status-badge status-pending">{schedule.status}</span>
+                                                                </template>
+                                                            </template>
+                                                        </td>
+                                                        <td class="slds-text-align_right"><span class="pending-text">{schedule.formattedPending}</span></td>
+                                                        <td class="slds-text-align_right"><span class="interest-text">{schedule.formattedInterest}</span></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+
+                                <!-- No Schedules -->
+                                <template if:false={hasSchedules}>
+                                    <div class="empty-state">
+                                        <lightning-icon icon-name="utility:info" size="large"></lightning-icon>
+                                        <h3>No Payment Schedules</h3>
+                                        <p>No payment schedules found for this booking.</p>
+                                    </div>
+                                </template>
+
+                            </template>
+                        </template>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="slds-modal__footer custom-modal-footer">
+                        <lightning-button label="Refresh" icon-name="utility:refresh" onclick={handleRefresh}
+                            variant="neutral" class="slds-m-right_x-small"></lightning-button>
+                        <template if:true={hasNextDemand}>
+                            <lightning-button label="Next" icon-name="utility:forward" icon-position="right"
+                                variant="brand" onclick={handleNext}></lightning-button>
+                        </template>
+                        <template if:false={hasNextDemand}>
+                            <lightning-button label="Close" variant="brand" onclick={handleClose}></lightning-button>
+                        </template>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+
+    <!-- ==================== NEXT DEMAND VIEW ==================== -->
+    <template if:true={showNextDemandView}>
+        <div class="modal-container">
+            <section role="dialog" tabindex="-1" aria-modal="true"
+                     class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container custom-modal-container">
+                    <header class="slds-modal__header custom-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close custom-close-btn"
+                                title="Close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" variant="inverse" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-text-heading_medium">
+                            <lightning-icon icon-name="utility:moneybag" variant="inverse" size="small"></lightning-icon>
+                            {nextDemandTitle}
+                        </h2>
+                    </header>
+
+                    <div class="slds-modal__content slds-p-around_medium custom-modal-content">
+                        <p class="slds-m-bottom_medium slds-text-color_weak">{completedSchedulesText}</p>
+
+                        <div class="next-demand-summary">
+                            <div class="summary-row">
+                                <span class="summary-label">Last Completed Milestone</span>
+                                <span class="summary-value">{nextDemand.lastCompletedMilestone}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Total Pending Amount</span>
+                                <span class="summary-value">{nextDemand.formattedPending}</span>
+                            </div>
+                            <template if:true={nextDemand.hasInterest}>
+                                <div class="summary-row">
+                                    <span class="summary-label">Total Interest Pending</span>
+                                    <span class="summary-value interest-text">{nextDemand.formattedInterest}</span>
+                                </div>
+                            </template>
+                            <div class="summary-row summary-total">
+                                <span class="summary-label"><strong>Grand Total</strong></span>
+                                <span class="summary-value total-text"><strong>{nextDemand.formattedTotal}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="slds-modal__footer custom-modal-footer">
+                        <lightning-button label="Back" icon-name="utility:back" onclick={handleBack}
+                            variant="neutral" class="slds-m-right_x-small"></lightning-button>
+                        <lightning-button label="Send Email" icon-name="utility:email" icon-position="right"
+                            variant="brand" onclick={handleSendEmail}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+
+    <!-- ==================== EMAIL CONFIRMATION ==================== -->
+    <template if:true={showEmailModal}>
+        <div class="modal-container">
+            <section role="dialog" tabindex="-1" aria-modal="true"
+                     class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container custom-modal-container">
+                    <header class="slds-modal__header custom-modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close custom-close-btn"
+                                title="Close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" variant="inverse" size="small"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title slds-text-heading_medium">
+                            <lightning-icon icon-name="utility:email" variant="inverse" size="small"></lightning-icon>
+                            Send Demand Email
+                        </h2>
+                    </header>
+
+                    <div class="slds-modal__content slds-p-around_medium custom-modal-content">
+                        <div class="slds-box slds-m-bottom_medium">
+                            <p>An email will be sent to the customer with the demand summary for <strong>{nextDemand.formattedTotal}</strong>.</p>
+                        </div>
+                        <div class="slds-box slds-theme_shade slds-text-body_small">
+                            <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                            Email configuration can be managed from Post Sales Admin &rarr; Email Templates.
+                        </div>
+                    </div>
+
+                    <footer class="slds-modal__footer custom-modal-footer">
+                        <lightning-button label="Back" icon-name="utility:back" onclick={handleCloseEmailModal}
+                            variant="neutral" class="slds-m-right_x-small"></lightning-button>
+                        <lightning-button label="Send Email" icon-name="utility:email" icon-position="right"
+                            variant="brand" onclick={handleEmailSent}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

@@ -1,0 +1,660 @@
+<apex:page controller="IntegrationAPIDocController" renderAs="{!renderFormat}"
+           showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false"
+           docType="html-5.0" standardStylesheets="false">
+<html>
+<head>
+<style type="text/css">
+
+/* ═══════════════════════════════════════════════════════════════
+   FLYING SAUCER / VISUALFORCE PDF-SAFE CSS
+   Avoided: transform, transition, opacity, position:fixed,
+   ::after/::before, box-shadow, flex/grid, rgba(), overflow:hidden
+   Used:    table layout, @page, hex colors, border, font, padding
+   ═══════════════════════════════════════════════════════════════ */
+
+@page {
+    size: A4;
+    margin: 1.8cm 1.5cm 2cm 1.5cm;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #2c2c2c;
+    font-size: 9pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── HEADER ── */
+.doc-header {
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+.doc-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 18pt;
+    font-weight: bold;
+    color: #ffffff;
+}
+.header-layout {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+}
+.header-layout td { border: none; padding: 0; vertical-align: middle; }
+.sub-title { font-size: 9pt; color: #ffffff; margin: 0; }
+
+.badge {
+    font-size: 7pt;
+    font-weight: bold;
+    padding: 2px 8px;
+    color: #ffffff;
+}
+.badge-version  { background-color: #546e8a; }
+.badge-active   { background-color: #27ae60; }
+.badge-inactive { background-color: #e74c3c; }
+.company-name {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #ffffff;
+}
+.header-logo { max-height: 48px; max-width: 130px; }
+
+/* ── SECTIONS ── */
+.section       { margin-top: 16px; page-break-inside: avoid; }
+.section-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: #ffffff;
+    padding: 6px 12px;
+    margin: 0 0 0 0;
+}
+
+/* ── OVERVIEW: top 4-col table ── */
+table.ov-top {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9pt;
+}
+table.ov-top td {
+    padding: 7px 10px;
+    border: 1px solid #c8cdd2;
+    vertical-align: middle;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+table.ov-top td.lbl {
+    font-weight: bold;
+    background-color: #f0f2f4;
+    color: #2c3e50;
+    width: 110px;
+    white-space: nowrap;
+    word-break: normal;
+}
+table.ov-top td.val { width: 33%; }
+
+/* ── OVERVIEW: endpoint row — own 2-col table, NO colspan ── */
+table.ov-url {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9pt;
+    /* Hard pixel width so FS has an absolute container to calculate against */
+    max-width: 100%;
+}
+table.ov-url td {
+    padding: 7px 10px;
+    border: 1px solid #c8cdd2;
+    border-top: none;
+    vertical-align: middle;
+}
+table.ov-url td.lbl {
+    font-weight: bold;
+    background-color: #f0f2f4;
+    color: #2c3e50;
+    /* Fixed px width — FS resolves % unreliably when no explicit parent width exists */
+    width: 110px;
+    white-space: nowrap;
+}
+table.ov-url td.url {
+    /* DO NOT set a % width — let table-layout:fixed give remainder to this cell */
+    word-break: break-all;
+    overflow-wrap: break-word;
+    /* overflow:hidden is the Flying Saucer trigger that forces the cell to stop growing */
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 7pt;
+    background-color: #eef1f5;
+    color: #1a252f;
+}
+
+/* ── OVERVIEW: bottom 4-col table ── */
+table.ov-bot {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9pt;
+}
+table.ov-bot td {
+    padding: 7px 10px;
+    border: 1px solid #c8cdd2;
+    border-top: none;
+    vertical-align: middle;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+table.ov-bot td.lbl {
+    font-weight: bold;
+    background-color: #f0f2f4;
+    color: #2c3e50;
+    width: 110px;
+    white-space: nowrap;
+    word-break: normal;
+}
+table.ov-bot td.val { width: 33%; }
+
+/* ── DESCRIPTION BOX ── */
+.desc-box {
+    border-left: 3px solid #3498db;
+    background-color: #f7f9fc;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 8.5pt;
+    color: #444444;
+    line-height: 1.55;
+}
+
+/* ── DATA TABLES ── */
+table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 8pt;
+    margin-bottom: 4px;
+}
+table.data-table th {
+    text-align: left;
+    padding: 6px 8px;
+    font-weight: bold;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    border: 1px solid #909090;
+    color: #ffffff;
+}
+table.data-table td {
+    padding: 5px 8px;
+    border: 1px solid #d0d4d8;
+    vertical-align: top;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+table.data-table tr.even td { background-color: #f7f8f9; }
+
+/* ── INLINE MONO ── */
+.mono {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 7.5pt;
+    background-color: #eef1f5;
+    padding: 1px 4px;
+    color: #1a252f;
+}
+
+/* ── STATUS / YES / NO ── */
+.yes-text    { color: #1e8449; font-weight: bold; }
+.no-text     { color: #909090; }
+.post-badge  { color: #1e8449; font-weight: bold; font-size: 9pt; }
+.status-ok   { color: #1e8449; font-weight: bold; }
+.status-err  { color: #c0392b; font-weight: bold; }
+.status-warn { color: #d35400; font-weight: bold; }
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+    border: 1px solid #3a3a4a;
+    background-color: #1e1e2e;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 7.5pt;
+    line-height: 1.6;
+    color: #cdd6f4;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+.jk { color: #89b4fa; }
+.js { color: #a6e3a1; }
+.jn { color: #fab387; }
+.jc { color: #6c7086; }
+
+/* ── SAMPLE REQUEST meta line ── */
+table.req-meta {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-bottom: 4px;
+    font-size: 8pt;
+}
+table.req-meta td { border: none; padding: 2px 0; vertical-align: top; }
+table.req-meta td.mc {
+    width: 36pt;
+    font-weight: bold;
+    color: #1e8449;
+    white-space: nowrap;
+    padding-right: 6px;
+    padding-top: 4px;
+}
+table.req-meta td.uc {
+    word-break: break-all;
+    overflow-wrap: break-word;
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 7.5pt;
+    background-color: #eef1f5;
+    padding: 3px 7px;
+    color: #1a252f;
+}
+.ct-line {
+    font-size: 7.5pt;
+    color: #666666;
+    padding: 3px 0 6px 42pt;
+}
+
+/* ── EMPTY / FOOTER ── */
+.empty-state {
+    color: #909090;
+    font-style: italic;
+    padding: 8px 10px;
+    font-size: 8.5pt;
+}
+.doc-footer {
+    text-align: center;
+    font-size: 7pt;
+    color: #aaaaaa;
+    margin-top: 20px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+}
+.no-break { page-break-inside: avoid; }
+
+</style>
+
+<script type="text/javascript">
+/* copy-to-clipboard — screen only, ignored by PDF renderer */
+function copyUrl(el) {
+    var url = el.getAttribute('data-url') || el.innerText || el.textContent;
+    url = url ? url.trim() : '';
+    if (!url) return;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+    } else {
+        var t = document.createElement('textarea');
+        t.value = url;
+        document.body.appendChild(t);
+        t.select();
+        try { document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(t);
+    }
+}
+</script>
+</head>
+<body>
+
+<apex:outputPanel rendered="{!hasConfig}">
+
+<!-- ══════════════════════════════ 1. HEADER ══════════════════════════════ -->
+<div class="doc-header" style="background-color:{!headerColor};">
+    <table class="header-layout">
+        <tr>
+            <td style="width:72%;">
+                <h1>API Documentation</h1>
+                <p class="sub-title">
+                    <!-- inline-table badge row: FS-safe alternative to inline-block spans -->
+                    <table style="border:none; border-collapse:collapse; display:inline-table; vertical-align:middle;">
+                        <tr>
+                            <td style="border:none; padding:0 4px 0 0; vertical-align:middle;">
+                                <span class="badge badge-version">{!config.Source_Name__c}</span>
+                            </td>
+                            <apex:outputPanel rendered="{!NOT(ISBLANK(versionDisplay))}" layout="none">
+                                <td style="border:none; padding:0 4px 0 0; vertical-align:middle;">
+                                    <span class="badge badge-version">{!versionDisplay}</span>
+                                </td>
+                            </apex:outputPanel>
+                            <td style="border:none; padding:0; vertical-align:middle;">
+                                <span class="badge {!IF(config.Is_Active__c,'badge-active','badge-inactive')}">
+                                    {!IF(config.Is_Active__c,'Active','Inactive')}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </p>
+            </td>
+            <td style="width:28%; text-align:right; vertical-align:middle;">
+                <apex:outputPanel rendered="{!hasLogo}">
+                    <img src="{!logoDataUrl}" class="header-logo" />
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(NOT(hasLogo), companyName != '')}">
+                    <span class="company-name">{!companyName}</span>
+                </apex:outputPanel>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+<!-- ══════════════════════════════ 2. OVERVIEW ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Overview</div>
+
+    <!-- Rows 1-2: Config / Source / Target / HTTP -->
+    <table class="ov-top">
+        <colgroup>
+            <col style="width:17%;" /><col style="width:33%;" />
+            <col style="width:17%;" /><col style="width:33%;" />
+        </colgroup>
+        <tr>
+            <td class="lbl">Config Name</td>
+            <td class="val">{!config.Name}</td>
+            <td class="lbl">Source Name</td>
+            <td class="val"><span class="mono">{!config.Source_Name__c}</span></td>
+        </tr>
+        <tr>
+            <td class="lbl">Target Object</td>
+            <td class="val">{!config.Target_Object__c}</td>
+            <td class="lbl">HTTP Method</td>
+            <td class="val"><span class="post-badge">POST</span></td>
+        </tr>
+    </table>
+
+    <!-- Row 3: Endpoint URL — own 2-col table, NO colspan, max-width:0 forces wrapping -->
+    <table class="ov-url">
+        <colgroup>
+            <col style="width:17%;" />
+            <col style="width:83%;" />
+        </colgroup>
+        <tr>
+            <td class="lbl">Endpoint URL</td>
+            <td class="url" data-url="{!endpointUrl}" onclick="copyUrl(this)" style="cursor:pointer; overflow:hidden; word-break:break-all;">{!endpointUrl}</td>
+        </tr>
+    </table>
+
+    <!-- Row 4: Duplicate / Generated -->
+    <table class="ov-bot">
+        <colgroup>
+            <col style="width:17%;" /><col style="width:33%;" />
+            <col style="width:17%;" /><col style="width:33%;" />
+        </colgroup>
+        <tr>
+            <td class="lbl">Duplicate Check</td>
+            <td class="val">{!IF(config.Enable_Duplicate_Check__c,'Enabled','Disabled')}</td>
+            <td class="lbl">Generated</td>
+            <td class="val">{!generatedDate}</td>
+        </tr>
+    </table>
+
+    <apex:outputPanel rendered="{!NOT(ISBLANK(config.Description__c))}" layout="block">
+        <div class="desc-box">{!config.Description__c}</div>
+    </apex:outputPanel>
+</div>
+
+
+<!-- ══════════════════════════════ 3. REQUEST PARAMETERS ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Request Parameters</div>
+    <apex:outputPanel rendered="{!hasApiSchema}">
+        <table class="data-table">
+            <colgroup>
+                <col style="width:22%;" /><col style="width:12%;" /><col style="width:11%;" />
+                <col style="width:27%;" /><col style="width:28%;" />
+            </colgroup>
+            <tr>
+                <th style="background-color:{!headerColor};">Parameter Name</th>
+                <th style="background-color:{!headerColor};">Data Type</th>
+                <th style="background-color:{!headerColor};">Mandatory</th>
+                <th style="background-color:{!headerColor};">Description</th>
+                <th style="background-color:{!headerColor};">Example</th>
+            </tr>
+            <apex:variable var="rn" value="{!0}"/>
+            <apex:repeat value="{!apiSchemaFields}" var="f">
+                <tr class="{!IF(MOD(rn,2)==0,'','even')}">
+                    <td><span class="mono">{!f.name}</span></td>
+                    <td>{!f.fieldType}</td>
+                    <td>
+                        <apex:outputPanel rendered="{!f.isRequired}"><span class="yes-text">Yes</span></apex:outputPanel>
+                        <apex:outputPanel rendered="{!NOT(f.isRequired)}"><span class="no-text">No</span></apex:outputPanel>
+                    </td>
+                    <td>{!f.label}</td>
+                    <td><span class="mono">{!f.sampleValue}</span></td>
+                </tr>
+                <apex:variable var="rn" value="{!rn+1}"/>
+            </apex:repeat>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!NOT(hasApiSchema)}">
+        <p class="empty-state">No API schema configured. Fields are inferred from the field mapping rules below.</p>
+    </apex:outputPanel>
+</div>
+
+
+<!-- ══════════════════════════════ 4. FIELD MAPPINGS ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Field Mappings</div>
+    <apex:outputPanel rendered="{!hasFieldRules}">
+        <table class="data-table">
+            <colgroup>
+                <col style="width:4%;" /><col style="width:18%;" /><col style="width:18%;" />
+                <col style="width:10%;" /><col style="width:8%;" />
+                <col style="width:20%;" /><col style="width:22%;" />
+            </colgroup>
+            <tr>
+                <th style="background-color:{!headerColor};">#</th>
+                <th style="background-color:{!headerColor};">API Field</th>
+                <th style="background-color:{!headerColor};">SF Field</th>
+                <th style="background-color:{!headerColor};">Type</th>
+                <th style="background-color:{!headerColor};">Req.</th>
+                <th style="background-color:{!headerColor};">Default</th>
+                <th style="background-color:{!headerColor};">Transform</th>
+            </tr>
+            <apex:variable var="mi" value="{!0}"/>
+            <apex:repeat value="{!mappingRows}" var="m">
+                <apex:outputPanel rendered="{!NOT(m.isStatic)}" layout="none">
+                    <tr class="{!IF(MOD(mi,2)==0,'','even')}">
+                        <td style="text-align:center;">{!m.sequence}</td>
+                        <td>
+                            <span class="mono">{!m.apiFieldName}</span>
+                            <apex:outputPanel rendered="{!NOT(ISBLANK(m.apiFieldLabel))}">
+                                <br/><span style="font-size:7pt; color:#909090;">{!m.apiFieldLabel}</span>
+                            </apex:outputPanel>
+                        </td>
+                        <td><span class="mono">{!m.sfFieldApiName}</span></td>
+                        <td>{!m.dataType}</td>
+                        <td>
+                            <apex:outputPanel rendered="{!m.isRequired}"><span class="yes-text">Yes</span></apex:outputPanel>
+                            <apex:outputPanel rendered="{!NOT(m.isRequired)}"><span class="no-text">No</span></apex:outputPanel>
+                        </td>
+                        <td>{!m.defaultValue}</td>
+                        <td>
+                            <apex:outputPanel rendered="{!NOT(ISBLANK(m.transformExpression))}">
+                                <span class="mono">{!m.transformExpression}</span>
+                            </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <apex:variable var="mi" value="{!mi+1}"/>
+                </apex:outputPanel>
+            </apex:repeat>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!NOT(hasFieldRules)}">
+        <p class="empty-state">No field mappings configured yet.</p>
+    </apex:outputPanel>
+</div>
+
+
+<!-- ══════════════════════════════ 5. LOOKUP CONFIGURATIONS ══════════════════════════════ -->
+<apex:outputPanel rendered="{!hasLookupRules}" layout="block">
+    <div class="section no-break">
+        <div class="section-title" style="background-color:{!headerColor};">Lookup Configurations</div>
+        <table class="data-table">
+            <colgroup>
+                <col style="width:16%;" /><col style="width:16%;" /><col style="width:16%;" />
+                <col style="width:16%;" /><col style="width:14%;" /><col style="width:22%;" />
+            </colgroup>
+            <tr>
+                <th style="background-color:{!headerColor};">API Field</th>
+                <th style="background-color:{!headerColor};">Lookup Object</th>
+                <th style="background-color:{!headerColor};">Match Field</th>
+                <th style="background-color:{!headerColor};">Return Field</th>
+                <th style="background-color:{!headerColor};">Fail If Not Found</th>
+                <th style="background-color:{!headerColor};">Additional Filter</th>
+            </tr>
+            <apex:variable var="li" value="{!0}"/>
+            <apex:repeat value="{!mappingRows}" var="m">
+                <apex:outputPanel rendered="{!m.hasLookup}" layout="none">
+                    <tr class="{!IF(MOD(li,2)==0,'','even')}">
+                        <td><span class="mono">{!m.apiFieldName}</span></td>
+                        <td>{!m.lookupObject}</td>
+                        <td><span class="mono">{!m.matchField}</span></td>
+                        <td><span class="mono">{!m.returnField}</span></td>
+                        <td>
+                            <apex:outputPanel rendered="{!m.failOnNoMatch}"><span class="yes-text">Yes</span></apex:outputPanel>
+                            <apex:outputPanel rendered="{!NOT(m.failOnNoMatch)}"><span class="no-text">No</span></apex:outputPanel>
+                        </td>
+                        <td>
+                            <apex:outputPanel rendered="{!NOT(ISBLANK(m.additionalFilter))}">
+                                <span class="mono">{!m.additionalFilter}</span>
+                            </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <apex:variable var="li" value="{!li+1}"/>
+                </apex:outputPanel>
+            </apex:repeat>
+        </table>
+    </div>
+</apex:outputPanel>
+
+
+<!-- ══════════════════════════════ 6. VALIDATION RULES ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Validation Rules</div>
+    <apex:outputPanel rendered="{!hasValidationRules}">
+        <table class="data-table">
+            <colgroup>
+                <col style="width:24%;" /><col style="width:36%;" /><col style="width:40%;" />
+            </colgroup>
+            <tr>
+                <th style="background-color:{!headerColor};">Field</th>
+                <th style="background-color:{!headerColor};">Regex Pattern</th>
+                <th style="background-color:{!headerColor};">Error Message</th>
+            </tr>
+            <apex:variable var="vi" value="{!0}"/>
+            <apex:repeat value="{!validationRules}" var="v">
+                <tr class="{!IF(MOD(vi,2)==0,'','even')}">
+                    <td><span class="mono">{!v.field}</span></td>
+                    <td><span class="mono">{!v.regex}</span></td>
+                    <td>{!v.message}</td>
+                </tr>
+                <apex:variable var="vi" value="{!vi+1}"/>
+            </apex:repeat>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!NOT(hasValidationRules)}">
+        <p class="empty-state">No custom validation rules configured.</p>
+    </apex:outputPanel>
+</div>
+
+
+<!-- ══════════════════════════════ 7. SAMPLE REQUEST ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Sample Request</div>
+
+    <!-- Method + URL: 2-col fixed table — max-width:0 forces word-break in FS -->
+    <table class="req-meta">
+        <colgroup>
+            <col style="width:36pt;" />
+            <col />
+        </colgroup>
+        <tr>
+            <td class="mc">POST</td>
+            <td class="uc" data-url="{!endpointUrl}" onclick="copyUrl(this)" style="cursor:pointer; overflow:hidden; word-break:break-all;">{!endpointUrl}</td>
+        </tr>
+    </table>
+    <div class="ct-line">Content-Type: application/json</div>
+
+    <div class="code-wrap" style="margin-top:6px;">
+        <apex:outputText value="{!sampleRequestJson}" escape="false"/>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════ 8. RESPONSE FORMAT ══════════════════════════════ -->
+<div class="section no-break">
+    <div class="section-title" style="background-color:{!headerColor};">Response Format</div>
+    <div class="code-wrap">
+        <apex:outputText value="{!sampleResponseJson}" escape="false"/>
+    </div>
+
+    <table class="data-table" style="margin-top:8px;">
+        <colgroup>
+            <col style="width:22%;" /><col style="width:13%;" /><col style="width:65%;" />
+        </colgroup>
+        <tr>
+            <th style="background-color:{!headerColor};">Status</th>
+            <th style="background-color:{!headerColor};">HTTP Code</th>
+            <th style="background-color:{!headerColor};">Description</th>
+        </tr>
+        <tr>
+            <td><span class="status-ok">SUCCESS</span></td>
+            <td>200</td>
+            <td>Record created successfully</td>
+        </tr>
+        <tr class="even">
+            <td><span class="status-warn">DUPLICATE</span></td>
+            <td>409</td>
+            <td>Duplicate record found (when duplicate check is enabled)</td>
+        </tr>
+        <tr>
+            <td><span class="status-err">VALIDATION_ERROR</span></td>
+            <td>400</td>
+            <td>Required fields missing or regex validation failed</td>
+        </tr>
+        <tr class="even">
+            <td><span class="status-err">NOT_FOUND</span></td>
+            <td>404</td>
+            <td>No active integration config found for the given source name</td>
+        </tr>
+        <tr>
+            <td><span class="status-err">SYSTEM_ERROR</span></td>
+            <td>500</td>
+            <td>Unexpected server-side error</td>
+        </tr>
+    </table>
+</div>
+
+
+<!-- ══════════════════════════════ FOOTER ══════════════════════════════ -->
+<div class="doc-footer">
+    <apex:outputPanel rendered="{!companyName != ''}">
+        {!companyName} &bull;
+    </apex:outputPanel>
+    Integration API Documentation &bull; Generated {!generatedDate}
+</div>
+
+</apex:outputPanel>
+
+
+<!-- ══════════════════════════════ NO CONFIG ══════════════════════════════ -->
+<apex:outputPanel rendered="{!NOT(hasConfig)}">
+    <div style="text-align:center; padding:80px 20px; color:#909090;">
+        <h2 style="color:#cccccc;">Integration Config Not Found</h2>
+        <p>Please provide a valid config ID in the URL parameter.<br/>
+        Example: <span class="mono">/apex/IntegrationAPIDoc?id=a0B5g000...</span></p>
+    </div>
+</apex:outputPanel>
+
+</body>
+</html>
+</apex:page>

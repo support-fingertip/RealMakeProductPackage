@@ -1,0 +1,99 @@
+/* Page Header */
+.slds-page-header {
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #f4f6f9, #ffffff);
+    border-bottom: 1px solid #d8dde6;
+}
+
+/* Filter Row Cards */
+.filter-row {
+    transition: all 0.2s ease-in-out;
+    border-left: 3px solid #0176d3;
+}
+
+.filter-row:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Priority Badge */
+.priority-badge {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Wizard Footer */
+.wizard-footer {
+    border-top: 1px solid #d8dde6;
+    background-color: #f3f3f3;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+/* Filter List */
+.filter-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Summary Tables */
+.slds-table th {
+    background-color: #f3f3f3;
+    font-weight: 600;
+}
+
+.slds-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Progress Step Labels */
+.step-label {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Lookup Container */
+.lookup-container {
+    position: relative;
+}
+
+.lookup-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9001;
+    background: white;
+    border: 1px solid #d8dde6;
+    border-radius: 0 0 0.25rem 0.25rem;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.lookup-dropdown .slds-listbox__option:hover {
+    background-color: #f3f2f2;
+    cursor: pointer;
+}
+
+.lookup-search-icon {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+/* Priority Weight Badge */
+.priority-weight-badge {
+    background-color: #04844b;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .slds-size_3-of-12,
+    .slds-size_5-of-12 {
+        width: 100%;
+    }
+}

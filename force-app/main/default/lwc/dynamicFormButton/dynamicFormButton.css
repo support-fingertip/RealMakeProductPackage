@@ -1,0 +1,20 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.config-card {
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.config-card:hover {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.slds-modal__container {
+    max-width: 600px;
+}

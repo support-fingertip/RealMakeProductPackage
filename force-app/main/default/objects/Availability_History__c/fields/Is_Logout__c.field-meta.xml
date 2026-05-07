@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Logout__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Marks this record as a session logout/end marker. When true, time calculation stops at this record instead of continuing to current time.</description>
+    <label>Is Logout</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

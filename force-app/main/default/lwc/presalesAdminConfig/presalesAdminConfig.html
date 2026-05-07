@@ -1,0 +1,66 @@
+<template>
+    <div class="wrapper">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>Presales Admin Configuration</h1>
+            <p>Manage and configure all presales automation modules</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-bar">
+
+            <div class={dupClass} data-name="duplication" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:copy" size="x-small"></lightning-icon>
+                <span>Duplication Config</span>
+            </div>
+
+            <div class={rrClass} data-name="roundRobin" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:rotate" size="x-small"></lightning-icon>
+                <span>Round Robin Config</span>
+            </div>
+
+            <div class={salesClass} data-name="sales" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:upload" size="x-small"></lightning-icon>
+                <span>General Setup Config</span>
+            </div>
+
+            <div class={scoreClass} data-name="scoring" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:chart" size="x-small"></lightning-icon>
+                <span>Lead Scoring Config</span>
+            </div>
+
+            <div class={integrationClass} data-name="integration" onclick={handleMenu}>
+                <lightning-icon icon-name="utility:link" size="x-small"></lightning-icon>
+                <span>Integration Config</span>
+            </div>
+
+        </div>
+
+        <!-- Content -->
+        <div class="content-card">
+
+            <template if:true={isDup}>
+                <c-duplication-configurator></c-duplication-configurator>
+            </template>
+
+            <template if:true={isRR}>
+                <c-round-robin-configurator-l-w-c></c-round-robin-configurator-l-w-c>
+            </template>
+
+            <template if:true={isSales}>
+                <c-field-mapping-setup></c-field-mapping-setup>
+            </template>
+
+            <template if:true={isScore}>
+                <c-lead-scoring-designer></c-lead-scoring-designer>
+            </template>
+
+            <template if:true={isIntegration}>
+                <c-integration-mapping-designer></c-integration-mapping-designer>
+            </template>
+
+        </div>
+
+    </div>
+</template>

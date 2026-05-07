@@ -1,0 +1,19 @@
+:host {
+    display: block;
+}
+
+.slds-text-title_caps {
+    font-size: 0.625rem;
+    letter-spacing: 0.0625rem;
+    text-transform: uppercase;
+    color: #706e6b;
+    margin-bottom: 2px;
+}
+
+.slds-text-color_success {
+    color: #2e844a;
+}
+
+.slds-text-color_error {
+    color: #c23934;
+}

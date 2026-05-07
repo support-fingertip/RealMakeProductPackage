@@ -1,0 +1,119 @@
+:host {
+    display: block;
+}
+
+.leaderboard-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.leaderboard-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: background 0.15s ease;
+}
+
+.leaderboard-row:hover {
+    background: #f1f5f9;
+}
+
+.rank-section {
+    flex: 0 0 40px;
+    text-align: center;
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.rank-badge.gold { background: #fef3c7; color: #92400e; }
+.rank-badge.silver { background: #e2e8f0; color: #475569; }
+.rank-badge.bronze { background: #fed7aa; color: #9a3412; }
+.rank-badge.default { background: #f1f5f9; color: #64748b; font-size: 12px; }
+
+.info-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.progress-track {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-bar.achieved { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.progress-bar.on-track { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.progress-bar.at-risk { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.progress-bar.behind { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+.stats-section {
+    flex: 0 0 100px;
+    text-align: right;
+}
+
+.achievement-pct {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.actual-vs-target {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 32px;
+    color: #94a3b8;
+    font-size: 14px;
+}

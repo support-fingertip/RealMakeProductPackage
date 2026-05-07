@@ -1,0 +1,531 @@
+<template>
+    <!-- Email Card -->
+    <div class="email-card">
+        <!-- Card Header -->
+        <div class="email-card-header">
+            <div class="email-card-title">
+                <lightning-icon icon-name="utility:email" size="x-small"></lightning-icon>
+                <span>Email</span>
+                <template if:true={hasTemplatesWithMatch}>
+                    <span class="template-count">{matchedTemplateCount} available</span>
+                </template>
+            </div>
+        </div>
+
+        <!-- Available Email Templates -->
+        <div class="template-section">
+            <template if:true={isLoading}>
+                <div class="history-loading">
+                    <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <template if:true={hasTemplatesLoaded}>
+                    <template for:each={templatesWithStatus} for:item="tmpl">
+                        <div key={tmpl.id} class={tmpl.cardClass}>
+                            <div class="tmpl-card-left">
+                                <div class={tmpl.iconClass}>
+                                    <lightning-icon icon-name={tmpl.iconName} size="xx-small"
+                                        variant="inverse"></lightning-icon>
+                                </div>
+                            </div>
+                            <div class="tmpl-card-center">
+                                <div class="tmpl-name">
+                                    {tmpl.name}
+                                    <template if:true={tmpl.isDefault}>
+                                        <span class="default-badge">Default</span>
+                                    </template>
+                                </div>
+                                <template if:true={tmpl.description}>
+                                    <div class="tmpl-desc">{tmpl.description}</div>
+                                </template>
+                                <div class="tmpl-criteria">
+                                    <span class={tmpl.matchBadgeClass}>{tmpl.matchSummary}</span>
+                                    <template if:true={tmpl.actionBinding}>
+                                        <span class="action-badge">{tmpl.actionBinding}</span>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="tmpl-card-right">
+                                <template if:true={tmpl.alreadySent}>
+                                    <span class="sent-badge">
+                                        <lightning-icon icon-name="utility:check" size="xx-small" class="sent-check"></lightning-icon>
+                                        Sent
+                                    </span>
+                                </template>
+                                <template if:false={tmpl.alreadySent}>
+                                    <template if:true={tmpl.criteriaMatched}>
+                                        <lightning-button
+                                            label="Send"
+                                            variant="brand"
+                                            icon-name="utility:email"
+                                            data-id={tmpl.id}
+                                            onclick={handleSendFromTemplate}
+                                            class="send-tmpl-btn">
+                                        </lightning-button>
+                                    </template>
+                                    <template if:false={tmpl.criteriaMatched}>
+                                        <span class="no-match-label">Not applicable</span>
+                                    </template>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:false={hasTemplatesLoaded}>
+                    <div class="history-empty">
+                        <lightning-icon icon-name="utility:email" size="small" class="empty-icon"></lightning-icon>
+                        <p>No email templates configured</p>
+                        <p class="empty-sub">Configure templates in Post Sales Admin</p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </div>
+
+    <!-- Main Modal -->
+    <template if:true={showModal}>
+        <section class="slds-modal slds-fade-in-open slds-modal_large" role="dialog" aria-modal="true">
+            <div class="slds-modal__container">
+                <!-- Header -->
+                <header class="slds-modal__header header-gradient">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        class="slds-modal__close"
+                        alternative-text="Close"
+                        onclick={handleCloseModal}>
+                    </lightning-button-icon>
+                    <div class="header-content">
+                        <h2 class="slds-modal__title slds-text-color_inverse">
+                            <lightning-icon icon-name="utility:email" size="small" class="slds-m-right_small"></lightning-icon>
+                            Send Email
+                        </h2>
+                        <!-- Step Indicator -->
+                        <template if:true={isTemplateSelected}>
+                            <div class="step-indicator">
+                                <div class={step1Class} data-step="1">
+                                    <span class="step-num">1</span>
+                                    <span class="step-label">Compose</span>
+                                </div>
+                                <div class="step-divider"></div>
+                                <div class={step2Class} data-step="2">
+                                    <span class="step-num">2</span>
+                                    <span class="step-label">Preview</span>
+                                </div>
+                                <div class="step-divider"></div>
+                                <div class={step3Class} data-step="3">
+                                    <span class="step-num">3</span>
+                                    <span class="step-label">Send</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </header>
+
+                <!-- Content -->
+                <div class="slds-modal__content slds-p-around_none">
+                    <template if:true={isLoading}>
+                        <div class="loading-container">
+                            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isLoading}>
+                        <!-- Template Selection -->
+                        <div class="slds-p-around_medium slds-border_bottom template-selector">
+                            <lightning-combobox
+                                label="Select Email Template"
+                                value={selectedTemplateId}
+                                options={templateOptions}
+                                placeholder="Choose a template or write custom email..."
+                                onchange={handleTemplateChange}>
+                            </lightning-combobox>
+                        </div>
+
+                        <!-- ==================== STEP 1: COMPOSE ==================== -->
+                        <template if:true={isTemplateSelected}>
+                            <template if:true={isStep1}>
+                                <div class="email-composer">
+                                    <!-- From & Reply To - COMPACT 2 column -->
+                                    <div class="slds-grid slds-gutters slds-p-horizontal_medium slds-p-top_small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <lightning-combobox
+                                                label="From"
+                                                value={fromAddressId}
+                                                options={orgWideEmails}
+                                                onchange={handleFromAddressChange}
+                                                variant="label-stacked">
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <lightning-input
+                                                type="email"
+                                                label="Reply To"
+                                                value={replyTo}
+                                                placeholder="Optional reply-to address"
+                                                onchange={handleReplyToChange}
+                                                variant="label-stacked">
+                                            </lightning-input>
+                                        </div>
+                                    </div>
+
+                                    <!-- Recipients - COMPACT inline -->
+                                    <div class="recipients-compact slds-p-horizontal_medium slds-p-top_x-small">
+                                        <!-- TO -->
+                                        <div class="recipient-row">
+                                            <span class="recipient-label">To:</span>
+                                            <div class="recipient-content">
+                                                <template for:each={toRecipients} for:item="recipient">
+                                                    <lightning-pill
+                                                        key={recipient.key}
+                                                        label={recipient.email}
+                                                        data-id={recipient.id}
+                                                        onremove={handleRemoveToRecipient}>
+                                                    </lightning-pill>
+                                                </template>
+                                                <template if:true={allowAdditionalRecipients}>
+                                                    <div class="inline-add">
+                                                        <lightning-input type="email" data-id="new-to-email"
+                                                            placeholder="Add email..." variant="label-hidden"
+                                                            class="compact-input"></lightning-input>
+                                                        <lightning-button-icon icon-name="utility:add"
+                                                            alternative-text="Add" size="small"
+                                                            onclick={handleAddToRecipient}></lightning-button-icon>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <!-- CC -->
+                                        <template if:true={showCcSection}>
+                                            <div class="recipient-row">
+                                                <span class="recipient-label">CC:</span>
+                                                <div class="recipient-content">
+                                                    <template for:each={ccRecipients} for:item="recipient">
+                                                        <lightning-pill
+                                                            key={recipient.key}
+                                                            label={recipient.email}
+                                                            data-id={recipient.id}
+                                                            onremove={handleRemoveCcRecipient}>
+                                                        </lightning-pill>
+                                                    </template>
+                                                    <template if:true={allowAdditionalRecipients}>
+                                                        <div class="inline-add">
+                                                            <lightning-input type="email" data-id="new-cc-email"
+                                                                placeholder="Add CC..." variant="label-hidden"
+                                                                class="compact-input"></lightning-input>
+                                                            <lightning-button-icon icon-name="utility:add"
+                                                                alternative-text="Add" size="small"
+                                                                onclick={handleAddCcRecipient}></lightning-button-icon>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- BCC -->
+                                        <template if:true={showBccSection}>
+                                            <div class="recipient-row">
+                                                <span class="recipient-label">BCC:</span>
+                                                <div class="recipient-content">
+                                                    <template for:each={bccRecipients} for:item="recipient">
+                                                        <lightning-pill
+                                                            key={recipient.key}
+                                                            label={recipient.email}
+                                                            data-id={recipient.id}
+                                                            onremove={handleRemoveBccRecipient}>
+                                                        </lightning-pill>
+                                                    </template>
+                                                    <template if:true={allowAdditionalRecipients}>
+                                                        <div class="inline-add">
+                                                            <lightning-input type="email" data-id="new-bcc-email"
+                                                                placeholder="Add BCC..." variant="label-hidden"
+                                                                class="compact-input"></lightning-input>
+                                                            <lightning-button-icon icon-name="utility:add"
+                                                                alternative-text="Add" size="small"
+                                                                onclick={handleAddBccRecipient}></lightning-button-icon>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Subject - Compact -->
+                                    <div class="slds-p-horizontal_medium slds-p-top_x-small">
+                                        <lightning-input
+                                            label="Subject"
+                                            value={subject}
+                                            required
+                                            onchange={handleSubjectChange}
+                                            variant="label-stacked">
+                                        </lightning-input>
+                                    </div>
+
+                                    <!-- Body - Full Width, Large -->
+                                    <div class="slds-p-horizontal_medium slds-p-top_x-small slds-p-bottom_small">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                Email Body
+                                            </label>
+                                            <div class="body-editor">
+                                                <lightning-input-rich-text
+                                                    value={body}
+                                                    onchange={handleBodyChange}>
+                                                </lightning-input-rich-text>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Attachments & Upload - Compact 2 column -->
+                                    <div class="slds-grid slds-gutters slds-p-horizontal_medium slds-p-bottom_medium slds-border_top slds-p-top_small">
+                                        <!-- Template Attachments -->
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <template if:true={hasAttachments}>
+                                                <div class="compact-section">
+                                                    <div class="compact-section-title">
+                                                        <lightning-icon icon-name="utility:attach" size="xx-small"></lightning-icon>
+                                                        Attachments ({selectedAttachmentCount})
+                                                    </div>
+                                                    <template for:each={attachments} for:item="att">
+                                                        <div key={att.id} class="att-item">
+                                                            <lightning-input
+                                                                type="checkbox"
+                                                                checked={att.isSelected}
+                                                                disabled={att.isRequired}
+                                                                data-id={att.id}
+                                                                onchange={handleAttachmentToggle}
+                                                                variant="label-hidden">
+                                                            </lightning-input>
+                                                            <lightning-icon icon-name="doctype:pdf" size="xx-small"></lightning-icon>
+                                                            <span class="att-name">{att.fileName}</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- File Upload -->
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <template if:true={allowFileUpload}>
+                                                <div class="compact-section">
+                                                    <div class="compact-section-title">
+                                                        <lightning-icon icon-name="utility:upload" size="xx-small"></lightning-icon>
+                                                        Upload Files
+                                                    </div>
+                                                    <lightning-file-upload
+                                                        label=""
+                                                        name="fileUploader"
+                                                        record-id={recordId}
+                                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                                                        multiple
+                                                        onuploadfinished={handleFileUpload}>
+                                                    </lightning-file-upload>
+                                                    <template if:true={hasUploadedFiles}>
+                                                        <template for:each={uploadedFiles} for:item="file">
+                                                            <div key={file.documentId} class="att-item">
+                                                                <lightning-icon icon-name="doctype:attachment" size="xx-small"></lightning-icon>
+                                                                <span class="att-name">{file.name}</span>
+                                                                <lightning-button-icon icon-name="utility:close"
+                                                                    variant="bare" size="small"
+                                                                    data-id={file.documentId}
+                                                                    alternative-text="Remove"
+                                                                    onclick={handleRemoveUploadedFile}></lightning-button-icon>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- ==================== STEP 2: PREVIEW BODY + DOCUMENTS ==================== -->
+                            <template if:true={isStep2}>
+                                <div class="preview-step">
+                                    <!-- Email Summary Bar -->
+                                    <div class="preview-summary">
+                                        <div class="preview-summary-row">
+                                            <span class="preview-lbl">From:</span>
+                                            <span class="preview-val">{previewFromLabel}</span>
+                                        </div>
+                                        <div class="preview-summary-row">
+                                            <span class="preview-lbl">To:</span>
+                                            <span class="preview-val">{previewToLabel}</span>
+                                        </div>
+                                        <template if:true={hasCcRecipients}>
+                                            <div class="preview-summary-row">
+                                                <span class="preview-lbl">CC:</span>
+                                                <span class="preview-val">{previewCcLabel}</span>
+                                            </div>
+                                        </template>
+                                        <div class="preview-summary-row">
+                                            <span class="preview-lbl">Subject:</span>
+                                            <span class="preview-val preview-val-bold">{subject}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Body Preview -->
+                                    <div class="preview-body-section">
+                                        <div class="preview-body-title">
+                                            <lightning-icon icon-name="utility:preview" size="xx-small"></lightning-icon>
+                                            Email Body Preview
+                                        </div>
+                                        <div class="preview-body-content">
+                                            <lightning-formatted-rich-text value={body}></lightning-formatted-rich-text>
+                                        </div>
+                                    </div>
+
+                                    <!-- Document Attachment Preview -->
+                                    <template if:true={hasSelectedAttachments}>
+                                        <div class="preview-docs-section">
+                                            <div class="preview-docs-title">
+                                                <lightning-icon icon-name="utility:attach" size="xx-small"></lightning-icon>
+                                                Document Attachments ({selectedAttachmentCount})
+                                            </div>
+                                            <div class="preview-docs-list">
+                                                <template for:each={selectedAttachments} for:item="att">
+                                                    <div key={att.id} class="preview-doc-item">
+                                                        <div class="preview-doc-info">
+                                                            <lightning-icon icon-name="doctype:pdf" size="small"></lightning-icon>
+                                                            <span class="preview-doc-name">{att.fileName}</span>
+                                                        </div>
+                                                        <template if:true={att.previewUrl}>
+                                                            <lightning-button
+                                                                label="Preview"
+                                                                icon-name="utility:preview"
+                                                                variant="neutral"
+                                                                size="small"
+                                                                data-url={att.previewUrl}
+                                                                onclick={handlePreviewAttachment}>
+                                                            </lightning-button>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- Uploaded Files -->
+                                    <template if:true={hasUploadedFiles}>
+                                        <div class="preview-docs-section">
+                                            <div class="preview-docs-title">
+                                                <lightning-icon icon-name="utility:upload" size="xx-small"></lightning-icon>
+                                                Uploaded Files ({uploadedFiles.length})
+                                            </div>
+                                            <div class="preview-docs-list">
+                                                <template for:each={uploadedFiles} for:item="file">
+                                                    <div key={file.documentId} class="preview-doc-item">
+                                                        <div class="preview-doc-info">
+                                                            <lightning-icon icon-name="doctype:attachment" size="small"></lightning-icon>
+                                                            <span class="preview-doc-name">{file.name}</span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- ==================== STEP 3: DOCUMENT PREVIEW IFRAME ==================== -->
+                            <template if:true={isStep3}>
+                                <div class="doc-preview-step">
+                                    <template if:true={previewDocumentUrl}>
+                                        <div class="doc-preview-header">
+                                            <lightning-icon icon-name="doctype:pdf" size="small"></lightning-icon>
+                                            <span>Document Preview: {previewDocumentName}</span>
+                                            <lightning-button label="Close Preview" variant="neutral" size="small"
+                                                onclick={handleCloseDocPreview}></lightning-button>
+                                        </div>
+                                        <div class="doc-preview-frame-wrap">
+                                            <iframe src={previewDocumentUrl} class="doc-preview-frame"></iframe>
+                                        </div>
+                                    </template>
+                                    <template if:false={previewDocumentUrl}>
+                                        <div class="doc-preview-empty">
+                                            <lightning-icon icon-name="utility:check" size="large"></lightning-icon>
+                                            <h3>Ready to Send</h3>
+                                            <p>Your email with {totalAttachmentCount} attachment(s) is ready to be sent.</p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- No Template Selected Message -->
+                        <template if:false={isTemplateSelected}>
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <div class="slds-illustration slds-illustration_small">
+                                    <lightning-icon icon-name="utility:email" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                    <h3 class="slds-text-heading_medium">Select a Template</h3>
+                                    <p class="slds-text-body_regular slds-m-top_small">
+                                        Choose an email template from the dropdown above, or select "Custom Email" to write your own.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <!-- Footer -->
+                <footer class="slds-modal__footer footer-bar">
+                    <lightning-button label="Cancel" onclick={handleCloseModal}></lightning-button>
+                    <template if:true={isTemplateSelected}>
+                        <!-- Step 1 Footer -->
+                        <template if:true={isStep1}>
+                            <lightning-button
+                                label="Preview Email"
+                                icon-name="utility:preview"
+                                variant="brand"
+                                onclick={handleGoToStep2}
+                                class="slds-m-left_small">
+                            </lightning-button>
+                        </template>
+
+                        <!-- Step 2 Footer -->
+                        <template if:true={isStep2}>
+                            <lightning-button
+                                label="Back to Edit"
+                                icon-name="utility:back"
+                                onclick={handleGoToStep1}
+                                class="slds-m-left_small">
+                            </lightning-button>
+                            <lightning-button
+                                label="Send Email"
+                                variant="brand"
+                                icon-name="utility:email"
+                                onclick={handleSend}
+                                disabled={isSending}
+                                class="slds-m-left_small">
+                            </lightning-button>
+                        </template>
+
+                        <!-- Step 3 Footer -->
+                        <template if:true={isStep3}>
+                            <lightning-button
+                                label="Back to Preview"
+                                icon-name="utility:back"
+                                onclick={handleGoToStep2}
+                                class="slds-m-left_small">
+                            </lightning-button>
+                            <lightning-button
+                                label="Send Email"
+                                variant="brand"
+                                icon-name="utility:email"
+                                onclick={handleSend}
+                                disabled={isSending}
+                                class="slds-m-left_small">
+                            </lightning-button>
+                        </template>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

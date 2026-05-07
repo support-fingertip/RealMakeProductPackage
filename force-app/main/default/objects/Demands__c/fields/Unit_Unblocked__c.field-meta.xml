@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Unit_Unblocked__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Whether the unit has been automatically unblocked due to non-payment.</description>
+    <label>Unit Unblocked</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reminder_1_Document__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Document template for 1st demand reminder</description>
+    <label>1st Reminder Document</label>
+    <referenceTo>Document_Template__c</referenceTo>
+    <relationshipLabel>Config Masters (Reminder 1)</relationshipLabel>
+    <relationshipName>Config_Masters_Reminder1</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,173 @@
+<template>
+    <lightning-card title="Discount Approval Status" icon-name="standard:approval">
+        <!-- Loading spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+
+        <!-- Header actions -->
+        <div slot="actions">
+            <lightning-button-icon icon-name="utility:refresh"
+                                   alternative-text="Refresh"
+                                   onclick={handleRefresh}
+                                   class="slds-m-right_x-small"></lightning-button-icon>
+        </div>
+
+        <template if:false={isLoading}>
+            <!-- No discounts message -->
+            <template if:false={hasDiscounts}>
+                <div class="slds-p-around_medium slds-text-align_center slds-text-color_weak">
+                    No discounts applied on this Cost Sheet.
+                </div>
+            </template>
+
+            <!-- Discount evaluations -->
+            <template if:true={hasDiscounts}>
+                <!-- Overall Status Banner -->
+                <div class="slds-p-around_small slds-m-bottom_small">
+                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                        <div>
+                            <span class="slds-text-title_caps slds-m-right_small">Overall Status:</span>
+                            <lightning-badge label={summary.overallStatus}
+                                            class={overallStatusVariant}></lightning-badge>
+                        </div>
+                        <div>
+                            <template if:true={summary.nextApproverName}>
+                                <span class="slds-text-body_small slds-text-color_weak">
+                                    Next Approver: <strong>{summary.nextApproverName}</strong>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                    <template if:true={summary.highestLevel}>
+                        <div class="slds-m-top_xx-small slds-text-body_small slds-text-color_weak">
+                            Highest Approval Level Required: <strong>{summary.highestLevel}</strong>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Per-discount cards -->
+                <template for:each={activeDiscounts} for:item="disc">
+                    <div key={disc.key}
+                         class="slds-box slds-box_x-small slds-m-around_small slds-theme_shade">
+                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_x-small">
+                            <h3 class="slds-text-heading_x-small">
+                                <lightning-icon icon-name={disc.statusIcon}
+                                                size="x-small"
+                                                class="slds-m-right_x-small"></lightning-icon>
+                                {disc.label}
+                            </h3>
+                            <lightning-badge label={disc.status}></lightning-badge>
+                        </div>
+
+                        <div class="slds-grid slds-wrap slds-gutters_x-small">
+                            <div class="slds-col slds-size_1-of-4">
+                                <div class="slds-text-title_caps">Value</div>
+                                <div class={disc.exceedsClass}>
+                                    <strong>{disc.formattedValue}</strong>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <div class="slds-text-title_caps">Limit</div>
+                                <div>{disc.formattedMax}</div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <div class="slds-text-title_caps">Discount %</div>
+                                <div class={disc.exceedsClass}>{disc.formattedPct}</div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4">
+                                <div class="slds-text-title_caps">Max %</div>
+                                <div>{disc.formattedMaxPct}</div>
+                            </div>
+                        </div>
+
+                        <template if:true={disc.approverName}>
+                            <div class="slds-m-top_x-small slds-text-body_small">
+                                Approver: <strong>{disc.approverName}</strong>
+                            </div>
+                        </template>
+
+                        <!-- Approve / Reject buttons (visible only to assigned approver) -->
+                        <template if:true={disc.showApproveReject}>
+                            <div class="slds-m-top_small slds-text-align_right">
+                                <lightning-button label="Reject" variant="destructive"
+                                                  data-field={disc.fieldNumber}
+                                                  onclick={handleReject}
+                                                  class="slds-m-right_x-small"></lightning-button>
+                                <lightning-button label="Approve" variant="success"
+                                                  data-field={disc.fieldNumber}
+                                                  onclick={handleApprove}></lightning-button>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Action buttons -->
+                <div class="slds-p-around_small slds-text-align_right">
+                    <template if:true={showRecallButton}>
+                        <lightning-button label="Resend Notification" variant="neutral"
+                                          icon-name="utility:notification"
+                                          onclick={handleResendNotification}
+                                          class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Recall Approval" variant="neutral"
+                                          onclick={handleRecall}
+                                          class="slds-m-right_small"></lightning-button>
+                    </template>
+                    <template if:true={showSubmitButton}>
+                        <lightning-button label="Submit for Approval" variant="brand"
+                                          icon-name="utility:approval"
+                                          onclick={handleSubmit}></lightning-button>
+                    </template>
+                </div>
+
+                <!-- Approval History toggle -->
+                <div class="slds-p-horizontal_small slds-p-bottom_small">
+                    <lightning-button label={historyButtonLabel}
+                                      variant="base"
+                                      icon-name="utility:clock"
+                                      onclick={toggleHistory}></lightning-button>
+
+                    <template if:true={showHistory}>
+                        <div class="slds-m-top_small">
+                            <template if:true={history.length}>
+                                <lightning-datatable data={history}
+                                                     columns={historyColumns}
+                                                     key-field="id"
+                                                     hide-checkbox-column></lightning-datatable>
+                            </template>
+                            <template if:false={history.length}>
+                                <div class="slds-text-align_center slds-text-color_weak slds-p-around_small">
+                                    No approval history yet.
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </lightning-card>
+
+    <!-- Comment Modal -->
+    <template if:true={showCommentModal}>
+        <section role="dialog" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium">Add Comments</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-textarea label="Comments (optional)"
+                                        value={comments}
+                                        onchange={handleCommentChange}
+                                        max-length="5000"></lightning-textarea>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCancelAction}
+                                      class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Confirm" variant="brand"
+                                      onclick={handleConfirmAction}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

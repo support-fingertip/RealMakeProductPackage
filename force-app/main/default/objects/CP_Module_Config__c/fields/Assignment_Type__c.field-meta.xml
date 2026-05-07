@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assignment_Type__c</fullName>
+    <defaultValue>&quot;Pre-Sales&quot;</defaultValue>
+    <description>Round-robin assignment type for lead assignment (e.g., Pre-Sales, Sales).</description>
+    <externalId>false</externalId>
+    <label>Assignment Type</label>
+    <length>100</length>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,29 @@
+<template>
+    <div class="leaderboard-container">
+        <h3 class="leaderboard-title">Leaderboard</h3>
+        <template if:true={hasEntries}>
+            <div class="leaderboard-list">
+                <template for:each={formattedEntries} for:item="entry">
+                    <div key={entry.assigneeId} class="leaderboard-row">
+                        <div class="rank-section">
+                            <span class={entry.badgeClass}>{entry.rankIcon}</span>
+                        </div>
+                        <div class="info-section">
+                            <div class="user-name">{entry.assigneeName}</div>
+                            <div class="progress-track">
+                                <div class={entry.progressClass} style={entry.progressWidth}></div>
+                            </div>
+                        </div>
+                        <div class="stats-section">
+                            <span class="achievement-pct">{entry.displayPct}%</span>
+                            <span class="actual-vs-target">{entry.actualValue} / {entry.targetValue}</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+        <template if:false={hasEntries}>
+            <div class="empty-state">No leaderboard data available</div>
+        </template>
+    </div>
+</template>

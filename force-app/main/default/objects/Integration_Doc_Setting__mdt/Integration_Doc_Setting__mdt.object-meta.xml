@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Configuration for Integration API Documentation PDF generation. Controls watermark text, company logo, company name, and header color displayed in the generated PDF documents.</description>
+    <label>Integration Doc Setting</label>
+    <pluralLabel>Integration Doc Settings</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

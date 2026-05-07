@@ -1,0 +1,55 @@
+:host {
+    display: block;
+}
+
+.user-lookup-container {
+    position: relative;
+}
+
+.lookup-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 9001;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.lookup-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lookup-item:hover {
+    background: #f3f3f3;
+}
+
+.lookup-name {
+    font-weight: 600;
+    color: #032d60;
+}
+
+.lookup-sub {
+    font-size: 0.85rem;
+    color: #706e6b;
+    margin-left: 4px;
+}
+
+.lookup-loading,
+.lookup-no-results {
+    justify-content: center;
+    cursor: default;
+    color: #706e6b;
+}
+
+.lookup-no-results:hover {
+    background: transparent;
+}

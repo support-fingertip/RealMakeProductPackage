@@ -1,0 +1,190 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- List View -->
+    <template if:false={showForm}>
+        <div class="section-header">
+            <h2 class="section-title">
+                <lightning-icon icon-name="utility:description" size="x-small"></lightning-icon>
+                Demand Letter Configuration
+            </h2>
+            <div class="header-actions">
+                <lightning-button label="New Config" variant="brand"
+                    icon-name="utility:add" onclick={handleNew}></lightning-button>
+            </div>
+        </div>
+
+        <p class="section-desc">Configure project-wise email and document templates for demand letters. Each project can have its own demand letter template that will be used during bulk demand raising.</p>
+
+        <template if:true={hasConfigs}>
+            <div class="config-grid">
+                <template for:each={configs} for:item="config">
+                    <div key={config.id} class={config.cardClass}>
+                        <div class="config-card-header">
+                            <div class="config-title-area">
+                                <span class="config-project-name">{config.projectName}</span>
+                                <template if:true={config.isActive}>
+                                    <span class="badge badge-active">Active</span>
+                                </template>
+                                <template if:false={config.isActive}>
+                                    <span class="badge badge-inactive">Inactive</span>
+                                </template>
+                            </div>
+                            <div class="config-actions">
+                                <lightning-button-icon icon-name="utility:edit"
+                                    alternative-text="Edit" data-id={config.id}
+                                    onclick={handleEdit} variant="border-filled"
+                                    size="small"></lightning-button-icon>
+                                <lightning-button-icon icon-name="utility:delete"
+                                    alternative-text="Delete" data-id={config.id}
+                                    onclick={handleDelete} variant="border-filled"
+                                    size="small"></lightning-button-icon>
+                            </div>
+                        </div>
+                        <div class="config-card-body">
+                            <div class="config-detail-grid">
+                                <div class="config-detail">
+                                    <span class="detail-label">Email Template</span>
+                                    <span class="detail-value">{config.emailTemplateName}</span>
+                                </div>
+                                <div class="config-detail">
+                                    <span class="detail-label">Document Template</span>
+                                    <span class="detail-value">{config.documentTemplateName}</span>
+                                </div>
+                                <div class="config-detail">
+                                    <span class="detail-label">Grace Period</span>
+                                    <span class="detail-value">{config.gracePeriodDays} days</span>
+                                </div>
+                                <div class="config-detail">
+                                    <span class="detail-label">Include Interest</span>
+                                    <span class="detail-value">
+                                        <template if:true={config.includeInterest}>Yes</template>
+                                        <template if:false={config.includeInterest}>No</template>
+                                    </span>
+                                </div>
+                                <div class="config-detail">
+                                    <span class="detail-label">Auto Send Email</span>
+                                    <span class="detail-value">
+                                        <template if:true={config.autoSendEmail}>Yes</template>
+                                        <template if:false={config.autoSendEmail}>No</template>
+                                    </span>
+                                </div>
+                            </div>
+                            <template if:true={config.description}>
+                                <div class="config-description">{config.description}</div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <template if:false={hasConfigs}>
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:description" size="large"></lightning-icon>
+                <h3>No Demand Letter Configurations</h3>
+                <p>Create project-specific demand letter configurations to pre-select email and document templates during bulk demand raising.</p>
+            </div>
+        </template>
+    </template>
+
+    <!-- Form View -->
+    <template if:true={showForm}>
+        <div class="form-container">
+            <div class="form-header">
+                <h2 class="form-title">
+                    <template if:true={isEditMode}>Edit Demand Letter Config</template>
+                    <template if:false={isEditMode}>New Demand Letter Config</template>
+                </h2>
+            </div>
+
+            <div class="form-body">
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <!-- Project Lookup -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <lightning-record-picker
+                            label="Project"
+                            placeholder="Search for a project..."
+                            object-api-name="Project__c"
+                            value={editingConfig.projectId}
+                            onchange={handleProjectChange}
+                            required>
+                        </lightning-record-picker>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small slds-p-top_medium">
+                        <lightning-input type="checkbox" label="Is Active"
+                            checked={editingConfig.isActive}
+                            data-field="isActive" onchange={handleFieldChange}></lightning-input>
+                    </div>
+
+                    <!-- Email Template -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <lightning-combobox label="Email Template"
+                            value={editingConfig.emailTemplateId}
+                            options={emailTemplateOptions}
+                            data-field="emailTemplateId"
+                            onchange={handleFieldChange}
+                            placeholder="Select email template..."></lightning-combobox>
+                    </div>
+
+                    <!-- Document Template -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <lightning-combobox label="Document Template (PDF)"
+                            value={editingConfig.documentTemplateId}
+                            options={documentTemplateOptions}
+                            data-field="documentTemplateId"
+                            onchange={handleFieldChange}
+                            placeholder="Select document template..."
+                            field-level-help="PDF template for demand letter attachment"></lightning-combobox>
+                    </div>
+
+                    <!-- Grace Period -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                        <lightning-input type="number" label="Grace Period (Days)"
+                            value={editingConfig.gracePeriodDays}
+                            data-field="gracePeriodDays"
+                            onchange={handleFieldChange}
+                            min="0" max="365"></lightning-input>
+                    </div>
+
+                    <!-- Include Interest -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small slds-p-top_medium">
+                        <lightning-input type="checkbox" label="Include Interest"
+                            checked={editingConfig.includeInterest}
+                            data-field="includeInterest"
+                            onchange={handleFieldChange}></lightning-input>
+                    </div>
+
+                    <!-- Auto Send Email -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small slds-p-top_medium">
+                        <lightning-input type="checkbox" label="Auto Send Email"
+                            checked={editingConfig.autoSendEmail}
+                            data-field="autoSendEmail"
+                            onchange={handleFieldChange}></lightning-input>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                        <lightning-textarea label="Description"
+                            value={editingConfig.description}
+                            data-field="description"
+                            onchange={handleFieldChange}
+                            max-length="32768"
+                            placeholder="Describe this demand letter configuration..."></lightning-textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+                <lightning-button label="Save" variant="brand"
+                    icon-name="utility:save" onclick={handleSave}></lightning-button>
+            </div>
+        </div>
+    </template>
+</template>

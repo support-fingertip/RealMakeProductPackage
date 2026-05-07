@@ -1,0 +1,421 @@
+<template>
+    <div class="perf-root">
+
+        <!-- HEADER -->
+        <header class="hero-header">
+            <div class="hero-bg-overlay"></div>
+            <div class="hero-geo geo-1"></div>
+            <div class="hero-geo geo-2"></div>
+            <div class="hero-content">
+                <p class="hero-eyebrow">Performance &amp; Targets</p>
+                <h1 class="hero-title">Target vs Actual</h1>
+                <p class="hero-sub">Track targets and achievements across your team</p>
+            </div>
+            <div class="header-actions">
+                <button class="action-btn action-btn--primary" onclick={handleCreateTarget} title="Create Target">
+                    <lightning-icon icon-name="utility:add" size="xx-small" class="btn-icon-light"></lightning-icon>
+                    Create Target
+                </button>
+                <button class="action-btn action-btn--outline" onclick={handleBulkAssign} title="Bulk Assign">
+                    <lightning-icon icon-name="utility:groups" size="xx-small" class="btn-icon"></lightning-icon>
+                    Bulk Assign
+                </button>
+                <button class="action-btn action-btn--outline" onclick={handleCloneTargets} title="Clone Period">
+                    <lightning-icon icon-name="utility:copy" size="xx-small" class="btn-icon"></lightning-icon>
+                    Clone Period
+                </button>
+                <button class="action-btn action-btn--outline" onclick={handleExportCSV} title="Export CSV">
+                    <lightning-icon icon-name="utility:download" size="xx-small" class="btn-icon"></lightning-icon>
+                    CSV
+                </button>
+                <button class="action-btn action-btn--outline" onclick={handleRecalculate} title="Recalculate">
+                    <lightning-icon icon-name="utility:refresh" size="xx-small" class="btn-icon"></lightning-icon>
+                    Recalculate
+                </button>
+                <button class="action-btn action-btn--ghost" onclick={handleRefresh} title="Refresh">
+                    <lightning-icon icon-name="utility:sync" size="xx-small" class="btn-icon-light"></lightning-icon>
+                </button>
+            </div>
+        </header>
+
+        <!-- VIEW TABS -->
+        <div class="view-tabs">
+            <button class={dashboardTabClass} data-view="dashboard" onclick={handleViewChange}>
+                <lightning-icon icon-name="utility:chart" size="xx-small" class="vtab-icon"></lightning-icon>
+                Dashboard
+            </button>
+            <button class={targetsTabClass} data-view="targets" onclick={handleViewChange}>
+                <lightning-icon icon-name="utility:target" size="xx-small" class="vtab-icon"></lightning-icon>
+                Manage Targets
+            </button>
+        </div>
+
+        <!-- FILTER BAR -->
+        <template lwc:if={hasLoaded}>
+            <div class="filter-bar">
+                <div class="filter-fields">
+                    <lightning-combobox label="Project" value={selectedProjectId}
+                        options={projectOptions} onchange={handleProjectChange}
+                        placeholder="All Projects" class="filter-combo">
+                    </lightning-combobox>
+                    <lightning-combobox label="Metric" value={selectedMetric}
+                        options={metricOptions} onchange={handleMetricChange}
+                        placeholder="All Metrics" class="filter-combo">
+                    </lightning-combobox>
+                    <lightning-combobox label="Period Type" value={selectedPeriodType}
+                        options={periodTypeOptions} onchange={handlePeriodTypeChange}
+                        placeholder="All Period Types" class="filter-combo">
+                    </lightning-combobox>
+                    <template lwc:if={showDynamicPeriodSelector}>
+                        <lightning-combobox label="Period" value={selectedPeriodValue}
+                            options={dynamicPeriodOptions} onchange={handlePeriodValueChange}
+                            placeholder="All Periods" class="filter-combo">
+                        </lightning-combobox>
+                    </template>
+                    <lightning-combobox label="Target Level" value={selectedLevel}
+                        options={levelOptions} onchange={handleLevelChange}
+                        placeholder="All Levels" class="filter-combo">
+                    </lightning-combobox>
+                    <lightning-combobox label="Assignee" value={selectedAssigneeId}
+                        options={assigneeOptions} onchange={handleAssigneeChange}
+                        placeholder="All Assignees" class="filter-combo">
+                    </lightning-combobox>
+                    <lightning-input type="date" label="Start Date" value={filterStartDate}
+                        onchange={handleStartDateChange} class="filter-date">
+                    </lightning-input>
+                    <lightning-input type="date" label="End Date" value={filterEndDate}
+                        onchange={handleEndDateChange} class="filter-date">
+                    </lightning-input>
+                </div>
+                <div class="filter-actions">
+                    <button class="filter-btn filter-btn--ghost" onclick={handleClearFilters}>
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- LOADING SPINNER -->
+        <template lwc:if={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ═══ DASHBOARD VIEW ═══ -->
+        <template lwc:if={isDashboardView}>
+            <template lwc:if={hasLoaded}>
+                <div class="dashboard-body">
+
+                    <!-- KPI CARDS -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrap kpi-icon--blue">
+                                <lightning-icon icon-name="utility:target" size="small"></lightning-icon>
+                            </div>
+                            <div class="kpi-info">
+                                <span class="kpi-value">{totalTargets}</span>
+                                <span class="kpi-label">Total Targets</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrap kpi-icon--green">
+                                <lightning-icon icon-name="utility:trending" size="small"></lightning-icon>
+                            </div>
+                            <div class="kpi-info">
+                                <span class="kpi-value">{avgAchievement}%</span>
+                                <span class="kpi-label">Avg Achievement</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrap kpi-icon--purple">
+                                <lightning-icon icon-name="utility:ribbon" size="small"></lightning-icon>
+                            </div>
+                            <div class="kpi-info">
+                                <span class="kpi-value">{topPerformer}</span>
+                                <span class="kpi-label">Top Performer</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon-wrap kpi-icon--red">
+                                <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+                            </div>
+                            <div class="kpi-info">
+                                <span class="kpi-value">{targetsAtRisk}</span>
+                                <span class="kpi-label">Targets At Risk</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEVEL BREAKDOWN -->
+                    <template lwc:if={hasLevelBreakdown}>
+                        <div class="section-card">
+                            <h3 class="section-title">Target Breakdown by Level</h3>
+                            <div class="level-breakdown-grid">
+                                <template for:each={levelBreakdown} for:item="lb">
+                                    <div key={lb.level} class="level-breakdown-card" data-level={lb.level} onclick={handleLevelCardClick}>
+                                        <div class="level-breakdown-header">
+                                            <lightning-icon icon-name={lb.iconName} size="small" class="level-icon"></lightning-icon>
+                                            <span class="level-breakdown-title">{lb.level}</span>
+                                        </div>
+                                        <div class="level-breakdown-body">
+                                            <div class="level-stat">
+                                                <span class="level-stat-value">{lb.count}</span>
+                                                <span class="level-stat-label">Targets</span>
+                                            </div>
+                                            <div class="level-stat">
+                                                <span class="level-stat-value">{lb.avgAchievementDisplay}</span>
+                                                <span class="level-stat-label">Avg Achievement</span>
+                                            </div>
+                                            <div class="level-stat">
+                                                <span class="level-stat-value">{lb.totalTargetDisplay}</span>
+                                                <span class="level-stat-label">Total Target</span>
+                                            </div>
+                                            <div class="level-stat">
+                                                <span class="level-stat-value">{lb.totalActualDisplay}</span>
+                                                <span class="level-stat-label">Total Actual</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-track">
+                                                <div class="progress-bar-fill" style={lb.progressBarStyle}></div>
+                                            </div>
+                                            <span class="progress-pct">{lb.overallPctDisplay}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- CHARTS ROW -->
+                    <div class="charts-row">
+                        <div class="section-card chart-card--wide">
+                            <h3 class="section-title">Target vs Actual by Metric</h3>
+                            <div class="chart-container chart-container--bar">
+                                <canvas class="bar-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="section-card chart-card--narrow">
+                            <h3 class="section-title">Achievement Status</h3>
+                            <div class="chart-container chart-container--donut">
+                                <canvas class="donut-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- METRIC PROGRESS CARDS -->
+                    <template lwc:if={hasMetricBreakdown}>
+                        <div class="section-card">
+                            <h3 class="section-title">Metric Progress Overview</h3>
+                            <div class="metric-progress-grid">
+                                <template for:each={metricProgressCards} for:item="metric">
+                                    <div key={metric.name} class="metric-progress-card">
+                                        <div class="metric-progress-header">
+                                            <span class="metric-progress-name">{metric.label}</span>
+                                            <span class={metric.statusClass}>{metric.status}</span>
+                                        </div>
+                                        <div class="metric-progress-numbers">
+                                            <span class="metric-actual">{metric.actualDisplay}</span>
+                                            <span class="metric-separator">/</span>
+                                            <span class="metric-target">{metric.targetDisplay}</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-track">
+                                                <div class={metric.progressBarClass} style={metric.progressBarStyle}></div>
+                                            </div>
+                                            <span class="progress-pct">{metric.pctDisplay}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TREND CHART -->
+                    <div class="section-card">
+                        <h3 class="section-title">Achievement Trend</h3>
+                        <div class="chart-container chart-container--trend">
+                            <canvas class="trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- TOP TARGETS (Individual Progress) -->
+                    <template lwc:if={hasTargetProgressList}>
+                        <div class="section-card">
+                            <h3 class="section-title">Individual Target Progress</h3>
+                            <div class="target-progress-list">
+                                <template for:each={targetProgressList} for:item="tp">
+                                    <div key={tp.id} class="target-progress-row">
+                                        <div class="target-progress-info">
+                                            <span class="target-progress-name">{tp.name}</span>
+                                            <span class="target-progress-meta">{tp.assigneeName} - {tp.metricDisplay}</span>
+                                        </div>
+                                        <div class="target-progress-bar-section">
+                                            <div class="progress-bar-track">
+                                                <div class={tp.progressBarClass} style={tp.progressBarStyle}></div>
+                                            </div>
+                                        </div>
+                                        <div class="target-progress-values">
+                                            <span class="target-progress-pct">{tp.pctDisplay}</span>
+                                            <span class="target-progress-actual">{tp.actualDisplay} / {tp.targetDisplay}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- LEADERBOARD -->
+                    <div class="section-card">
+                        <h3 class="section-title">Leaderboard</h3>
+                        <c-performance-leaderboard entries={leaderboardEntries}></c-performance-leaderboard>
+                    </div>
+                </div>
+            </template>
+        </template>
+
+        <!-- ═══ TARGETS VIEW ═══ -->
+        <template lwc:if={isTargetsView}>
+            <template lwc:if={hasLoaded}>
+                <div class="view-body">
+                    <div class="section-card">
+                        <div class="section-header-row">
+                            <h3 class="section-title">All Targets</h3>
+                            <span class="target-count">{totalTargets} targets</span>
+                        </div>
+
+                        <template lwc:if={hasTargets}>
+                            <div class="table-scroll">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Target</th>
+                                            <th>Level</th>
+                                            <th>Metric</th>
+                                            <th>Assignee</th>
+                                            <th>Period</th>
+                                            <th>Target</th>
+                                            <th>Actual</th>
+                                            <th>Achievement</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={formattedTargetList} for:item="target">
+                                            <tr key={target.Id} class="target-row" data-targetid={target.Id} onclick={handleTargetClick}>
+                                                <td class="td-name">{target.Name}</td>
+                                                <td>
+                                                    <span class={target.levelBadgeClass}>{target.Target_Level__c}</span>
+                                                </td>
+                                                <td>{target.metricDisplay}</td>
+                                                <td>{target.assigneeName}</td>
+                                                <td>{target.periodDisplay}</td>
+                                                <td class="td-number">{target.targetDisplay}</td>
+                                                <td class="td-number">{target.actualDisplay}</td>
+                                                <td class="td-number">{target.achievementDisplay}</td>
+                                                <td>
+                                                    <span class={target.statusClass}>{target.Status__c}</span>
+                                                </td>
+                                                <td class="td-actions" onclick={stopPropagation}>
+                                                    <button class="row-action-btn" data-targetid={target.Id} onclick={handleEditTarget} title="Edit">
+                                                        <lightning-icon icon-name="utility:edit" size="xx-small"></lightning-icon>
+                                                    </button>
+                                                    <button class="row-action-btn row-action-btn--danger" data-targetid={target.Id} onclick={handleDeleteTarget} title="Delete">
+                                                        <lightning-icon icon-name="utility:delete" size="xx-small"></lightning-icon>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+
+                        <template lwc:else>
+                            <div class="empty-state">
+                                <lightning-icon icon-name="utility:target" size="large" class="empty-icon"></lightning-icon>
+                                <p class="empty-text">No targets found. Create a target to get started.</p>
+                                <button class="filter-btn filter-btn--primary" onclick={handleCreateTarget}>
+                                    Create Target
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </template>
+
+        <!-- ═══ DETAIL VIEW ═══ -->
+        <template lwc:if={isDetailView}>
+            <div class="view-body">
+                <button class="back-btn" onclick={handleBack}>
+                    <lightning-icon icon-name="utility:back" size="xx-small" class="back-icon"></lightning-icon>
+                    Back to Targets
+                </button>
+
+                <template lwc:if={selectedTarget}>
+                    <div class="detail-card">
+                        <div class="detail-header">
+                            <div class="detail-title-section">
+                                <h2 class="detail-title">{detailTargetName}</h2>
+                                <span class={detailStatusClass}>{detailStatusLabel}</span>
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Metric</span>
+                                <span class="detail-value">{detailMetricDisplay}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Assignee</span>
+                                <span class="detail-value">{detailAssigneeName}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Period</span>
+                                <span class="detail-value">{detailPeriodDisplay}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Target Value</span>
+                                <span class="detail-value detail-value--lg">{detailTargetDisplay}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Actual Value</span>
+                                <span class="detail-value detail-value--lg">{detailActualDisplay}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Achievement</span>
+                                <span class="detail-value detail-value--lg">{detailAchievementDisplay}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Trend Chart -->
+                    <div class="section-card">
+                        <h3 class="section-title">Progress Trend</h3>
+                        <div class="chart-container chart-container--trend">
+                            <canvas class="detail-trend-chart"></canvas>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ═══ FORM MODAL ═══ -->
+        <template lwc:if={showForm}>
+            <div class="modal-overlay" onclick={handleFormCancel}>
+                <div class="modal-container" onclick={stopPropagation}>
+                    <c-performance-target-form
+                        mode={formMode}
+                        edit-target={editTarget}
+                        source-filter={sourceFilterForClone}
+                        ontargetsaved={handleTargetSaved}
+                        oncancel={handleFormCancel}>
+                    </c-performance-target-form>
+                </div>
+            </div>
+        </template>
+
+    </div>
+</template>

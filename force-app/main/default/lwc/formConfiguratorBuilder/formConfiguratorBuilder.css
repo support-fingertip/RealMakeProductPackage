@@ -1,0 +1,71 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.section-header {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #181818;
+    background: #f3f3f3;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+}
+
+.section-card {
+    border: 1px solid #d8dde6;
+    border-radius: 6px;
+}
+
+.section-card-header {
+    background: #f4f6f9;
+    border-bottom: 1px solid #d8dde6;
+    border-radius: 6px 6px 0 0;
+}
+
+.child-section {
+    border-color: #b0adab;
+}
+
+.child-header {
+    background: #fef3cd;
+}
+
+.compact-table th,
+.compact-table td {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.action-col {
+    width: 100px;
+    text-align: center;
+}
+
+.rule-modal {
+    width: 50%;
+    max-width: 40rem;
+}
+
+.field-condition-row td {
+    background: #f0f7ff;
+    border-top: none !important;
+    padding-top: 0 !important;
+}
+
+.field-condition-box {
+    padding: 0.35rem 0.5rem;
+    border-left: 3px solid #0176d3;
+    margin: 0 0.25rem 0.35rem 1.25rem;
+    border-radius: 0 4px 4px 0;
+    background: #eaf5fe;
+}
+
+.condition-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0176d3;
+}

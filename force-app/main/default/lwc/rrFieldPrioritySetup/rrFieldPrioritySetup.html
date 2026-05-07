@@ -1,0 +1,139 @@
+<template>
+    <template if:true={isSaving}>
+        <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+    </template>
+
+    <lightning-card title="Field Priority Setup" icon-name="custom:custom63">
+        <lightning-button slot="actions" label={addButtonLabel} variant="brand"
+                          icon-name="utility:add" onclick={handleToggleAdd}></lightning-button>
+        <div class="slds-p-around_medium">
+            <p class="slds-text-body_regular slds-m-bottom_medium slds-text-color_weak">
+                Configure universal priority weights for Lead fields. Higher priority = more important for Round Robin matching.
+                When a lead matches multiple RR rules, the rule with the highest total priority wins.
+            </p>
+
+            <!-- Stats Bar -->
+            <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_medium">
+                <div class="slds-grid slds-grid_align-spread">
+                    <div>
+                        <span class="slds-text-title_caps">Configured Fields:</span>
+                        <strong class="slds-m-left_xx-small">{priorities.length}</strong>
+                    </div>
+                    <div>
+                        <span class="slds-text-title_caps">Max Possible Weight:</span>
+                        <strong class="slds-m-left_xx-small">{totalConfiguredWeight}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Form -->
+            <template if:true={showAddForm}>
+                <div class="slds-box slds-m-bottom_medium add-form">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Add Field Priority</h3>
+                    <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                        <div class="slds-col slds-size_4-of-12">
+                            <lightning-combobox
+                                label="Lead Field"
+                                options={fieldOptions}
+                                value={newEntry.fieldApiName}
+                                placeholder="Select a field"
+                                onchange={handleNewFieldChange}
+                                required>
+                            </lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_3-of-12">
+                            <lightning-input
+                                label="Priority Weight"
+                                type="number"
+                                value={newEntry.priority}
+                                onchange={handleNewPriorityChange}
+                                min="1"
+                                placeholder="e.g. 1000"
+                                required>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12">
+                            <lightning-input
+                                type="checkbox"
+                                label="Active"
+                                checked={newEntry.active}
+                                onchange={handleNewActiveChange}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_3-of-12">
+                            <lightning-button label="Save" variant="brand" onclick={handleSaveNew}
+                                              icon-name="utility:save" class="slds-m-right_x-small"></lightning-button>
+                            <lightning-button label="Cancel" onclick={handleToggleAdd}></lightning-button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Priority Table -->
+            <template if:true={hasPriorities}>
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col"><div class="slds-truncate">Field Label</div></th>
+                            <th scope="col"><div class="slds-truncate">API Name</div></th>
+                            <th scope="col" style="width: 10rem;"><div class="slds-truncate">Priority Weight</div></th>
+                            <th scope="col" style="width: 6rem;"><div class="slds-truncate">Status</div></th>
+                            <th scope="col" style="width: 6rem;"><div class="slds-truncate">Actions</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={priorities} for:item="p">
+                            <tr key={p.id}>
+                                <td><strong>{p.fieldLabel}</strong></td>
+                                <td class="slds-text-color_weak">{p.fieldApiName}</td>
+                                <td>
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        value={p.priority}
+                                        data-field-api={p.fieldApiName}
+                                        data-field="priority"
+                                        onchange={handleInlineUpdate}
+                                        min="0">
+                                    </lightning-input>
+                                </td>
+                                <td>
+                                    <lightning-input
+                                        type="toggle"
+                                        variant="label-hidden"
+                                        checked={p.active}
+                                        data-field-api={p.fieldApiName}
+                                        data-field="active"
+                                        onchange={handleInlineUpdate}
+                                        message-toggle-active="On"
+                                        message-toggle-inactive="Off">
+                                    </lightning-input>
+                                </td>
+                                <td>
+                                    <lightning-button-icon
+                                        icon-name="utility:delete"
+                                        variant="border-destructive"
+                                        alternative-text="Delete"
+                                        data-id={p.id}
+                                        onclick={handleDelete}>
+                                    </lightning-button-icon>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+
+            <template if:false={hasPriorities}>
+                <div class="slds-illustration slds-illustration_small slds-text-align_center slds-p-around_large">
+                    <p class="slds-text-body_regular slds-text-color_weak">
+                        No field priorities configured yet. Click "Add Field" to get started.
+                    </p>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+                        Example: Project = 1000, Zone = 100, Source = 1
+                    </p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

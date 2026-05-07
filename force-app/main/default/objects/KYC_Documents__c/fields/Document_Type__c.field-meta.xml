@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Document_Type__c</fullName>
+    <label>Document Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Aadhar Card</fullName>
+                <default>false</default>
+                <label>Aadhar Card</label>
+            </value>
+            <value>
+                <fullName>PAN Card</fullName>
+                <default>false</default>
+                <label>PAN Card</label>
+            </value>
+            <value>
+                <fullName>Passport</fullName>
+                <default>false</default>
+                <label>Passport</label>
+            </value>
+            <value>
+                <fullName>Driving License</fullName>
+                <default>false</default>
+                <label>Driving License</label>
+            </value>
+            <value>
+                <fullName>Voter ID</fullName>
+                <default>false</default>
+                <label>Voter ID</label>
+            </value>
+            <value>
+                <fullName>Ration Card</fullName>
+                <default>false</default>
+                <label>Ration Card</label>
+            </value>
+            <value>
+                <fullName>Bank Statement</fullName>
+                <default>false</default>
+                <label>Bank Statement</label>
+            </value>
+            <value>
+                <fullName>Salary Slip</fullName>
+                <default>false</default>
+                <label>Salary Slip</label>
+            </value>
+            <value>
+                <fullName>ITR</fullName>
+                <default>false</default>
+                <label>ITR</label>
+            </value>
+            <value>
+                <fullName>Power of Attorney</fullName>
+                <default>false</default>
+                <label>Power of Attorney</label>
+            </value>
+            <value>
+                <fullName>Photo</fullName>
+                <default>false</default>
+                <label>Photo</label>
+            </value>
+            <value>
+                <fullName>Signature</fullName>
+                <default>false</default>
+                <label>Signature</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

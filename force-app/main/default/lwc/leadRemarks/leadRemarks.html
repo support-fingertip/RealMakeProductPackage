@@ -1,0 +1,52 @@
+<template>
+    <lightning-card>
+        <div class="slds-var-p-around_medium">
+            <!-- Header -->
+            <div class="note-header slds-text-heading_medium slds-text-align_center slds-var-m-bottom_medium">
+                All Remarks
+            </div>
+
+            <!-- Add Remark Controls -->
+            <div class="button-container slds-var-m-bottom_medium">
+                <lightning-button
+                    label="Clear Remark"
+                    variant="destructive"
+                    onclick={handleClearRemark}
+                    class="slds-var-m-right_x-small">
+                </lightning-button>
+                <lightning-button
+                    label="Add Remark"
+                    variant="brand"
+                    onclick={handleAddRemark}>
+                </lightning-button>
+            </div>
+
+            <div class="slds-var-m-bottom_medium">
+                <label class="slds-form-element__label slds-var-m-bottom_xx-small">
+                    <b>Please Enter Remarks:</b>
+                </label>
+                <lightning-textarea
+                    value={newRemark}
+                    placeholder="Type Here ..."
+                    onchange={handleRemarkChange}
+                    class="remark-textarea">
+                </lightning-textarea>
+            </div>
+
+            <!-- Remarks List -->
+            <div class="note-container">
+                <template for:each={remarks} for:item="remark">
+                    <div key={remark} class="note-item slds-var-m-bottom_x-small">
+                        <p>{remark}</p>
+                    </div>
+                </template>
+
+                <template lwc:if={noRemarks}>
+                    <div class="slds-text-align_center slds-text-color_weak slds-var-p-around_medium">
+                        No remarks available.
+                    </div>
+                </template>
+            </div>
+        </div>
+    </lightning-card>
+</template>

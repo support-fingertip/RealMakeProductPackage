@@ -1,0 +1,14 @@
+.section-box {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+.section-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #3e3e3c;
+    padding: 0.25rem 0.5rem 0.5rem;
+    display: flex;
+    align-items: center;
+}

@@ -1,0 +1,142 @@
+/* Ensure cards stretch to fill height in flex container */
+.h-full {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.slds-card__body {
+    flex-grow: 1;
+}
+
+/* Subtle animation for elements appearing */
+.fade-in {
+    animation: fadeEffect 0.5s;
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0; transform: translateY(5px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* Enhancing the Tabset area */
+.tab-container {
+    min-height: 400px;
+}
+
+/* Customizing the Header background to stand out */
+.slds-page-header_record-home {
+    background: linear-gradient(to right, #f4f6f9, #ffffff);
+    border-bottom: 1px solid #d8dde6;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Make the Dual Listbox look more integrated */
+:host .slds-form-element__label {
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+/* Filter Row Cards */
+.filter-row {
+    transition: all 0.2s ease-in-out;
+    border-left: 3px solid #0176d3;
+}
+
+.filter-row:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Validation Messages */
+.slds-notify {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.slds-theme_error {
+    background-color: #ea001e;
+    color: white;
+}
+
+.slds-theme_warning {
+    background-color: #fe9339;
+    color: white;
+}
+
+/* Lookup Container */
+.lookup-container {
+    position: relative;
+}
+
+/* Lookup Pill (selected state) */
+.lookup-pill-container {
+    padding-top: 0.25rem;
+}
+
+/* Lookup Dropdown */
+.lookup-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9001;
+    background: #ffffff;
+    border: 1px solid #c9c9c9;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: -2px;
+}
+
+.lookup-results-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+}
+
+.lookup-result-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.lookup-result-item:hover {
+    background-color: #f3f3f3;
+}
+
+.lookup-result-icon {
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+}
+
+.lookup-result-name {
+    font-size: 0.8125rem;
+    color: #080707;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Priority Weight Input */
+.priority-input {
+    max-width: 90px;
+}
+
+/* ─── List Mode Styles ──────────────────────────────────── */
+.slds-backdrop_open {
+    z-index: 9002;
+}
+
+.slds-modal {
+    z-index: 9003;
+}
+
+.slds-icon-text-weak {
+    opacity: 0.4;
+}

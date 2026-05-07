@@ -1,0 +1,1224 @@
+<template>
+    <lightning-card title="Lead & Unit Management" icon-name="standard:lead">
+
+        <!-- Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <div class="slds-p-around_medium">
+
+            <!-- ════════════════ TAB BAR ════════════════ -->
+            <lightning-tabset active-tab-value={activeTab} onactive={handleTabChange}>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 1: PERMANENT REASSIGNMENT           ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Reassignment" value="reassignment" icon-name="utility:reassign">
+                    <div class="slds-p-top_small">
+                        <!-- FILTER SECTION -->
+                        <div class="filter-section slds-p-bottom_medium">
+                            <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:filterList" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Filter Leads
+                            </h2>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Owner</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={selectedOwnerName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{selectedOwnerName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearOwner}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={selectedOwnerName}>
+                                            <lightning-input type="text" placeholder="Search user..." value={ownerSearchTerm}
+                                                             onchange={handleOwnerSearch} onfocus={handleOwnerFocus} onblur={handleOwnerBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showOwnerDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isOwnerSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isOwnerSearching}>
+                                                        <template if:true={hasOwnerResults}>
+                                                            <template for:each={ownerLookupResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleOwnerSelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasOwnerResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Project</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={filterProjectName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{filterProjectName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearProject}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={filterProjectName}>
+                                            <lightning-input type="text" placeholder="Search project..." value={projectSearchTerm}
+                                                             onchange={handleProjectSearch} onfocus={handleProjectFocus} onblur={handleProjectBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showProjectDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={hasProjectResults}>
+                                                        <template for:each={projectSearchResults} for:item="proj">
+                                                            <div key={proj.value} class="lookup-item" data-record-id={proj.value} data-record-name={proj.label} onmousedown={handleProjectSelect}>
+                                                                <span class="lookup-name">{proj.label}</span>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                    <template if:false={hasProjectResults}>
+                                                        <div class="lookup-item lookup-no-results">No projects found</div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Lead Status" value={filterLeadStatus} options={leadStatusOptions} onchange={handleFilterChange} data-field="leadStatus" placeholder="-- All --"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Lead Source" value={filterLeadSource} options={leadSourceOptions} onchange={handleFilterChange} data-field="leadSource" placeholder="-- All --"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input label="Lead ID" value={filterLeadId} onchange={handleFilterChange} data-field="leadId" placeholder="e.g. LD-000001"></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input label="Mobile Number" value={filterMobile} onchange={handleFilterChange} data-field="mobileNumber" placeholder="Primary or Secondary mobile" type="tel" pattern="[0-9]*"></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Lead Bucket" value={filterBucket} options={bucketOptions} onchange={handleFilterChange} data-field="leadBucket" placeholder="-- All --"></lightning-combobox>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Search" variant="brand" onclick={handleSearch} disabled={isSearchDisabled} icon-name="utility:search" class="slds-m-right_small"></lightning-button>
+                                <lightning-button label="Clear Filters" variant="neutral" onclick={handleClearFilters} icon-name="utility:refresh"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- RESULTS -->
+                        <template if:true={hasSearched}>
+                            <div class="results-section slds-p-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h2 class="slds-text-heading_small section-header">
+                                        <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Results ({resultCount})
+                                    </h2>
+                                    <template if:true={hasSelectedRows}>
+                                        <span class="slds-badge slds-badge_inverse">{selectedCount} Selected</span>
+                                    </template>
+                                </div>
+
+                                <template if:true={hasResults}>
+                                    <div class="datatable-container">
+                                        <lightning-datatable key-field="leadId" data={searchResults} columns={columns}
+                                                             onrowselection={handleRowSelection} max-row-selection="200" show-row-number-column></lightning-datatable>
+                                    </div>
+                                </template>
+                                <template if:false={hasResults}>
+                                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                        <p class="slds-text-body_regular slds-text-color_weak">No leads found matching the applied filters.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- REASSIGNMENT PANEL -->
+                        <template if:true={hasSelectedRows}>
+                            <div class="reassignment-section slds-p-top_medium slds-m-top_medium">
+                                <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                    <lightning-icon icon-name="utility:reassign" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Reassign Selected Leads
+                                </h2>
+
+                                <div class="slds-box reassignment-box">
+                                    <div class="slds-grid slds-wrap slds-gutters_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                            <lightning-combobox label="Target Bucket" value={targetBucket} options={targetBucketOptions}
+                                                                onchange={handleTargetBucketChange} required placeholder="Select target bucket"></lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small slds-grid slds-grid_vertical-align-end">
+                                            <lightning-input type="checkbox" label="Enable Round Robin Assignment" checked={isRoundRobin} onchange={handleRoundRobinToggle}></lightning-input>
+                                        </div>
+
+                                        <!-- Single Target User -->
+                                        <template if:true={isNotRoundRobin}>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                                <label class="slds-form-element__label filter-label">Target User <abbr class="slds-required" title="required">*</abbr></label>
+                                                <div class="user-lookup-container">
+                                                    <template if:true={targetUserName}>
+                                                        <div class="slds-pill_container">
+                                                            <span class="slds-pill">
+                                                                <span class="slds-pill__label">{targetUserName}</span>
+                                                                <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTargetUser}>
+                                                                    <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                    </template>
+                                                    <template if:false={targetUserName}>
+                                                        <lightning-input type="text" placeholder="Search active user..." value={targetUserSearchTerm}
+                                                                         onchange={handleTargetUserSearch} onfocus={handleTargetUserFocus} onblur={handleTargetUserBlur}
+                                                                         variant="label-hidden"></lightning-input>
+                                                        <template if:true={showTargetUserDropdown}>
+                                                            <div class="lookup-dropdown" role="listbox">
+                                                                <template if:true={isTargetUserSearching}>
+                                                                    <div class="lookup-item lookup-loading">Searching...</div>
+                                                                </template>
+                                                                <template if:false={isTargetUserSearching}>
+                                                                    <template if:true={hasTargetUserResults}>
+                                                                        <template for:each={targetUserResults} for:item="user">
+                                                                            <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTargetUserSelect}>
+                                                                                <span class="lookup-name">{user.Name}</span>
+                                                                                <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                            </div>
+                                                                        </template>
+                                                                    </template>
+                                                                    <template if:false={hasTargetUserResults}>
+                                                                        <div class="lookup-item lookup-no-results">No active users found</div>
+                                                                    </template>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Round Robin Users -->
+                                        <template if:true={isRoundRobin}>
+                                            <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+                                                    Add users and leads will be distributed in round-robin order.
+                                                    <template if:true={selectedRRCount}><strong> ({selectedRRCount} user(s) selected)</strong></template>
+                                                </p>
+                                            </div>
+                                            <template for:each={rrSlots} for:item="slot">
+                                                <div key={slot.key} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                                    <label class="slds-form-element__label filter-label">{slot.label}</label>
+                                                    <div class="rr-slot-row">
+                                                        <div class="user-lookup-container rr-lookup-flex">
+                                                            <template if:true={slot.hasSelected}>
+                                                                <div class="slds-pill_container">
+                                                                    <span class="slds-pill">
+                                                                        <span class="slds-pill__label">{slot.userName}</span>
+                                                                        <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" data-slot-index={slot.index} onclick={handleRRUserClear}>
+                                                                            <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                                        </button>
+                                                                    </span>
+                                                                </div>
+                                                            </template>
+                                                            <template if:false={slot.hasSelected}>
+                                                                <lightning-input type="text" placeholder="Search user..." value={slot.searchTerm}
+                                                                                 data-slot-index={slot.index} onchange={handleRRUserSearch}
+                                                                                 onfocus={handleRRUserFocus} onblur={handleRRUserBlur} variant="label-hidden"></lightning-input>
+                                                                <template if:true={slot.showDropdown}>
+                                                                    <div class="lookup-dropdown" role="listbox">
+                                                                        <template if:true={slot.isSearching}>
+                                                                            <div class="lookup-item lookup-loading">Searching...</div>
+                                                                        </template>
+                                                                        <template if:false={slot.isSearching}>
+                                                                            <template if:true={slot.hasResults}>
+                                                                                <template for:each={slot.results} for:item="user">
+                                                                                    <div key={user.Id} class="lookup-item" data-slot-index={slot.index} data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleRRUserSelect}>
+                                                                                        <span class="lookup-name">{user.Name}</span>
+                                                                                        <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                                    </div>
+                                                                                </template>
+                                                                            </template>
+                                                                            <template if:false={slot.hasResults}>
+                                                                                <div class="lookup-item lookup-no-results">No users found</div>
+                                                                            </template>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </template>
+                                                        </div>
+                                                        <template if:true={slot.canRemove}>
+                                                            <button class="slds-button slds-button_icon slds-button_icon-border rr-remove-btn" title="Remove this user slot" data-slot-index={slot.index} onclick={handleRemoveRRSlot}>
+                                                                <lightning-icon icon-name="utility:dash" size="x-small" alternative-text="Remove slot"></lightning-icon>
+                                                            </button>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small slds-grid slds-grid_vertical-align-end">
+                                                <lightning-button label="Add User" variant="neutral" icon-name="utility:add" onclick={handleAddRRSlot} class="rr-add-btn"></lightning-button>
+                                            </div>
+                                        </template>
+
+                                        <!-- Suppress Notifications -->
+                                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                            <lightning-input type="checkbox" label="Deactivate Assignment Notifications" checked={suppressNotifications} onchange={handleSuppressChange}></lightning-input>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-m-top_small slds-clearfix">
+                                        <lightning-button label="Reassign Leads" variant="brand" onclick={handleReassign} disabled={isReassignDisabled} icon-name="utility:reassign" class="slds-float_right"></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- RESULT SUMMARY -->
+                        <template if:true={showResultSummary}>
+                            <div class="slds-m-top_medium">
+                                <div class="result-summary slds-box">
+                                    <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                        <lightning-icon icon-name="utility:check" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Reassignment Summary
+                                    </h2>
+                                    <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-success">
+                                                <p class="summary-count">{reassignResult.successCount}</p>
+                                                <p class="summary-label">Successful</p>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-failure">
+                                                <p class="summary-count">{reassignResult.failureCount}</p>
+                                                <p class="summary-label">Failed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <template if:true={hasFailures}>
+                                        <h3 class="slds-text-title_caps slds-m-bottom_x-small slds-text-color_error">Failure Details</h3>
+                                        <div class="failure-table-container">
+                                            <lightning-datatable key-field="leadId" data={reassignResult.failures} columns={failureColumns} hide-checkbox-column></lightning-datatable>
+                                        </div>
+                                    </template>
+                                    <div class="slds-m-top_small">
+                                        <lightning-button label="Done" variant="neutral" onclick={handleDismissResult}></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 2: TEMPORARY OWNERSHIP              ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Temporary Ownership" value="tempOwnership" icon-name="utility:clock">
+                    <div class="slds-p-top_small">
+                        <!-- FILTER SECTION -->
+                        <div class="filter-section slds-p-bottom_medium">
+                            <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:filterList" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Filter Leads
+                            </h2>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Owner</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={tempSelectedOwnerName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{tempSelectedOwnerName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTempFilterOwner}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={tempSelectedOwnerName}>
+                                            <lightning-input type="text" placeholder="Search user..." value={tempOwnerSearchTerm}
+                                                             onchange={handleTempOwnerFilterSearch} onfocus={handleTempOwnerFilterFocus} onblur={handleTempOwnerFilterBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showTempOwnerFilterDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isTempOwnerFilterSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isTempOwnerFilterSearching}>
+                                                        <template if:true={hasTempOwnerFilterResults}>
+                                                            <template for:each={tempOwnerFilterResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTempOwnerFilterSelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasTempOwnerFilterResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Project" value={tempFilterProjectId} options={projectOptions}
+                                                        onchange={handleTempFilterChange} data-field="tempProject" placeholder="Select project"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input label="Lead ID" value={tempFilterLeadId} onchange={handleTempFilterChange} data-field="leadId" placeholder="e.g. LD-000001"></lightning-input>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Search" variant="brand" onclick={handleTempSearch} disabled={isTempSearchDisabled} icon-name="utility:search" class="slds-m-right_small"></lightning-button>
+                                <lightning-button label="Clear" variant="neutral" onclick={handleClearTempFilters} icon-name="utility:refresh"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- RESULTS -->
+                        <template if:true={tempHasSearched}>
+                            <div class="results-section slds-p-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h2 class="slds-text-heading_small section-header">
+                                        <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Results ({tempResultCount})
+                                    </h2>
+                                    <template if:true={tempHasSelectedRows}>
+                                        <span class="slds-badge slds-badge_inverse">{tempSelectedCount} Selected</span>
+                                    </template>
+                                </div>
+
+                                <template if:true={tempHasResults}>
+                                    <div class="datatable-container">
+                                        <lightning-datatable key-field="leadId" data={tempSearchResults} columns={columns}
+                                                             onrowselection={handleTempRowSelection} max-row-selection="200" show-row-number-column></lightning-datatable>
+                                    </div>
+                                </template>
+                                <template if:false={tempHasResults}>
+                                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                        <p class="slds-text-body_regular slds-text-color_weak">No leads found.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- TEMP ASSIGNMENT PANEL -->
+                        <template if:true={tempHasSelectedRows}>
+                            <div class="reassignment-section slds-p-top_medium slds-m-top_medium">
+                                <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                    <lightning-icon icon-name="utility:clock" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Assign Temporary Owner
+                                </h2>
+
+                                <div class="slds-box temp-box">
+                                    <div class="slds-grid slds-wrap slds-gutters_small">
+                                        <!-- Temp Owner Lookup -->
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <label class="slds-form-element__label filter-label">Temporary Owner <abbr class="slds-required" title="required">*</abbr></label>
+                                            <div class="user-lookup-container">
+                                                <template if:true={tempTargetUserName}>
+                                                    <div class="slds-pill_container">
+                                                        <span class="slds-pill">
+                                                            <span class="slds-pill__label">{tempTargetUserName}</span>
+                                                            <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTempTargetUser}>
+                                                                <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                </template>
+                                                <template if:false={tempTargetUserName}>
+                                                    <lightning-input type="text" placeholder="Search user..." value={tempTargetSearchTerm}
+                                                                     onchange={handleTempTargetUserSearch} onfocus={handleTempTargetUserFocus} onblur={handleTempTargetUserBlur}
+                                                                     variant="label-hidden"></lightning-input>
+                                                    <template if:true={showTempTargetDropdown}>
+                                                        <div class="lookup-dropdown" role="listbox">
+                                                            <template if:true={isTempTargetSearching}>
+                                                                <div class="lookup-item lookup-loading">Searching...</div>
+                                                            </template>
+                                                            <template if:false={isTempTargetSearching}>
+                                                                <template if:true={hasTempTargetResults}>
+                                                                    <template for:each={tempTargetResults} for:item="user">
+                                                                        <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTempTargetUserSelect}>
+                                                                            <span class="lookup-name">{user.Name}</span>
+                                                                            <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                        </div>
+                                                                    </template>
+                                                                </template>
+                                                                <template if:false={hasTempTargetResults}>
+                                                                    <div class="lookup-item lookup-no-results">No active users found</div>
+                                                                </template>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <!-- Start Date -->
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="date" label="Start Date" value={tempStartDate} min={todayDate} onchange={handleTempStartDateChange} required></lightning-input>
+                                        </div>
+
+                                        <!-- End Date -->
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="date" label="End Date" value={tempEndDate} min={todayDate} onchange={handleTempEndDateChange} required></lightning-input>
+                                        </div>
+
+                                        <!-- Reason -->
+                                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                            <lightning-textarea label="Reason" value={tempReason} onchange={handleTempReasonChange} placeholder="Reason for temporary assignment" max-length="255"></lightning-textarea>
+                                        </div>
+
+                                        <!-- Sharing Options -->
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-combobox label="Lead Access Level" value={tempLeadAccessLevel}
+                                                                options={tempAccessLevelOptions} onchange={handleTempAccessLevelChange}></lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="toggle" label="Share Followups" checked={tempShareFollowups}
+                                                             onchange={handleTempShareFollowupsChange}
+                                                             message-toggle-active="Yes" message-toggle-inactive="No"></lightning-input>
+                                            <div class="slds-form-element__help slds-text-body_small slds-text-color_weak">Followups inherit Lead access via master-detail</div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="toggle" label="Share Site Visits" checked={tempShareSiteVisits}
+                                                             onchange={handleTempShareSiteVisitsChange}
+                                                             message-toggle-active="Yes" message-toggle-inactive="No"></lightning-input>
+                                            <div class="slds-form-element__help slds-text-body_small slds-text-color_weak">Completed &amp; Cancelled &rarr; Read; Scheduled &amp; Re-Scheduled &rarr; Edit</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-m-top_small slds-clearfix">
+                                        <lightning-button label="Assign Temporary Owner" variant="brand" onclick={handleTempAssign} disabled={isTempAssignDisabled} icon-name="utility:clock" class="slds-float_right slds-m-left_small"></lightning-button>
+                                        <lightning-button label="Revoke Temp Ownership" variant="destructive" onclick={handleRevokeTempAssign} icon-name="utility:ban" class="slds-float_right"></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- RESULT SUMMARY -->
+                        <template if:true={showTempResultSummary}>
+                            <div class="slds-m-top_medium">
+                                <div class="result-summary slds-box">
+                                    <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                        <lightning-icon icon-name="utility:check" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Summary
+                                    </h2>
+                                    <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-success">
+                                                <p class="summary-count">{tempResult.successCount}</p>
+                                                <p class="summary-label">Successful</p>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-failure">
+                                                <p class="summary-count">{tempResult.failureCount}</p>
+                                                <p class="summary-label">Failed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <template if:true={hasTempFailures}>
+                                        <h3 class="slds-text-title_caps slds-m-bottom_x-small slds-text-color_error">Failure Details</h3>
+                                        <div class="failure-table-container">
+                                            <lightning-datatable key-field="leadId" data={tempResult.failures} columns={failureColumns} hide-checkbox-column></lightning-datatable>
+                                        </div>
+                                    </template>
+                                    <div class="slds-m-top_small">
+                                        <lightning-button label="Done" variant="neutral" onclick={handleDismissTempResult}></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 3: UNIT BLOCKING                    ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Unit Blocking" value="unitBlocking" icon-name="utility:lock">
+                    <div class="slds-p-top_small">
+                        <!-- UNIT FILTER SECTION -->
+                        <div class="filter-section slds-p-bottom_medium">
+                            <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:filterList" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Filter Units
+                            </h2>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Project" value={unitFilterProject} options={projectOptions}
+                                                        onchange={handleUnitFilterChange} data-field="project" placeholder="Select project"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Unit Status" value={unitFilterStatus} options={unitStatusOptions}
+                                                        onchange={handleUnitFilterChange} data-field="unitStatus" placeholder="-- All --"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input label="Unit Number" value={unitFilterNumber} onchange={handleUnitFilterChange} data-field="unitNumber" placeholder="Search unit number"></lightning-input>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Search Units" variant="brand" onclick={handleUnitSearch} disabled={isUnitSearchDisabled} icon-name="utility:search" class="slds-m-right_small"></lightning-button>
+                                <lightning-button label="Clear" variant="neutral" onclick={handleClearUnitFilters} icon-name="utility:refresh"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- UNIT RESULTS -->
+                        <template if:true={unitHasSearched}>
+                            <div class="results-section slds-p-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h2 class="slds-text-heading_small section-header">
+                                        <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Units ({unitResultCount})
+                                    </h2>
+                                    <template if:true={unitHasSelectedRows}>
+                                        <span class="slds-badge slds-badge_inverse">{unitSelectedCount} Selected</span>
+                                    </template>
+                                </div>
+
+                                <template if:true={unitHasResults}>
+                                    <div class="datatable-container">
+                                        <lightning-datatable key-field="unitId" data={unitSearchResults} columns={unitColumns}
+                                                             onrowselection={handleUnitRowSelection} max-row-selection="200" show-row-number-column></lightning-datatable>
+                                    </div>
+                                </template>
+                                <template if:false={unitHasResults}>
+                                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                        <p class="slds-text-body_regular slds-text-color_weak">No units found.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- UNIT BLOCKING PANEL -->
+                        <template if:true={unitHasSelectedRows}>
+                            <div class="reassignment-section slds-p-top_medium slds-m-top_medium">
+                                <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                    <lightning-icon icon-name="utility:lock" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Block / Unblock Units
+                                </h2>
+
+                                <div class="slds-box unit-block-box">
+                                    <div class="slds-grid slds-wrap slds-gutters_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="number" label="Block Duration (Days)" value={blockDays}
+                                                             onchange={handleBlockDaysChange} min="1" step="1" placeholder="Number of days"></lightning-input>
+                                            <template if:true={selectedUnitMaxBlockDays}>
+                                                <span class="slds-text-body_small slds-text-color_weak">Project max: {selectedUnitMaxBlockDays} days</span>
+                                            </template>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <lightning-input type="toggle" label="Management Block" checked={isManagementBlock}
+                                                             onchange={handleManagementBlockToggle}
+                                                             message-toggle-active="Yes" message-toggle-inactive="No"></lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <label class="slds-form-element__label filter-label">Blocking For (Executive)</label>
+                                            <div class="user-lookup-container">
+                                                <template if:true={blockingForUserName}>
+                                                    <div class="slds-pill_container">
+                                                        <span class="slds-pill">
+                                                            <span class="slds-pill__label">{blockingForUserName}</span>
+                                                            <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearBlockingFor}>
+                                                                <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                </template>
+                                                <template if:false={blockingForUserName}>
+                                                    <lightning-input type="text" placeholder="Search user..." value={blockingForSearchTerm}
+                                                                     onchange={handleBlockingForSearch} onfocus={handleBlockingForFocus} onblur={handleBlockingForBlur}
+                                                                     variant="label-hidden"></lightning-input>
+                                                    <template if:true={showBlockingForDropdown}>
+                                                        <div class="lookup-dropdown" role="listbox">
+                                                            <template if:true={isBlockingForSearching}>
+                                                                <div class="lookup-item lookup-loading">Searching...</div>
+                                                            </template>
+                                                            <template if:false={isBlockingForSearching}>
+                                                                <template if:true={hasBlockingForResults}>
+                                                                    <template for:each={blockingForResults} for:item="user">
+                                                                        <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleBlockingForSelect}>
+                                                                            <span class="lookup-name">{user.Name}</span>
+                                                                            <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                        </div>
+                                                                    </template>
+                                                                </template>
+                                                                <template if:false={hasBlockingForResults}>
+                                                                    <div class="lookup-item lookup-no-results">No users found</div>
+                                                                </template>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <!-- Lead Lookup -->
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                            <label class="slds-form-element__label filter-label">Lead</label>
+                                            <div class="user-lookup-container">
+                                                <template if:true={blockLeadName}>
+                                                    <div class="slds-pill_container">
+                                                        <span class="slds-pill">
+                                                            <span class="slds-pill__label">{blockLeadName}</span>
+                                                            <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearBlockLead}>
+                                                                <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                </template>
+                                                <template if:false={blockLeadName}>
+                                                    <lightning-input type="text" placeholder="Search by Name / Lead ID / Number" value={blockLeadSearchTerm}
+                                                                     onchange={handleBlockLeadSearch} onfocus={handleBlockLeadFocus} onblur={handleBlockLeadBlur}
+                                                                     variant="label-hidden"></lightning-input>
+                                                    <template if:true={showBlockLeadDropdown}>
+                                                        <div class="lookup-dropdown" role="listbox">
+                                                            <template if:true={isBlockLeadSearching}>
+                                                                <div class="lookup-item lookup-loading">Searching...</div>
+                                                            </template>
+                                                            <template if:false={isBlockLeadSearching}>
+                                                                <template if:true={hasBlockLeadResults}>
+                                                                    <template for:each={blockLeadResults} for:item="lead">
+                                                                        <div key={lead.leadId} class="lookup-item" data-record-id={lead.leadId} data-record-name={lead.leadName} onmousedown={handleBlockLeadSelect}>
+                                                                            <span class="lookup-name">{lead.leadName}</span>
+                                                                            <template if:true={lead.leadIdName}><span class="lookup-sub"> - {lead.leadIdName}</span></template>
+                                                                        </div>
+                                                                    </template>
+                                                                </template>
+                                                                <template if:false={hasBlockLeadResults}>
+                                                                    <div class="lookup-item lookup-no-results">No leads found</div>
+                                                                </template>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-p-bottom_small">
+                                            <lightning-textarea label="Block Reason" value={blockReason} onchange={handleBlockReasonChange} placeholder="Reason for blocking" max-length="255" required></lightning-textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-m-top_small slds-clearfix">
+                                        <lightning-button label="Block Units" variant="brand" onclick={handleBlockUnits} disabled={isBlockDisabled} icon-name="utility:lock" class="slds-float_right slds-m-left_small"></lightning-button>
+                                        <lightning-button label="Unblock Units" variant="destructive" onclick={handleUnblockUnits} icon-name="utility:unlock" class="slds-float_right"></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- UNIT RESULT SUMMARY -->
+                        <template if:true={showUnitResultSummary}>
+                            <div class="slds-m-top_medium">
+                                <div class="result-summary slds-box">
+                                    <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                        <lightning-icon icon-name="utility:check" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Summary
+                                    </h2>
+                                    <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-success">
+                                                <p class="summary-count">{unitResult.successCount}</p>
+                                                <p class="summary-label">Successful</p>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <div class="summary-card summary-failure">
+                                                <p class="summary-count">{unitResult.failureCount}</p>
+                                                <p class="summary-label">Failed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <template if:true={hasUnitFailures}>
+                                        <h3 class="slds-text-title_caps slds-m-bottom_x-small slds-text-color_error">Failure Details</h3>
+                                        <div class="failure-table-container">
+                                            <lightning-datatable key-field="unitId" data={unitResult.failures} columns={unitFailureColumns} hide-checkbox-column></lightning-datatable>
+                                        </div>
+                                    </template>
+                                    <div class="slds-m-top_small">
+                                        <lightning-button label="Done" variant="neutral" onclick={handleDismissUnitResult}></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 4: TEMPORARY SHARED RECORDS         ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Temporary Shared Records" value="tempSharedRecords" icon-name="utility:share">
+                    <div class="slds-p-top_small">
+                        <div class="filter-section slds-p-bottom_medium">
+                            <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:share" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Temporary Shared Records
+                            </h2>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">User</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={tab4UserName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{tab4UserName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTab4User}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={tab4UserName}>
+                                            <lightning-input type="text" placeholder="Search user..." value={tab4SearchTerm}
+                                                             onchange={handleTab4UserSearch} onfocus={handleTab4UserFocus} onblur={handleTab4UserBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showTab4Dropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isTab4Searching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isTab4Searching}>
+                                                        <template if:true={hasTab4LookupResults}>
+                                                            <template for:each={tab4LookupResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTab4UserSelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasTab4LookupResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Search" variant="brand" onclick={handleTab4Search} icon-name="utility:search"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4 RESULTS -->
+                        <template if:true={tab4HasSearched}>
+                            <div class="results-section slds-p-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h2 class="slds-text-heading_small section-header">
+                                        <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Records ({tab4ResultCount})
+                                    </h2>
+                                    <template if:true={tab4HasSelectedRows}>
+                                        <span class="slds-badge slds-badge_inverse">{tab4SelectedCount} Selected</span>
+                                    </template>
+                                </div>
+                                <template if:true={tab4HasResults}>
+                                    <div class="datatable-container">
+                                        <lightning-datatable key-field="historyId" data={tab4Results} columns={tempShareColumns}
+                                                             onrowselection={handleTab4RowSelection} max-row-selection="200" show-row-number-column></lightning-datatable>
+                                    </div>
+                                    <template if:true={tab4HasSelectedRows}>
+                                        <div class="slds-m-top_small">
+                                            <lightning-button label="Revoke Selected Sharing" variant="destructive" onclick={handleRevokeTab4Sharing} icon-name="utility:ban"></lightning-button>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:false={tab4HasResults}>
+                                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                        <p class="slds-text-body_regular slds-text-color_weak">No temporary shared records found.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 5: BLOCKED UNITS VIEWER             ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Blocked Units" value="blockedUnitsViewer" icon-name="utility:preview">
+                    <div class="slds-p-top_small">
+                        <div class="filter-section slds-p-bottom_medium">
+                            <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                Blocked Units
+                            </h2>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <!-- Blocked By user lookup -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Blocked By</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={tab5BlockedByName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{tab5BlockedByName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTab5BlockedBy}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={tab5BlockedByName}>
+                                            <lightning-input type="text" placeholder="Search user..." value={tab5BlockedBySearchTerm}
+                                                             onchange={handleTab5BlockedBySearch} onfocus={handleTab5BlockedByFocus} onblur={handleTab5BlockedByBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showTab5BlockedByDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isTab5BlockedBySearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isTab5BlockedBySearching}>
+                                                        <template if:true={hasTab5BlockedByResults}>
+                                                            <template for:each={tab5BlockedByResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTab5BlockedBySelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasTab5BlockedByResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Blocking For user lookup -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Blocking For</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={tab5BlockingForName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{tab5BlockingForName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearTab5BlockingFor}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={tab5BlockingForName}>
+                                            <lightning-input type="text" placeholder="Search user..." value={tab5BlockingForSearchTerm}
+                                                             onchange={handleTab5BlockingForSearch} onfocus={handleTab5BlockingForFocus} onblur={handleTab5BlockingForBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showTab5BlockingForDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isTab5BlockingForSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isTab5BlockingForSearching}>
+                                                        <template if:true={hasTab5BlockingForResults}>
+                                                            <template for:each={tab5BlockingForResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleTab5BlockingForSelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasTab5BlockingForResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Management Only toggle -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small slds-grid slds-grid_vertical-align-end">
+                                    <lightning-input type="toggle" label="Management Only" checked={tab5ManagementOnly}
+                                                     onchange={handleTab5ManagementToggle}
+                                                     message-toggle-active="Yes" message-toggle-inactive="No"></lightning-input>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Search" variant="brand" onclick={handleTab5Search} icon-name="utility:search"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5 RESULTS -->
+                        <template if:true={tab5HasSearched}>
+                            <div class="results-section slds-p-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h2 class="slds-text-heading_small section-header">
+                                        <lightning-icon icon-name="utility:table" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Blocked Units ({tab5ResultCount})
+                                    </h2>
+                                    <template if:true={tab5HasSelectedRows}>
+                                        <span class="slds-badge slds-badge_inverse">{tab5SelectedCount} Selected</span>
+                                    </template>
+                                </div>
+                                <template if:true={tab5HasResults}>
+                                    <div class="datatable-container">
+                                        <lightning-datatable key-field="unitId" data={tab5Results} columns={blockedUnitColumns}
+                                                             onrowselection={handleTab5RowSelection} max-row-selection="200" show-row-number-column></lightning-datatable>
+                                    </div>
+                                    <template if:true={tab5HasSelectedRows}>
+                                        <div class="slds-m-top_small">
+                                            <lightning-button label="Remove Blocking" variant="destructive" onclick={handleTab5Unblock} icon-name="utility:unlock"></lightning-button>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:false={tab5HasResults}>
+                                    <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                        <p class="slds-text-body_regular slds-text-color_weak">No blocked units found.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ╔══════════════════════════════════════════╗ -->
+                <!-- ║  TAB 6: BLOCK REQUESTS & APPROVAL        ║ -->
+                <!-- ╚══════════════════════════════════════════╝ -->
+                <lightning-tab label="Block Requests" value="blockRequests" icon-name="utility:approval">
+                    <div class="slds-p-top_small">
+                        <h2 class="slds-text-heading_small slds-m-bottom_small section-header">
+                            <lightning-icon icon-name="utility:approval" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                            Block Requests &amp; Approval
+                        </h2>
+
+                        <!-- SECTION 1: Submit Block Request -->
+                        <div class="slds-box request-box slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_small section-header">Submit Block Request</h3>
+
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <!-- Project combobox -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Project" value={reqProject} options={projectOptions}
+                                                        onchange={handleReqProjectChange} placeholder="Select project"></lightning-combobox>
+                                </div>
+
+                                <!-- Unit search -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Unit</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={reqUnitName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{reqUnitName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearReqUnit}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={reqUnitName}>
+                                            <lightning-input type="text" placeholder="Search unit..." value={reqUnitSearchTerm}
+                                                             onchange={handleReqUnitSearch} onfocus={handleReqUnitFocus} onblur={handleReqUnitBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showReqUnitDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isReqUnitSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isReqUnitSearching}>
+                                                        <template if:true={hasReqUnitResults}>
+                                                            <template for:each={reqUnitResults} for:item="unit">
+                                                                <div key={unit.unitId} class="lookup-item" data-record-id={unit.unitId} data-record-name={unit.unitNumber} onmousedown={handleReqUnitSelect}>
+                                                                    <span class="lookup-name">{unit.unitNumber}</span>
+                                                                    <template if:true={unit.projectName}><span class="lookup-sub"> - {unit.projectName}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasReqUnitResults}>
+                                                            <div class="lookup-item lookup-no-results">No units found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Lead lookup (optional) -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Lead (Optional)</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={reqLeadName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{reqLeadName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearReqLead}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={reqLeadName}>
+                                            <lightning-input type="text" placeholder="Search by Name / Lead ID / Number" value={reqLeadSearchTerm}
+                                                             onchange={handleReqLeadSearch} onfocus={handleReqLeadFocus} onblur={handleReqLeadBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showReqLeadDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isReqLeadSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isReqLeadSearching}>
+                                                        <template if:true={hasReqLeadResults}>
+                                                            <template for:each={reqLeadResults} for:item="lead">
+                                                                <div key={lead.leadId} class="lookup-item" data-record-id={lead.leadId} data-record-name={lead.leadName} onmousedown={handleReqLeadSelect}>
+                                                                    <span class="lookup-name">{lead.leadName}</span>
+                                                                    <template if:true={lead.leadIdName}><span class="lookup-sub"> - {lead.leadIdName}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasReqLeadResults}>
+                                                            <div class="lookup-item lookup-no-results">No leads found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Duration -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input type="number" label="Duration (Days)" value={reqBlockDays}
+                                                     onchange={handleReqBlockDaysChange} min="1" step="1" placeholder="Number of days"></lightning-input>
+                                </div>
+
+                                <!-- Reason -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-p-bottom_small">
+                                    <lightning-textarea label="Reason" value={reqReason} onchange={handleReqReasonChange} placeholder="Reason for block request" max-length="255" required></lightning-textarea>
+                                </div>
+
+                                <!-- Approver lookup -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small">
+                                    <label class="slds-form-element__label filter-label">Approver</label>
+                                    <div class="user-lookup-container">
+                                        <template if:true={reqApproverName}>
+                                            <div class="slds-pill_container">
+                                                <span class="slds-pill">
+                                                    <span class="slds-pill__label">{reqApproverName}</span>
+                                                    <button class="slds-button slds-button_icon slds-pill__remove" title="Remove" onclick={handleClearReqApprover}>
+                                                        <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Remove"></lightning-icon>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <template if:false={reqApproverName}>
+                                            <lightning-input type="text" placeholder="Search approver..." value={reqApproverSearchTerm}
+                                                             onchange={handleReqApproverSearch} onfocus={handleReqApproverFocus} onblur={handleReqApproverBlur}
+                                                             variant="label-hidden"></lightning-input>
+                                            <template if:true={showReqApproverDropdown}>
+                                                <div class="lookup-dropdown" role="listbox">
+                                                    <template if:true={isReqApproverSearching}>
+                                                        <div class="lookup-item lookup-loading">Searching...</div>
+                                                    </template>
+                                                    <template if:false={isReqApproverSearching}>
+                                                        <template if:true={hasReqApproverResults}>
+                                                            <template for:each={reqApproverResults} for:item="user">
+                                                                <div key={user.Id} class="lookup-item" data-record-id={user.Id} data-record-name={user.Name} onmousedown={handleReqApproverSelect}>
+                                                                    <span class="lookup-name">{user.Name}</span>
+                                                                    <template if:true={user.Email}><span class="lookup-sub"> - {user.Email}</span></template>
+                                                                </div>
+                                                            </template>
+                                                        </template>
+                                                        <template if:false={hasReqApproverResults}>
+                                                            <div class="lookup-item lookup-no-results">No users found</div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                    <template if:true={defaultManagerName}>
+                                        <span class="slds-text-body_small slds-text-color_weak">Default: {defaultManagerName}</span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_small">
+                                <lightning-button label="Submit Block Request" variant="brand" onclick={handleSubmitBlockRequest} icon-name="utility:approval"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- SECTION 2: Pending Approvals -->
+                        <template if:true={hasPendingRequests}>
+                            <div class="reassignment-section slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                    <lightning-icon icon-name="utility:clock" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Pending Approvals
+                                </h3>
+                                <div class="datatable-container">
+                                    <lightning-datatable key-field="requestId" data={pendingRequests} columns={blockRequestColumns}
+                                                         onrowaction={handleRequestRowAction} hide-checkbox-column></lightning-datatable>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Reject Modal -->
+                        <template if:true={showRejectModal}>
+                            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                                <div class="slds-modal__container">
+                                    <header class="slds-modal__header">
+                                        <h2 class="slds-text-heading_medium">Reject Block Request</h2>
+                                    </header>
+                                    <div class="slds-modal__content slds-p-around_medium">
+                                        <lightning-textarea label="Rejection Notes" value={rejectNotes} onchange={handleRejectNotesChange} placeholder="Reason for rejection" required></lightning-textarea>
+                                    </div>
+                                    <footer class="slds-modal__footer">
+                                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelReject} class="slds-m-right_small"></lightning-button>
+                                        <lightning-button label="Confirm Reject" variant="destructive" onclick={handleConfirmReject}></lightning-button>
+                                    </footer>
+                                </div>
+                            </section>
+                            <div class="slds-backdrop slds-backdrop_open"></div>
+                        </template>
+
+                        <!-- SECTION 3: My Requests -->
+                        <div class="reassignment-section slds-m-top_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_small section-header">
+                                <lightning-icon icon-name="utility:list" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                My Requests
+                            </h3>
+                            <template if:true={myRequests}>
+                                <div class="datatable-container">
+                                    <lightning-datatable key-field="requestId" data={myRequests} columns={myRequestColumns}
+                                                         hide-checkbox-column></lightning-datatable>
+                                </div>
+                            </template>
+                            <template if:false={myRequests}>
+                                <div class="slds-illustration slds-illustration_small slds-p-around_large slds-align_absolute-center">
+                                    <p class="slds-text-body_regular slds-text-color_weak">No block requests submitted yet.</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </lightning-tab>
+
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>

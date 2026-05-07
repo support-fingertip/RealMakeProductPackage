@@ -1,0 +1,31 @@
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 12px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.compact-table th,
+.compact-table td {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.action-col {
+    width: 80px;
+    text-align: center;
+}

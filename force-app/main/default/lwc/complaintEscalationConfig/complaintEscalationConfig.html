@@ -1,0 +1,268 @@
+<template>
+    <div class="escalation-container">
+        <!-- Header -->
+        <div class="section-header">
+            <h2 class="section-title">
+                <lightning-icon icon-name="utility:priority" size="x-small"></lightning-icon>
+                Complaint Escalation Matrix
+            </h2>
+            <div class="header-actions">
+                <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                    onclick={handleRefresh} variant="border-filled" class="slds-m-right_x-small"></lightning-button-icon>
+                <lightning-button label="New Rule" variant="brand"
+                    icon-name="utility:add" onclick={handleNewRule}></lightning-button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <template if:true={hasSummary}>
+            <div class="summary-cards slds-m-bottom_medium">
+                <template for:each={escalationSummary} for:item="item">
+                    <div key={item.level} class="summary-card">
+                        <div class={item.badgeClass}>
+                            <span class="summary-count">{item.count}</span>
+                            <span class="summary-label">Level {item.level}</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Rules List -->
+        <template if:false={isLoading}>
+            <template if:true={hasRules}>
+                <div class="rules-grid">
+                    <template for:each={rules} for:item="rule">
+                        <div key={rule.Id} class={rule.cardClass}>
+                            <div class="rule-header">
+                                <div class="rule-title-row">
+                                    <span class="rule-name">{rule.Name}</span>
+                                    <template if:true={rule.Active__c}>
+                                        <lightning-badge label="Active" class="active-badge"></lightning-badge>
+                                    </template>
+                                    <template if:false={rule.Active__c}>
+                                        <lightning-badge label="Inactive" class="inactive-badge"></lightning-badge>
+                                    </template>
+                                </div>
+                                <lightning-button-menu alternative-text="Actions" variant="border-filled"
+                                    menu-alignment="right" onselect={handleRuleAction} data-id={rule.Id}>
+                                    <lightning-menu-item value="edit" label="Edit" icon-name="utility:edit"></lightning-menu-item>
+                                    <lightning-menu-item value="toggle" label={rule.toggleLabel}
+                                        icon-name={rule.toggleIcon}></lightning-menu-item>
+                                    <lightning-menu-item value="delete" label="Delete"
+                                        icon-name="utility:delete"></lightning-menu-item>
+                                </lightning-button-menu>
+                            </div>
+
+                            <div class="rule-filters">
+                                <template if:true={rule.Priority__c}>
+                                    <span class={rule.priorityBadgeClass}>{rule.Priority__c}</span>
+                                </template>
+                                <template if:false={rule.Priority__c}>
+                                    <span class="filter-tag">All Priorities</span>
+                                </template>
+                                <template if:true={rule.Category__c}>
+                                    <span class="filter-tag category">{rule.Category__c}</span>
+                                </template>
+                                <template if:false={rule.Category__c}>
+                                    <span class="filter-tag">All Categories</span>
+                                </template>
+                                <template if:true={rule.projectName}>
+                                    <span class="filter-tag project">{rule.projectName}</span>
+                                </template>
+                            </div>
+
+                            <div class="escalation-levels">
+                                <div class="level-row level-1">
+                                    <div class="level-indicator">L1</div>
+                                    <div class="level-details">
+                                        <span class="level-days">{rule.Level_1_Days__c} days</span>
+                                        <span class="level-arrow">&rarr;</span>
+                                        <span class="level-target">{rule.Level_1_Notify__c}</span>
+                                        <template if:true={rule.level1UserName}>
+                                            <span class="level-user">({rule.level1UserName})</span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <template if:true={rule.Level_2_Days__c}>
+                                    <div class="level-row level-2">
+                                        <div class="level-indicator">L2</div>
+                                        <div class="level-details">
+                                            <span class="level-days">{rule.Level_2_Days__c} days</span>
+                                            <span class="level-arrow">&rarr;</span>
+                                            <span class="level-target">{rule.Level_2_Notify__c}</span>
+                                            <template if:true={rule.level2UserName}>
+                                                <span class="level-user">({rule.level2UserName})</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template if:true={rule.Level_3_Days__c}>
+                                    <div class="level-row level-3">
+                                        <div class="level-indicator">L3</div>
+                                        <div class="level-details">
+                                            <span class="level-days">{rule.Level_3_Days__c} days</span>
+                                            <span class="level-arrow">&rarr;</span>
+                                            <span class="level-target">{rule.Level_3_Notify__c}</span>
+                                            <template if:true={rule.level3UserName}>
+                                                <span class="level-user">({rule.level3UserName})</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <template if:true={rule.Auto_Reassign__c}>
+                                <div class="auto-reassign-tag">
+                                    <lightning-icon icon-name="utility:reassign" size="xx-small"></lightning-icon>
+                                    Auto-reassign enabled
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasRules}>
+                <div class="empty-state">
+                    <lightning-icon icon-name="utility:priority" size="large"></lightning-icon>
+                    <h3>No Escalation Rules</h3>
+                    <p>Create escalation rules to automatically notify the right people when complaints are overdue.</p>
+                    <lightning-button label="Create First Rule" variant="brand" onclick={handleNewRule}></lightning-button>
+                </div>
+            </template>
+        </template>
+
+        <!-- Edit Modal -->
+        <template if:true={showModal}>
+            <section class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={handleCloseModal}>
+                            <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                        </button>
+                        <h2 class="slds-modal__title">{modalTitle}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <!-- Matching Criteria -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Matching Criteria</h3>
+                            <p class="form-section-desc">Leave fields blank to match all values for that criteria.</p>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox label="Priority" value={editRule.priority}
+                                        options={priorityOptions} onchange={handleFieldChange}
+                                        data-field="priority"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox label="Category" value={editRule.category}
+                                        options={categoryOptions} onchange={handleFieldChange}
+                                        data-field="category"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                    <lightning-input label="Description" value={editRule.description}
+                                        onchange={handleFieldChange} data-field="description"></lightning-input>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level 1 -->
+                        <div class="form-section level-section level-1-section">
+                            <h3 class="form-section-title">Level 1 Escalation <span class="required-tag">Required</span></h3>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input type="number" label="Days Overdue" value={editRule.level1Days}
+                                        min="1" required onchange={handleFieldChange}
+                                        data-field="level1Days"></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Notify" value={editRule.level1Notify}
+                                        options={notifyOptions} required onchange={handleFieldChange}
+                                        data-field="level1Notify"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <template if:true={showLevel1UserLookup}>
+                                        <lightning-input label="Custom User ID" value={editRule.level1UserId}
+                                            onchange={handleFieldChange} data-field="level1UserId"
+                                            placeholder="User ID"></lightning-input>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level 2 -->
+                        <div class="form-section level-section level-2-section">
+                            <h3 class="form-section-title">Level 2 Escalation <span class="optional-tag">Optional</span></h3>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input type="number" label="Days Overdue" value={editRule.level2Days}
+                                        min="1" onchange={handleFieldChange}
+                                        data-field="level2Days"></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Notify" value={editRule.level2Notify}
+                                        options={notifyOptions} onchange={handleFieldChange}
+                                        data-field="level2Notify"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <template if:true={showLevel2UserLookup}>
+                                        <lightning-input label="Custom User ID" value={editRule.level2UserId}
+                                            onchange={handleFieldChange} data-field="level2UserId"
+                                            placeholder="User ID"></lightning-input>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level 3 -->
+                        <div class="form-section level-section level-3-section">
+                            <h3 class="form-section-title">Level 3 Escalation <span class="optional-tag">Optional</span></h3>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-input type="number" label="Days Overdue" value={editRule.level3Days}
+                                        min="1" onchange={handleFieldChange}
+                                        data-field="level3Days"></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <lightning-combobox label="Notify" value={editRule.level3Notify}
+                                        options={notifyOptions} onchange={handleFieldChange}
+                                        data-field="level3Notify"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_small">
+                                    <template if:true={showLevel3UserLookup}>
+                                        <lightning-input label="Custom User ID" value={editRule.level3UserId}
+                                            onchange={handleFieldChange} data-field="level3UserId"
+                                            placeholder="User ID"></lightning-input>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Options</h3>
+                            <lightning-input type="checkbox" label="Auto-reassign complaint on escalation"
+                                checked={editRule.autoReassign} onchange={handleAutoReassignChange}></lightning-input>
+                            <lightning-input type="checkbox" label="Active"
+                                checked={editRule.active} onchange={handleActiveChange}
+                                class="slds-m-top_small"></lightning-input>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={handleCloseModal}
+                            class="slds-m-right_small"></lightning-button>
+                        <lightning-button label="Save" variant="brand" onclick={handleSave}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+</template>

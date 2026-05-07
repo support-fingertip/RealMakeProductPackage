@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Amount_Composition_Config__c</fullName>
+    <description>Payment Schedule config: JSON defining how Amount, GST, TDS are calculated. Defines component fields from Booking and calculation mode (separate or inclusive)</description>
+    <label>Amount Composition Config</label>
+    <length>32768</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

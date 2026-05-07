@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enable_Reminder_4__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enable or disable 4th demand reminder for this project.</description>
+    <inlineHelpText>Enable 4th demand reminder</inlineHelpText>
+    <label>Enable 4th Reminder</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

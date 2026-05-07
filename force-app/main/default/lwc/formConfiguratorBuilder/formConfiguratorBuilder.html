@@ -1,0 +1,671 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- LIST VIEW -->
+    <template if:true={isListView}>
+        <lightning-card title="Dynamic Form Configurations" icon-name="custom:custom63">
+            <lightning-button slot="actions" label="New Configuration" variant="brand"
+                icon-name="utility:add" onclick={handleNewConfig}></lightning-button>
+            <div class="slds-p-around_medium">
+                <template if:true={hasConfigurations}>
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped compact-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Target Object</th>
+                                <th scope="col">Context Object</th>
+                                <th scope="col">Button Label</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="action-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={configurations} for:item="config">
+                                <tr key={config.Id}>
+                                    <td><a data-id={config.Id} onclick={handleEditConfig}>{config.Name}</a></td>
+                                    <td>{config.Object_API_Name__c}</td>
+                                    <td>{config.Context_Object__c}</td>
+                                    <td>{config.Button_Label__c}</td>
+                                    <td>
+                                        <template if:true={config.Active__c}>
+                                            <span class="slds-badge slds-theme_success">Active</span>
+                                        </template>
+                                        <template if:false={config.Active__c}>
+                                            <span class="slds-badge">Inactive</span>
+                                        </template>
+                                    </td>
+                                    <td class="action-col">
+                                        <lightning-button-icon icon-name="utility:edit" alternative-text="Edit"
+                                            data-id={config.Id} onclick={handleEditConfig}
+                                            variant="bare" size="small"
+                                            class="slds-m-right_xx-small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:copy" alternative-text="Clone"
+                                            data-id={config.Id} onclick={handleCloneConfig}
+                                            variant="bare" size="small"
+                                            class="slds-m-right_xx-small"></lightning-button-icon>
+                                        <lightning-button-icon icon-name="utility:delete" alternative-text="Delete"
+                                            data-id={config.Id} onclick={handleDeleteConfig}
+                                            variant="bare" size="small"></lightning-button-icon>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+                <template if:false={hasConfigurations}>
+                    <div class="slds-text-align_center slds-p-around_large slds-text-color_weak">
+                        No configurations found. Click "New Configuration" to create one.
+                    </div>
+                </template>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- BUILDER VIEW -->
+    <template if:true={isBuilderView}>
+        <lightning-card title={builderTitle} icon-name="custom:custom63">
+            <lightning-button slot="actions" label="Back to List" variant="neutral"
+                icon-name="utility:back" onclick={handleBackToList}></lightning-button>
+
+            <div class="slds-p-around_medium">
+
+                <!-- Step 1: Basic Info -->
+                <div class="slds-section slds-is-open slds-m-bottom_medium">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-header">
+                            1. Basic Information
+                        </span>
+                    </h3>
+                    <div class="slds-section__content">
+                        <div class="slds-grid slds-gutters slds-wrap">
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input label="Form Name" value={formName}
+                                    onchange={handleFormNameChange} required></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input label="Button Label" value={buttonLabel}
+                                    onchange={handleButtonLabelChange}
+                                    placeholder="e.g., Create Booking"></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox name="targetObject" label="Target Object (to create)"
+                                    value={selectedObject} placeholder="Select the object to create"
+                                    options={objectOptions} onchange={handleObjectChange}
+                                    required></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox name="contextObject" label="Context Object (button placed on)"
+                                    value={contextObject} placeholder="Select where the button will be placed"
+                                    options={objectOptions}
+                                    onchange={handleContextObjectChange}></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-textarea label="Description" value={description}
+                                    onchange={handleDescriptionChange}></lightning-textarea>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4 slds-m-bottom_small">
+                                <lightning-input type="checkbox" label="Active" checked={isActive}
+                                    onchange={handleActiveChange}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4 slds-m-bottom_small">
+                                <lightning-input label="Save Form Name To Field"
+                                    value={saveFormNameToField} onchange={handleSaveFieldChange}
+                                    placeholder="e.g., Form_Used__c"></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox name="contextLookupField"
+                                    label="Context Lookup Field (auto-populate from context record)"
+                                    value={contextLookupField} placeholder="Select lookup field on target object..."
+                                    options={contextLookupFieldOptions}
+                                    onchange={handleContextLookupFieldChange}
+                                    field-level-help="Select the lookup field on the target object that points back to the context object. It will be auto-populated with the context record ID."></lightning-combobox>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Conditions -->
+                <template if:true={contextObject}>
+                    <div class="slds-section slds-is-open slds-m-bottom_medium">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small section-header">
+                                2. Display Conditions (on Context Object)
+                            </span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                                Define field conditions on the context object that must be met for this form to appear.
+                            </p>
+                            <template if:true={hasConditions}>
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-m-bottom_small">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Field</th>
+                                            <th scope="col">Operator</th>
+                                            <th scope="col">Value</th>
+                                            <th scope="col" style="width:60px">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={conditions} for:item="cond">
+                                            <tr key={cond.key}>
+                                                <td>{cond.fieldLabel}</td>
+                                                <td>{cond.operator}</td>
+                                                <td>{cond.value}</td>
+                                                <td>
+                                                    <lightning-button-icon icon-name="utility:delete"
+                                                        alternative-text="Remove" data-key={cond.key}
+                                                        onclick={handleRemoveCondition}
+                                                        variant="destructive"></lightning-button-icon>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+                            <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-combobox label="Field" value={newCondField}
+                                        options={contextFieldOptions}
+                                        onchange={handleCondFieldChange}
+                                        placeholder="Select field"></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning-combobox label="Operator" value={newCondOperator}
+                                        options={conditionOperatorOptions}
+                                        onchange={handleCondOperatorChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning-input label="Value" value={newCondValue}
+                                        onchange={handleCondValueChange}></lightning-input>
+                                </div>
+                                <div class="slds-col">
+                                    <lightning-button label="Add" variant="brand"
+                                        onclick={handleAddCondition}></lightning-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Step 3: Sections & Fields -->
+                <template if:true={selectedObject}>
+                    <div class="slds-section slds-is-open slds-m-bottom_medium">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small section-header">
+                                3. Form Sections & Fields
+                            </span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <lightning-button label="Add Section" variant="brand"
+                                icon-name="utility:add" onclick={handleAddSection}
+                                class="slds-m-bottom_small"></lightning-button>
+
+                            <template if:true={hasSections}>
+                                <template for:each={sections} for:item="section">
+                                    <div key={section.id} class="section-card slds-m-bottom_medium">
+                                        <div class="slds-grid slds-grid_vertical-align-center slds-p-around_small section-card-header">
+                                            <div class="slds-col slds-grow">
+                                                <lightning-input label="Section Label"
+                                                    value={section.label}
+                                                    data-section-id={section.id}
+                                                    onchange={handleSectionLabelChange}
+                                                    variant="label-hidden"
+                                                    placeholder="Section Label"></lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-m-left_small" style="width:120px">
+                                                <lightning-combobox label="Columns"
+                                                    value={section.columns}
+                                                    data-section-id={section.id}
+                                                    options={columnOptions}
+                                                    onchange={handleSectionColumnsChange}
+                                                    variant="label-hidden"></lightning-combobox>
+                                            </div>
+                                            <div class="slds-col slds-m-left_small slds-shrink-none">
+                                                <lightning-button-icon icon-name="utility:up"
+                                                    alternative-text="Move Up"
+                                                    data-section-id={section.id}
+                                                    onclick={handleMoveSectionUp}></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:down"
+                                                    alternative-text="Move Down"
+                                                    data-section-id={section.id}
+                                                    onclick={handleMoveSectionDown}></lightning-button-icon>
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Remove Section"
+                                                    data-section-id={section.id}
+                                                    onclick={handleRemoveSection}
+                                                    variant="destructive"></lightning-button-icon>
+                                            </div>
+                                        </div>
+
+                                        <!-- Field picker for this section -->
+                                        <div class="slds-p-around_small">
+                                            <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_small">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-combobox
+                                                        label="Add Field"
+                                                        placeholder="Select a field to add"
+                                                        options={availableFieldOptions}
+                                                        data-section-id={section.id}
+                                                        onchange={handleFieldAddToSection}></lightning-combobox>
+                                                </div>
+                                            </div>
+
+                                            <template if:true={section.hasFields}>
+                                                <table class="slds-table slds-table_bordered slds-table_cell-buffer compact-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">#</th>
+                                                            <th scope="col">Field</th>
+                                                            <th scope="col">API Name</th>
+                                                            <th scope="col">Required</th>
+                                                            <th scope="col">Default Value</th>
+                                                            <th scope="col" style="width:150px">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <template for:each={section.fields} for:item="field">
+                                                            <tr key={field.id}>
+                                                                <td>{field.order}</td>
+                                                                <td>{field.label}</td>
+                                                                <td>{field.apiName}</td>
+                                                                <td>
+                                                                    <lightning-input type="checkbox"
+                                                                        checked={field.isRequired}
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onchange={handleFieldRequiredChange}
+                                                                        variant="label-hidden"></lightning-input>
+                                                                </td>
+                                                                <td>
+                                                                    <lightning-input
+                                                                        value={field.defaultValue}
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onchange={handleFieldDefaultChange}
+                                                                        variant="label-hidden"
+                                                                        placeholder="Default"></lightning-input>
+                                                                </td>
+                                                                <td>
+                                                                    <lightning-button-icon icon-name="utility:filterList"
+                                                                        alternative-text="Field Condition"
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleToggleFieldCondition}
+                                                                        title="Toggle field visibility condition"
+                                                                        class={field.showCondition}></lightning-button-icon>
+                                                                    <lightning-button-icon icon-name="utility:up"
+                                                                        alternative-text="Up"
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleFieldMoveUp}></lightning-button-icon>
+                                                                    <lightning-button-icon icon-name="utility:down"
+                                                                        alternative-text="Down"
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleFieldMoveDown}></lightning-button-icon>
+                                                                    <lightning-button-icon icon-name="utility:delete"
+                                                                        alternative-text="Remove"
+                                                                        data-section-id={section.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleFieldRemove}
+                                                                        variant="destructive"></lightning-button-icon>
+                                                                </td>
+                                                            </tr>
+                                                            <!-- Field Condition Row -->
+                                                            <template if:true={field.showCondition}>
+                                                                <tr key={field.id} class="field-condition-row">
+                                                                    <td colspan="6">
+                                                                        <div class="field-condition-box slds-grid slds-gutters slds-grid_vertical-align-end">
+                                                                            <div class="slds-col slds-shrink-none slds-p-top_x-small">
+                                                                                <lightning-icon icon-name="utility:filterList" size="xx-small"
+                                                                                    class="slds-m-right_xx-small"></lightning-icon>
+                                                                                <span class="condition-label">Show only when</span>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-4">
+                                                                                <lightning-combobox label="Field"
+                                                                                    value={field.showCondition.field}
+                                                                                    options={allFormFieldOptions}
+                                                                                    data-section-id={section.id}
+                                                                                    data-field-id={field.id}
+                                                                                    onchange={handleFieldCondFieldChange}
+                                                                                    placeholder="Select field"
+                                                                                    variant="label-hidden"></lightning-combobox>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-5">
+                                                                                <lightning-combobox label="Operator"
+                                                                                    value={field.showCondition.operator}
+                                                                                    options={fieldConditionOperators}
+                                                                                    data-section-id={section.id}
+                                                                                    data-field-id={field.id}
+                                                                                    onchange={handleFieldCondOperatorChange}
+                                                                                    variant="label-hidden"></lightning-combobox>
+                                                                            </div>
+                                                                            <div class="slds-col slds-size_1-of-4">
+                                                                                <lightning-input label="Value"
+                                                                                    value={field.showCondition.value}
+                                                                                    data-section-id={section.id}
+                                                                                    data-field-id={field.id}
+                                                                                    onchange={handleFieldCondValueChange}
+                                                                                    placeholder="Condition value"
+                                                                                    variant="label-hidden"></lightning-input>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </template>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                            </template>
+                                            <template if:false={section.hasFields}>
+                                                <p class="slds-text-color_weak slds-text-body_small slds-p-vertical_small">
+                                                    No fields added. Use the dropdown above to add fields.
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasSections}>
+                                <p class="slds-text-color_weak slds-text-align_center slds-p-around_medium">
+                                    No sections added. Click "Add Section" to start building your form.
+                                </p>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Step 4: Child Records -->
+                <template if:true={selectedObject}>
+                    <div class="slds-section slds-is-open slds-m-bottom_medium">
+                        <h3 class="slds-section__title">
+                            <span class="slds-truncate slds-p-horizontal_small section-header">
+                                4. Child Record Sections
+                            </span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_small">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-combobox label="Add Child Object"
+                                        placeholder="Select a child relationship"
+                                        options={childRelationshipOptions}
+                                        value={selectedChildRelationship}
+                                        onchange={handleChildRelSelect}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-m-left_small">
+                                    <lightning-button label="Add Child Section" variant="brand"
+                                        onclick={handleAddChildConfig}></lightning-button>
+                                </div>
+                            </div>
+
+                            <template if:true={hasChildConfigs}>
+                                <template for:each={childConfigs} for:item="child">
+                                    <div key={child.id} class="section-card slds-m-bottom_medium child-section">
+                                        <div class="slds-grid slds-grid_vertical-align-center slds-p-around_small section-card-header child-header">
+                                            <div class="slds-col slds-grow">
+                                                <lightning-input label="Section Label"
+                                                    value={child.sectionLabel}
+                                                    data-child-id={child.id}
+                                                    onchange={handleChildLabelChange}
+                                                    variant="label-hidden"
+                                                    placeholder="Child Section Label"></lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-m-left_small slds-text-body_small slds-text-color_weak">
+                                                {child.childObject} via {child.relationshipField}
+                                            </div>
+                                            <div class="slds-col slds-m-left_small slds-shrink-none">
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Remove"
+                                                    data-child-id={child.id}
+                                                    onclick={handleRemoveChildConfig}
+                                                    variant="destructive"></lightning-button-icon>
+                                            </div>
+                                        </div>
+
+                                        <div class="slds-p-around_small">
+                                            <div class="slds-grid slds-grid_vertical-align-end slds-m-bottom_small">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <lightning-combobox
+                                                        label="Add Field"
+                                                        placeholder="Select a field"
+                                                        options={child.availableFields}
+                                                        data-child-id={child.id}
+                                                        onchange={handleChildFieldAdd}></lightning-combobox>
+                                                </div>
+                                            </div>
+
+                                            <template if:true={child.hasFields}>
+                                                <table class="slds-table slds-table_bordered slds-table_cell-buffer compact-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">#</th>
+                                                            <th scope="col">Field</th>
+                                                            <th scope="col">API Name</th>
+                                                            <th scope="col">Required</th>
+                                                            <th scope="col" style="width:100px">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <template for:each={child.fields} for:item="field">
+                                                            <tr key={field.id}>
+                                                                <td>{field.order}</td>
+                                                                <td>{field.label}</td>
+                                                                <td>{field.apiName}</td>
+                                                                <td>
+                                                                    <lightning-input type="checkbox"
+                                                                        checked={field.isRequired}
+                                                                        data-child-id={child.id}
+                                                                        data-field-id={field.id}
+                                                                        onchange={handleChildFieldRequiredChange}
+                                                                        variant="label-hidden"></lightning-input>
+                                                                </td>
+                                                                <td>
+                                                                    <lightning-button-icon icon-name="utility:up"
+                                                                        alternative-text="Up"
+                                                                        data-child-id={child.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleChildFieldMoveUp}></lightning-button-icon>
+                                                                    <lightning-button-icon icon-name="utility:down"
+                                                                        alternative-text="Down"
+                                                                        data-child-id={child.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleChildFieldMoveDown}></lightning-button-icon>
+                                                                    <lightning-button-icon icon-name="utility:delete"
+                                                                        alternative-text="Remove"
+                                                                        data-child-id={child.id}
+                                                                        data-field-id={field.id}
+                                                                        onclick={handleChildFieldRemove}
+                                                                        variant="destructive"></lightning-button-icon>
+                                                                </td>
+                                                            </tr>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                            </template>
+                                            <template if:false={child.hasFields}>
+                                                <p class="slds-text-color_weak slds-text-body_small slds-p-vertical_small">
+                                                    No fields added for this child object.
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Step 5: Visibility Rules -->
+                <div class="slds-section slds-is-open slds-m-bottom_medium">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-header">
+                            5. Visibility Rules (User/Profile/Role)
+                        </span>
+                    </h3>
+                    <div class="slds-section__content">
+                        <template if:true={hasVisibilityRules}>
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-m-bottom_small">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Rule Type</th>
+                                        <th scope="col">Operator</th>
+                                        <th scope="col">Value</th>
+                                        <th scope="col" style="width:60px">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={visibilityRules} for:item="rule">
+                                        <tr key={rule.key}>
+                                            <td>{rule.ruleType}</td>
+                                            <td>{rule.operator}</td>
+                                            <td>{rule.value}</td>
+                                            <td>
+                                                <lightning-button-icon icon-name="utility:delete"
+                                                    alternative-text="Remove" data-key={rule.key}
+                                                    onclick={handleRemoveRule}
+                                                    variant="destructive"></lightning-button-icon>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                        <lightning-button label="Add Visibility Rule" onclick={handleAddRule}
+                            variant="neutral" icon-name="utility:add"></lightning-button>
+                    </div>
+                </div>
+
+                <!-- 6. Document Upload Configuration -->
+                <div class="slds-section slds-is-open slds-m-top_medium">
+                    <h3 class="slds-section__title">
+                        <span class="slds-truncate slds-p-horizontal_small section-header">
+                            6. Document Upload Section
+                        </span>
+                    </h3>
+                    <div class="slds-section__content">
+                        <lightning-input type="checkbox" label="Enable Document Upload in Form"
+                            checked={enableDocumentUpload}
+                            onchange={handleDocUploadToggle}
+                            class="slds-m-bottom_small">
+                        </lightning-input>
+
+                        <template if:true={enableDocumentUpload}>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                                Select which document categories and types users must upload when filling this form.
+                                Checked types will appear as upload slots in the form. Mark as required to enforce upload.
+                            </p>
+
+                            <template if:true={hasDocumentCategories}>
+                                <template for:each={documentCategories} for:item="cat">
+                                    <div key={cat.value} class="slds-box slds-box_x-small slds-m-bottom_small">
+                                        <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small">
+                                            <lightning-input type="checkbox"
+                                                label={cat.label}
+                                                checked={cat.isSelected}
+                                                data-category={cat.value}
+                                                onchange={handleDocCategoryToggle}
+                                                class="slds-text-title_bold">
+                                            </lightning-input>
+                                        </div>
+                                        <template if:true={cat.isSelected}>
+                                            <div class="slds-p-left_large">
+                                                <template for:each={cat.documentTypes} for:item="dtype">
+                                                    <div key={dtype.value} class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <lightning-input type="checkbox"
+                                                                label={dtype.label}
+                                                                checked={dtype.isSelected}
+                                                                data-category={cat.value}
+                                                                data-type={dtype.value}
+                                                                onchange={handleDocTypeToggle}>
+                                                            </lightning-input>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <template if:true={dtype.isSelected}>
+                                                                <lightning-input type="checkbox"
+                                                                    label="Required"
+                                                                    checked={dtype.isRequired}
+                                                                    data-category={cat.value}
+                                                                    data-type={dtype.value}
+                                                                    onchange={handleDocTypeRequiredToggle}>
+                                                                </lightning-input>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <template if:false={hasDocumentCategories}>
+                                <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
+                                    No document categories found. Configure Document_Category__c and Document_Type__c picklists on ContentVersion.
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Save / Cancel -->
+                <div class="slds-text-align_center slds-m-top_large">
+                    <lightning-button label="Cancel" onclick={handleBackToList}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button label="Save Configuration" onclick={handleSave}
+                        variant="brand"></lightning-button>
+                </div>
+            </div>
+        </lightning-card>
+
+        <!-- Visibility Rule Modal -->
+        <template if:true={showRuleModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container rule-modal">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Add Visibility Rule</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-combobox label="Rule Type" value={currentRule.ruleType}
+                            options={ruleTypes} onchange={handleRuleTypeChange}
+                            class="slds-m-bottom_small"></lightning-combobox>
+                        <lightning-combobox label="Operator" value={currentRule.operator}
+                            options={operatorOptions} onchange={handleOperatorChange}
+                            class="slds-m-bottom_small"></lightning-combobox>
+
+                        <template if:true={showProfilePicker}>
+                            <lightning-combobox label="Profile" value={currentRule.value}
+                                options={profileOptions}
+                                onchange={handleRuleValueChange}></lightning-combobox>
+                        </template>
+                        <template if:true={showRolePicker}>
+                            <lightning-combobox label="Role" value={currentRule.value}
+                                options={roleOptions}
+                                onchange={handleRuleValueChange}></lightning-combobox>
+                        </template>
+                        <template if:true={showUserPicker}>
+                            <lightning-input label="Search User" onchange={handleUserSearch}
+                                placeholder="Type to search users"></lightning-input>
+                            <template if:true={hasUserOptions}>
+                                <lightning-combobox label="Select User" value={currentRule.value}
+                                    options={userOptions}
+                                    onchange={handleRuleValueChange}></lightning-combobox>
+                            </template>
+                        </template>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" onclick={closeRuleModal}></lightning-button>
+                        <lightning-button label="Save Rule" variant="brand"
+                            onclick={handleSaveRule}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </template>
+</template>

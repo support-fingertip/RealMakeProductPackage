@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sub_Category__c</fullName>
+    <label>Sub Category</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cracks in walls</fullName>
+                <default>false</default>
+                <label>Cracks in walls</label>
+            </value>
+            <value>
+                <fullName>Leakage</fullName>
+                <default>false</default>
+                <label>Leakage</label>
+            </value>
+            <value>
+                <fullName>Drainage</fullName>
+                <default>false</default>
+                <label>Drainage</label>
+            </value>
+            <value>
+                <fullName>Tap</fullName>
+                <default>false</default>
+                <label>Tap</label>
+            </value>
+            <value>
+                <fullName>Flush</fullName>
+                <default>false</default>
+                <label>Flush</label>
+            </value>
+            <value>
+                <fullName>Pipe</fullName>
+                <default>false</default>
+                <label>Pipe</label>
+            </value>
+            <value>
+                <fullName>Water Pressure</fullName>
+                <default>false</default>
+                <label>Water Pressure</label>
+            </value>
+            <value>
+                <fullName>Switch</fullName>
+                <default>false</default>
+                <label>Switch</label>
+            </value>
+            <value>
+                <fullName>Socket</fullName>
+                <default>false</default>
+                <label>Socket</label>
+            </value>
+            <value>
+                <fullName>Wiring</fullName>
+                <default>false</default>
+                <label>Wiring</label>
+            </value>
+            <value>
+                <fullName>Light</fullName>
+                <default>false</default>
+                <label>Light</label>
+            </value>
+            <value>
+                <fullName>Fan</fullName>
+                <default>false</default>
+                <label>Fan</label>
+            </value>
+            <value>
+                <fullName>MCB</fullName>
+                <default>false</default>
+                <label>MCB</label>
+            </value>
+            <value>
+                <fullName>Peeling</fullName>
+                <default>false</default>
+                <label>Peeling</label>
+            </value>
+            <value>
+                <fullName>Uneven</fullName>
+                <default>false</default>
+                <label>Uneven</label>
+            </value>
+            <value>
+                <fullName>Color Mismatch</fullName>
+                <default>false</default>
+                <label>Color Mismatch</label>
+            </value>
+            <value>
+                <fullName>Stains</fullName>
+                <default>false</default>
+                <label>Stains</label>
+            </value>
+            <value>
+                <fullName>Ceiling defects</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Ceiling defects</label>
+            </value>
+            <value>
+                <fullName>Light fixture issues</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Light fixture issues</label>
+            </value>
+            <value>
+                <fullName>Loose wiring</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Loose wiring</label>
+            </value>
+            <value>
+                <fullName>MCB / DB problems</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>MCB / DB problems</label>
+            </value>
+            <value>
+                <fullName>Plaster defects</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Plaster defects</label>
+            </value>
+            <value>
+                <fullName>Power fluctuations</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Power fluctuations</label>
+            </value>
+            <value>
+                <fullName>Switch / socket not working</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Switch / socket not working</label>
+            </value>
+            <value>
+                <fullName>Uneven flooring</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Uneven flooring</label>
+            </value>
+            <value>
+                <fullName>Water seepage</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Water seepage</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

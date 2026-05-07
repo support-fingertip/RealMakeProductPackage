@@ -1,0 +1,457 @@
+<template>
+    <lightning-card>
+        <!-- Loading spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative" style="min-height: 200px;">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <!-- Progress indicator -->
+            <div class="slds-p-horizontal_medium slds-p-top_small">
+                <lightning-progress-indicator current-step={currentStep} type="base" variant="base">
+                    <lightning-progress-step label="Applicant Details" value="1"></lightning-progress-step>
+                    <lightning-progress-step label="Co-Applicants" value="2"></lightning-progress-step>
+                    <lightning-progress-step label="Booking Details" value="3"></lightning-progress-step>
+                    <lightning-progress-step label="Review" value="4"></lightning-progress-step>
+                </lightning-progress-indicator>
+            </div>
+
+            <!-- Step 1: Primary Applicant Details -->
+            <template if:true={isStep1}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_small slds-m-bottom_medium">Primary Applicant Details</h2>
+
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Salutation" value={bookingData.Salutation__c}
+                                options={salutationOptions} data-field="Salutation__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Customer Name" value={bookingData.Customer_Name__c}
+                                required data-field="Customer_Name__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Customer Mobile" type="tel"
+                                value={bookingData.Customer_Mobile__c}
+                                required data-field="Customer_Mobile__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Email" type="email" value={bookingData.Email__c}
+                                data-field="Email__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Son/Daughter/Wife of"
+                                value={bookingData.Son_Daughter_Wife_of__c}
+                                data-field="Son_Daughter_Wife_of__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Date of Birth" type="date"
+                                value={bookingData.Date_of_Birth__c}
+                                data-field="Date_of_Birth__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="PAN Number" value={bookingData.PAN_Number__c}
+                                data-field="PAN_Number__c" required
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Aadhaar Number" value={bookingData.Aadhaar__c}
+                                data-field="Aadhaar__c" required
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Nationality" value={bookingData.Nationality__c}
+                                options={nationalityOptions} data-field="Nationality__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Residential Status"
+                                value={bookingData.Residential_Status__c}
+                                options={residentialStatusOptions}
+                                data-field="Residential_Status__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 2: Co-Applicants -->
+            <template if:true={isStep2}>
+                <div class="slds-p-around_medium">
+                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_medium">
+                        <h2 class="slds-text-heading_small">Co-Applicants</h2>
+                        <lightning-button label="Add Co-Applicant" variant="brand"
+                            icon-name="utility:add" onclick={handleAddCoApplicant}></lightning-button>
+                    </div>
+
+                    <template if:false={hasCoApplicants}>
+                        <div class="slds-text-align_center slds-text-color_weak slds-p-around_large">
+                            No co-applicants added. Click "Add Co-Applicant" to add one.
+                        </div>
+                    </template>
+
+                    <template for:each={coApplicants} for:item="coApp">
+                        <div key={coApp.key}
+                             class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
+                            <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
+                                <h3 class="slds-text-heading_x-small">
+                                    Co-Applicant {coApp.index}
+                                </h3>
+                                <lightning-button-icon icon-name="utility:delete"
+                                    alternative-text="Remove" variant="bare-inverse"
+                                    data-key={coApp.key}
+                                    onclick={handleRemoveCoApplicant}></lightning-button-icon>
+                            </div>
+
+                            <div class="slds-grid slds-wrap slds-gutters">
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="Applicant Name" required
+                                        value={coApp.Applicant_Name__c}
+                                        data-key={coApp.key} data-field="Applicant_Name__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox label="Relationship" required
+                                        value={coApp.Relationship__c}
+                                        options={relationshipOptions}
+                                        data-key={coApp.key} data-field="Relationship__c"
+                                        onchange={handleCoAppFieldChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="Mobile" type="tel"
+                                        value={coApp.Applicant_Mobile__c}
+                                        data-key={coApp.key} data-field="Applicant_Mobile__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="Email" type="email"
+                                        value={coApp.Applicant_Email__c}
+                                        data-key={coApp.key} data-field="Applicant_Email__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="Date of Birth" type="date"
+                                        value={coApp.Date_of_Birth__c}
+                                        data-key={coApp.key} data-field="Date_of_Birth__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="PAN Number"
+                                        value={coApp.PAN_Number__c}
+                                        data-key={coApp.key} data-field="PAN_Number__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-input label="Aadhaar Number"
+                                        value={coApp.Aadhar_Number__c}
+                                        data-key={coApp.key} data-field="Aadhar_Number__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                                    <lightning-combobox label="Occupation"
+                                        value={coApp.Occupation__c}
+                                        options={occupationOptions}
+                                        data-key={coApp.key} data-field="Occupation__c"
+                                        onchange={handleCoAppFieldChange}></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                    <lightning-input label="Address"
+                                        value={coApp.Address__c}
+                                        data-key={coApp.key} data-field="Address__c"
+                                        onchange={handleCoAppFieldChange}></lightning-input>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Step 3: Booking Details -->
+            <template if:true={isStep3}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_small slds-m-bottom_medium">Booking Details</h2>
+
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-input label="Booking Date" type="date"
+                                value={bookingData.Booking_Date__c} required
+                                data-field="Booking_Date__c"
+                                onchange={handleBookingFieldChange}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Booking Stage"
+                                value={bookingData.Booking_Stage__c}
+                                options={bookingStageOptions} required
+                                data-field="Booking_Stage__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Payment Plan" required
+                                value={bookingData.Payment_Plan__c}
+                                options={paymentPlanOptions}
+                                data-field="Payment_Plan__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Funding Type"
+                                value={bookingData.Funding_Type__c}
+                                options={fundingTypeOptions}
+                                data-field="Funding_Type__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+                            <lightning-combobox label="Booking Source"
+                                value={bookingData.Booking_Source__c}
+                                options={bookingSourceOptions}
+                                data-field="Booking_Source__c"
+                                onchange={handleBookingFieldChange}></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                            <lightning-textarea label="Remarks"
+                                value={bookingData.Remarks__c}
+                                data-field="Remarks__c" max-length="5000"
+                                onchange={handleBookingFieldChange}></lightning-textarea>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Template Info -->
+                    <template if:true={hasMappingConfig}>
+                        <div class="slds-box slds-box_x-small slds-theme_info slds-m-top_small">
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <lightning-icon icon-name="utility:info" size="x-small"
+                                    class="slds-m-right_small"></lightning-icon>
+                                <span class="slds-text-body_small">
+                                    {mappedFieldCount} calculation steps will be applied from the Project Calculation Template.
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Step 4: Review -->
+            <template if:true={isStep4}>
+                <div class="slds-p-around_medium">
+                    <h2 class="slds-text-heading_small slds-m-bottom_medium">Review & Confirm</h2>
+
+                    <!-- Cost Sheet & Property Info -->
+                    <div class="slds-box slds-box_x-small slds-m-bottom_small">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Cost Sheet & Property</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_x-small">
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Cost Sheet:</span>
+                                <span class="slds-m-left_xx-small"><strong>{costSheetName}</strong></span>
+                            </div>
+                            <template if:true={projectName}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Project:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{projectName}</strong></span>
+                                </div>
+                            </template>
+                            <template if:true={unitName}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Unit:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{unitName}</strong></span>
+                                </div>
+                            </template>
+                            <template if:true={towerName}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Tower:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{towerName}</strong></span>
+                                </div>
+                            </template>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Agreement Value:</span>
+                                <span class="slds-m-left_xx-small"><strong>{formattedAgreementValue}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Applicant Summary -->
+                    <div class="slds-box slds-box_x-small slds-m-bottom_small">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Primary Applicant</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_x-small">
+                            <template if:true={bookingData.Salutation__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Salutation:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Salutation__c}</strong></span>
+                                </div>
+                            </template>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Name:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Customer_Name__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Mobile:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Customer_Mobile__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Email:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Email__c}</strong></span>
+                            </div>
+                            <template if:true={bookingData.Son_Daughter_Wife_of__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">S/D/W of:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Son_Daughter_Wife_of__c}</strong></span>
+                                </div>
+                            </template>
+                            <template if:true={bookingData.Date_of_Birth__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">DOB:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Date_of_Birth__c}</strong></span>
+                                </div>
+                            </template>
+                            <template if:true={bookingData.PAN_Number__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">PAN:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.PAN_Number__c}</strong></span>
+                                </div>
+                            </template>
+                            <template if:true={bookingData.Aadhaar__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Aadhaar:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Aadhaar__c}</strong></span>
+                                </div>
+                            </template>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Nationality:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Nationality__c}</strong></span>
+                            </div>
+                            <template if:true={bookingData.Residential_Status__c}>
+                                <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Residential Status:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Residential_Status__c}</strong></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Co-Applicants Summary -->
+                    <template if:true={hasCoApplicants}>
+                        <div class="slds-box slds-box_x-small slds-m-bottom_small">
+                            <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+                                Co-Applicants ({coApplicantCount})
+                            </h3>
+                            <template for:each={coApplicants} for:item="coApp">
+                                <div key={coApp.key} class="slds-p-bottom_xx-small slds-border_bottom">
+                                    <div class="slds-grid slds-wrap slds-gutters_x-small">
+                                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                            <span class="slds-text-color_weak">Name:</span>
+                                            <span class="slds-m-left_xx-small"><strong>{coApp.Applicant_Name__c}</strong></span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                            <span class="slds-text-color_weak">Relationship:</span>
+                                            <span class="slds-m-left_xx-small"><strong>{coApp.Relationship__c}</strong></span>
+                                        </div>
+                                        <template if:true={coApp.Applicant_Mobile__c}>
+                                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                                <span class="slds-text-color_weak">Mobile:</span>
+                                                <span class="slds-m-left_xx-small"><strong>{coApp.Applicant_Mobile__c}</strong></span>
+                                            </div>
+                                        </template>
+                                        <template if:true={coApp.Applicant_Email__c}>
+                                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                                <span class="slds-text-color_weak">Email:</span>
+                                                <span class="slds-m-left_xx-small"><strong>{coApp.Applicant_Email__c}</strong></span>
+                                            </div>
+                                        </template>
+                                        <template if:true={coApp.PAN_Number__c}>
+                                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                                <span class="slds-text-color_weak">PAN:</span>
+                                                <span class="slds-m-left_xx-small"><strong>{coApp.PAN_Number__c}</strong></span>
+                                            </div>
+                                        </template>
+                                        <template if:true={coApp.Occupation__c}>
+                                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                                <span class="slds-text-color_weak">Occupation:</span>
+                                                <span class="slds-m-left_xx-small"><strong>{coApp.Occupation__c}</strong></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Booking Details Summary -->
+                    <div class="slds-box slds-box_x-small slds-m-bottom_small">
+                        <h3 class="slds-text-title_caps slds-m-bottom_x-small">Booking Details</h3>
+                        <div class="slds-grid slds-wrap slds-gutters_x-small">
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Date:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Booking_Date__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Stage:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Booking_Stage__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Payment Plan:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Payment_Plan__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Funding:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Funding_Type__c}</strong></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3 slds-p-bottom_xx-small">
+                                <span class="slds-text-color_weak">Source:</span>
+                                <span class="slds-m-left_xx-small"><strong>{bookingData.Booking_Source__c}</strong></span>
+                            </div>
+                            <template if:true={bookingData.Remarks__c}>
+                                <div class="slds-col slds-size_1-of-1 slds-p-bottom_xx-small">
+                                    <span class="slds-text-color_weak">Remarks:</span>
+                                    <span class="slds-m-left_xx-small"><strong>{bookingData.Remarks__c}</strong></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Mapping info -->
+                    <template if:true={hasMappingConfig}>
+                        <div class="slds-box slds-box_x-small slds-theme_info">
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <lightning-icon icon-name="utility:sync" size="x-small"
+                                    class="slds-m-right_small"></lightning-icon>
+                                <span><strong>{mappedFieldCount}</strong> calculation steps will be applied from the Project Calculation Template.</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Navigation Buttons -->
+            <div class="slds-p-around_medium slds-grid slds-grid_align-spread slds-border_top">
+                <div>
+                    <template if:false={isStep1}>
+                        <lightning-button label="Previous" variant="neutral"
+                            icon-name="utility:chevronleft"
+                            onclick={handlePrevious}></lightning-button>
+                    </template>
+                    <lightning-button label="Cancel" variant="neutral"
+                        onclick={handleCancel}
+                        class="slds-m-left_small"></lightning-button>
+                </div>
+                <div>
+                    <template if:false={isStep4}>
+                        <lightning-button label="Next" variant="brand"
+                            icon-name="utility:chevronright" icon-position="right"
+                            onclick={handleNext}></lightning-button>
+                    </template>
+                    <template if:true={isStep4}>
+                        <lightning-button label="Create Booking" variant="success"
+                            icon-name="utility:check" onclick={handleCreateBooking}
+                            disabled={isSaving}></lightning-button>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </lightning-card>
+</template>

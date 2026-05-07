@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <property name="objectApiName" type="String" label="Object API Name" description="The API name of the object (e.g., Account, Contact)" required="true"/>
+            <property name="buttonLabel" type="String" label="Button Label" description="Text to display on the button" default="Create Record"/>
+            <property name="buttonVariant" type="String" label="Button Variant" description="Button style (brand, neutral, destructive)" default="brand"/>
+            <property name="buttonIcon" type="String" label="Button Icon" description="Icon name (e.g., utility:add)" default="utility:add"/>
+        </targetConfig>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
+            <property name="objectApiName" type="String" label="Context Object API Name" description="The API name of the context object" required="true"/>
+            <property name="buttonLabel" type="String" label="Button Label" description="Text to display on the button" default="Create Record"/>
+            <property name="buttonVariant" type="String" label="Button Variant" description="Button style (brand, neutral, destructive)" default="brand"/>
+            <property name="buttonIcon" type="String" label="Button Icon" description="Icon name (e.g., utility:add)" default="utility:add"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

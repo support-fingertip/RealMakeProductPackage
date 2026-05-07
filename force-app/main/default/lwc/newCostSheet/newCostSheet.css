@@ -1,0 +1,78 @@
+/* ── Unit search results ─────────────────────────── */
+.unit-results {
+    max-height: 250px;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+}
+
+.selected-unit-box {
+    background: #eaf5fe;
+    border-color: #1b96ff;
+}
+
+/* ── Cost Sheet sections ────────────────────────── */
+.cs-section {
+    background: #f3f3f3;
+    border-radius: 6px;
+}
+
+.cs-field {
+    padding: 6px 4px;
+}
+
+.cs-label {
+    display: block;
+    font-size: 11px;
+    color: #706e6b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.cs-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #181818;
+}
+
+.cs-currency::before {
+    content: '\20B9 ';
+    font-weight: 400;
+}
+
+.cs-highlight {
+    color: #0070d2;
+}
+
+.cs-discount {
+    color: #c23934;
+}
+
+.cs-large {
+    font-size: 18px;
+}
+
+.cs-total {
+    color: #2e844a;
+}
+
+/* ── Discount section ───────────────────────────── */
+.cs-discount-section {
+    background: #fff8e6;
+    border-color: #f4bc25;
+}
+
+/* ── Totals section ─────────────────────────────── */
+.cs-totals-section {
+    background: #f0faf0;
+    border-color: #2e844a;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+/* ── Milestone table ────────────────────────────── */
+.milestone-table {
+    max-height: 350px;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+}

@@ -1,0 +1,182 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+    </template>
+
+    <!-- ═══════════ REPORT LIST ═══════════ -->
+    <template if:true={isListView}>
+        <div class="viewer-container">
+            <div class="viewer-header">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <lightning-icon icon-name="utility:table" size="medium"
+                            class="header-icon-badge"></lightning-icon>
+                    </div>
+                    <div class="header-text">
+                        <h1 class="header-title">CRM Reports</h1>
+                        <p class="header-subtitle">Select a report to view</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-list-container">
+                <template if:true={hasReports}>
+                    <div class="report-cards-grid">
+                        <template for:each={reports} for:item="report">
+                            <div key={report.id} class="report-card"
+                                data-id={report.id} onclick={handleRunReport}>
+                                <div class="report-card-icon">
+                                    <lightning-icon icon-name="doctype:unknown" size="medium"></lightning-icon>
+                                </div>
+                                <div class="report-card-content">
+                                    <h3 class="report-card-title">{report.name}</h3>
+                                    <p class="report-card-description">{report.description}</p>
+                                </div>
+                                <div class="report-card-action">
+                                    <lightning-icon icon-name="utility:chevronright" size="x-small"></lightning-icon>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasReports}>
+                    <div class="empty-state">
+                        <lightning-icon icon-name="utility:table" size="large"></lightning-icon>
+                        <h3 class="slds-m-top_medium">No Reports Available</h3>
+                        <p class="slds-text-color_weak slds-m-top_small">
+                            No reports have been shared with you yet. Contact your administrator.
+                        </p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ REPORT VIEW ═══════════ -->
+    <template if:true={isReportView}>
+        <div class="viewer-container">
+            <div class="report-view-header">
+                <div class="report-view-header-left">
+                    <lightning-button label="Back to Reports" variant="base"
+                        icon-name="utility:back" onclick={handleBackToList}></lightning-button>
+                </div>
+                <div class="report-view-header-center">
+                    <h2 class="report-view-title">{activeReportName}</h2>
+                    <template if:true={activeReportDescription}>
+                        <p class="report-view-subtitle">{activeReportDescription}</p>
+                    </template>
+                </div>
+                <div class="report-view-header-right">
+                    <lightning-button label="Download Excel" variant="neutral"
+                        icon-name="utility:download" onclick={handleExportExcel}
+                        class="slds-m-right_small"></lightning-button>
+                    <lightning-button-icon icon-name="utility:refresh"
+                        alternative-text="Refresh" onclick={handleRefreshReport}
+                        variant="border-filled" size="medium"></lightning-button-icon>
+                </div>
+            </div>
+
+            <div class="report-sections-container">
+                <template if:true={hasReportSections}>
+                    <template for:each={processedSections} for:item="sec">
+                        <div key={sec.sectionId} class="report-section">
+                            <div class="report-section-header">
+                                <h3 class="report-section-title">{sec.sectionTitle}</h3>
+                                <div class="report-section-badges">
+                                    <span class="section-type-badge">{sec.sectionType}</span>
+                                    <span class="section-count-badge">{sec.totalRows} records</span>
+                                    <lightning-button-icon icon-name="utility:download"
+                                        alternative-text="Export CSV" data-sectionid={sec.sectionId}
+                                        onclick={handleExportCsv} variant="bare"
+                                        size="small" class="export-btn"></lightning-button-icon>
+                                </div>
+                            </div>
+
+                            <template if:true={sec.hasRows}>
+                                <div class="report-table-wrapper">
+                                    <table class="report-table">
+                                        <thead>
+                                            <tr>
+                                                <template for:each={sec.sortedColumns} for:item="col">
+                                                    <th key={col.fieldName} class={col.sortClass}
+                                                        data-sectionid={sec.sectionId}
+                                                        data-field={col.fieldName}
+                                                        onclick={handleSort}>
+                                                        <div class="th-content th-sortable" title={col.label}>
+                                                            {col.label}
+                                                            <template if:true={col.isSorted}>
+                                                                <lightning-icon icon-name={col.sortIcon}
+                                                                    size="xx-small" class="sort-icon"></lightning-icon>
+                                                            </template>
+                                                        </div>
+                                                    </th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={sec.processedRows} for:item="row">
+                                                <tr key={row.key}>
+                                                    <template for:each={row.cells} for:item="cell">
+                                                        <td key={cell.key}>
+                                                            <template if:true={cell.isNumber}>
+                                                                <span class="cell-number">{cell.value}</span>
+                                                            </template>
+                                                            <template if:false={cell.isNumber}>
+                                                                <span class="cell-text" title={cell.value}>{cell.value}</span>
+                                                            </template>
+                                                        </td>
+                                                    </template>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <template if:true={sec.showPagination}>
+                                    <div class="pagination-bar">
+                                        <span class="pagination-info">{sec.paginationInfo}</span>
+                                        <div class="pagination-controls">
+                                            <lightning-button-icon icon-name="utility:chevronleft"
+                                                alternative-text="Previous" data-sectionid={sec.sectionId}
+                                                onclick={handlePrevPage} variant="border-filled"
+                                                size="small" disabled={sec.isPrevDisabled}></lightning-button-icon>
+                                            <span class="pagination-page">Page {sec.currentPage} of {sec.totalPages}</span>
+                                            <lightning-button-icon icon-name="utility:chevronright"
+                                                alternative-text="Next" data-sectionid={sec.sectionId}
+                                                onclick={handleNextPage} variant="border-filled"
+                                                size="small" disabled={sec.isNextDisabled}></lightning-button-icon>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <template if:false={sec.hasRows}>
+                                <div class="section-empty">
+                                    No data found for this section.
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:true={reportError}>
+                    <div class="report-error">
+                        <lightning-icon icon-name="utility:error" size="small" variant="error"
+                            class="slds-m-right_small"></lightning-icon>
+                        {reportError}
+                    </div>
+                </template>
+
+                <template if:false={hasReportSections}>
+                    <template if:false={reportError}>
+                        <div class="section-empty">
+                            No report data available.
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </div>
+    </template>
+</template>
