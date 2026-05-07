@@ -107,14 +107,10 @@ public with sharing class IntegrationFieldMappingEngine {
 
             Object convertedValue = convertValue(rawValue, rule);
             if (convertedValue != null) {
-                String fieldKey = rule.SF_Field_API_Name__c;
-                if (targetType != null) {
-                    Schema.SObjectField sfField = NamespaceUtil.describeField(targetType, fieldKey);
-                    if (sfField != null) {
-                        fieldKey = sfField.getDescribe().getName();
-                    }
-                }
-                fieldMap.put(fieldKey, convertedValue);
+                // Preserve the rule's configured field name as the map key so callers can
+                // continue to read by the un-prefixed SF API name. applyFieldMap() resolves
+                // the runtime API name via NamespaceUtil.describeField when writing to an SObject.
+                fieldMap.put(rule.SF_Field_API_Name__c, convertedValue);
             }
         }
 

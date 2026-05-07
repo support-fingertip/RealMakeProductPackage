@@ -18,7 +18,11 @@ public with sharing class GenericDuplicationTriggerHandler {
     }
 
     private static void checkAndPreventDuplicates(List<SObject> newRecords, String objectApiName) {
-        // 1. Get configuration (1 SOQL)
+        // 1. Get configuration (1 SOQL). Tolerate config records stored with either
+        // prefixed or un-prefixed object names.
+        Set<String> objectNameCandidates = new Set<String>{
+            objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+        };
         List<Duplication_Configuration__c> configs = [
             SELECT Id,
                    Primary_Object_API_Name__c,
@@ -27,7 +31,7 @@ public with sharing class GenericDuplicationTriggerHandler {
                    Related_Expression__c,
                    Block_On_Duplicate__c
             FROM Duplication_Configuration__c
-            WHERE Primary_Object_API_Name__c = :objectApiName
+            WHERE Primary_Object_API_Name__c IN :objectNameCandidates
             AND Active__c = true
             LIMIT 1
         ];

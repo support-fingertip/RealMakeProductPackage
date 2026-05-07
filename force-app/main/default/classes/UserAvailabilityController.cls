@@ -418,11 +418,18 @@ public with sharing class UserAvailabilityController {
             Boolean needsUpdate = false;
             User u = new User(Id = userId);
 
-            if (isAvailable && (!current.is_working__c || !current.Availability__c)) {
+            // Treat null current values as the unset state so callers can always toggle.
+            // current.is_working__c / current.Availability__c may be null on a fresh User
+            // record; coerce to the appropriate primitive booleans before comparing.
+            Boolean isCurrentlyWorking = current.is_working__c == true;
+            Boolean isCurrentlyAvailable = current.Availability__c == true;
+
+            if (isAvailable && (!isCurrentlyWorking || !isCurrentlyAvailable)) {
                 u.is_working__c = true;
                 u.Availability__c = true;
                 needsUpdate = true;
-            } else if (!isAvailable && current.Availability__c) {
+            } else if (!isAvailable && current.Availability__c != false) {
+                // null or true — write false. Skip only if already explicitly false.
                 u.Availability__c = false;
                 needsUpdate = true;
             }

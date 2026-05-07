@@ -182,14 +182,12 @@ public with sharing class RoundRobinConfiguratorController {
     @AuraEnabled(cacheable=true)
     public static List<PicklistOption> getLeadFieldPicklistValues(String fieldApiName) {
         List<PicklistOption> options = new List<PicklistOption>();
-        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Lead__c.fields.getMap();
-
-        String normalizedName = fieldApiName.toLowerCase();
-        if (!fieldMap.containsKey(normalizedName)) {
+        Schema.SObjectField field = NamespaceUtil.describeField(Lead__c.SObjectType, fieldApiName);
+        if (field == null) {
             return options;
         }
 
-        Schema.DescribeFieldResult dfr = fieldMap.get(normalizedName).getDescribe();
+        Schema.DescribeFieldResult dfr = field.getDescribe();
         if (dfr.getType() == Schema.DisplayType.PICKLIST || dfr.getType() == Schema.DisplayType.MULTIPICKLIST) {
             for (Schema.PicklistEntry pe : dfr.getPicklistValues()) {
                 if (pe.isActive()) {

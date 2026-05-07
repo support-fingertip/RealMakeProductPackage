@@ -38,6 +38,11 @@ public with sharing class DocumentViewerController {
                 objectApiName = Id.valueOf(recordId).getSObjectType().getDescribe().getName();
             }
 
+            // Templates may be configured with either form of the API name; match both.
+            Set<String> objectApiNameCandidates = new Set<String>{
+                objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+            };
+
             // Query active templates for this object (Document Viewer context only)
             List<Document_Template__c> templates = [
                 SELECT Id, Name, Description__c, Template_JSON__c,
@@ -45,7 +50,7 @@ public with sharing class DocumentViewerController {
                        File_Name_Pattern__c, Page_Size__c, Page_Orientation__c,
                        Matching_Criteria__c
                 FROM Document_Template__c
-                WHERE Object_API_Name__c = :objectApiName
+                WHERE Object_API_Name__c IN :objectApiNameCandidates
                   AND Active__c = true
                   AND (Display_Context__c = 'Document Viewer' OR Display_Context__c = 'Both' OR Display_Context__c = null)
                 ORDER BY Name ASC
@@ -120,13 +125,17 @@ public with sharing class DocumentViewerController {
                 objectApiName = Id.valueOf(recordId).getSObjectType().getDescribe().getName();
             }
 
+            Set<String> objectApiNameCandidates2 = new Set<String>{
+                objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+            };
+
             List<Document_Template__c> templates = [
                 SELECT Id, Name, Description__c, Template_JSON__c,
                        Template_Content_Document_Id__c,
                        File_Name_Pattern__c, Page_Size__c, Page_Orientation__c,
                        Matching_Criteria__c
                 FROM Document_Template__c
-                WHERE Object_API_Name__c = :objectApiName
+                WHERE Object_API_Name__c IN :objectApiNameCandidates2
                   AND Active__c = true
                   AND Action_Binding__c INCLUDES (:actionName)
                 ORDER BY Name ASC
@@ -376,7 +385,7 @@ public with sharing class DocumentViewerController {
         Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
         if (sType == null) return result;
 
-        Schema.SObjectField field = sType.getDescribe().fields.getMap().get(fieldApiName.toLowerCase());
+        Schema.SObjectField field = NamespaceUtil.describeField(sType, fieldApiName);
         if (field == null) return result;
 
         Schema.DescribeFieldResult dfr = field.getDescribe();

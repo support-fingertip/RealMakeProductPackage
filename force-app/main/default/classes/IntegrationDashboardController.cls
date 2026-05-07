@@ -513,14 +513,16 @@ public with sharing class IntegrationDashboardController {
                 Schema.SObjectType.Integration_Endpoint__c.fields.getMap();
 
             for (String fieldName : endpointData.keySet()) {
-                String lowerName = fieldName.toLowerCase();
-
-                // Skip fields that do not exist on the object
-                if (!fieldMap.containsKey(lowerName)) {
+                // Tolerate callers that pass either prefixed or un-prefixed names.
+                Schema.SObjectField sfField = fieldMap.get(fieldName.toLowerCase());
+                if (sfField == null) {
+                    sfField = fieldMap.get(NamespaceUtil.qualify(fieldName).toLowerCase());
+                }
+                if (sfField == null) {
                     continue;
                 }
 
-                Schema.DescribeFieldResult dfr = fieldMap.get(lowerName).getDescribe();
+                Schema.DescribeFieldResult dfr = sfField.getDescribe();
 
                 // Skip fields the running user cannot write
                 Boolean canWrite = recordId != null ? dfr.isUpdateable() : dfr.isCreateable();
@@ -530,7 +532,7 @@ public with sharing class IntegrationDashboardController {
 
                 Object value = endpointData.get(fieldName);
                 if (value != null) {
-                    endpoint.put(fieldName, value);
+                    endpoint.put(sfField, value);
                 }
             }
 

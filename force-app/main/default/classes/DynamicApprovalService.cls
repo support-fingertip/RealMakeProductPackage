@@ -106,8 +106,13 @@ public with sharing class DynamicApprovalService {
         Approval_Configuration__c config = getConfiguration(configId);
         String objectApiName = recordId.getSObjectType().getDescribe().getName();
         
-        // Validate object matches
-        if (objectApiName != config.Object_API_Name__c) {
+        // Validate object matches. The config may store the un-prefixed form while the
+        // runtime API name carries the namespace (or vice-versa); compare both forms.
+        String runtimeQualified = NamespaceUtil.qualify(objectApiName);
+        String runtimeStripped = NamespaceUtil.strip(objectApiName);
+        String configQualified = NamespaceUtil.qualify(config.Object_API_Name__c);
+        String configStripped = NamespaceUtil.strip(config.Object_API_Name__c);
+        if (runtimeQualified != configQualified && runtimeStripped != configStripped) {
             throw new ApprovalException('Record object type does not match configuration');
         }
         

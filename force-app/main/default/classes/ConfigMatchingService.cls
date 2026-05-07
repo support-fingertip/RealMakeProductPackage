@@ -176,7 +176,7 @@ public with sharing class ConfigMatchingService {
         Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return values;
 
-        Schema.SObjectField field = objType.getDescribe().fields.getMap().get(fieldApiName.toLowerCase());
+        Schema.SObjectField field = NamespaceUtil.describeField(objType, fieldApiName);
         if (field == null) return values;
 
         Schema.DescribeFieldResult dfr = field.getDescribe();
