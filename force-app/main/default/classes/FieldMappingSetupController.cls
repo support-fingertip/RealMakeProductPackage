@@ -39,9 +39,11 @@ public with sharing class FieldMappingSetupController {
             Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldName).getDescribe();
 
             if (fieldDescribe.isAccessible() && !fieldDescribe.isCalculated()) {
+                // Return the un-prefixed API name so the LWC and stored mapping config remain
+                // namespace-agnostic. NamespaceUtil.qualify() resolves it back at runtime.
                 fieldOptions.add(new FieldOption(
                     fieldDescribe.getLabel(),
-                    fieldDescribe.getName(),
+                    NamespaceUtil.strip(fieldDescribe.getName()),
                     String.valueOf(fieldDescribe.getType()),
                     fieldDescribe.isUpdateable()
                 ));

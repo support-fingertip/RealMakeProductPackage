@@ -42,7 +42,7 @@ public with sharing class DuplicationDetectionHelper {
             if (String.isBlank(whereClause) || whereClause == '()') continue;
 
             String query =
-                'SELECT Id FROM ' + objectApiName +
+                'SELECT Id FROM ' + NamespaceUtil.qualify(objectApiName) +
                 ' WHERE ' + whereClause;
 
             if (record.Id != null) {
@@ -169,7 +169,12 @@ public with sharing class DuplicationDetectionHelper {
         String fieldName,
         String fullExpression
     ) {
-        Object value = record.get(fieldName);
+        // The expression stores un-prefixed field names; resolve to runtime API name.
+        String qualifiedFieldName = NamespaceUtil.qualify(fieldName);
+        Object value = record.get(qualifiedFieldName);
+        if (value == null) {
+            value = record.get(fieldName);
+        }
         if (value == null) return '';
 
         if (value instanceof String) {
@@ -186,17 +191,17 @@ public with sharing class DuplicationDetectionHelper {
                 List<String> conditions = new List<String>();
 
                 for (String mf : mobileFields) {
-                    conditions.add(mf + ' = \'' + val + '\'');
+                    conditions.add(NamespaceUtil.qualify(mf) + ' = \'' + val + '\'');
                 }
 
                 return '(' + String.join(conditions, ' OR ') + ')';
             }
 
-            return fieldName + ' = \'' + val + '\'';
+            return qualifiedFieldName + ' = \'' + val + '\'';
         }
 
         if (value instanceof Id) {
-            return fieldName + ' = \'' + value + '\'';
+            return qualifiedFieldName + ' = \'' + value + '\'';
         }
 
         if (value instanceof Boolean ||
@@ -204,15 +209,15 @@ public with sharing class DuplicationDetectionHelper {
             value instanceof Decimal ||
             value instanceof Double ||
             value instanceof Long) {
-            return fieldName + ' = ' + value;
+            return qualifiedFieldName + ' = ' + value;
         }
 
         if (value instanceof Date) {
-            return fieldName + ' = ' + String.valueOf(value);
+            return qualifiedFieldName + ' = ' + String.valueOf(value);
         }
 
         if (value instanceof Datetime) {
-            return fieldName + ' = ' +
+            return qualifiedFieldName + ' = ' +
                 ((Datetime)value).formatGMT('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'');
         }
 
@@ -239,7 +244,8 @@ public with sharing class DuplicationDetectionHelper {
             part = part.trim();
 
             if (part.toLowerCase().contains('mobile')) {
-                mobileFields.add(part);
+                // Always emit the namespace-qualified API name so SOQL and SObject.get() resolve correctly.
+                mobileFields.add(NamespaceUtil.qualify(part));
             }
         }
 
@@ -350,7 +356,7 @@ public with sharing class DuplicationDetectionHelper {
         }
 
         String query = 'SELECT ' + String.escapeSingleQuotes(fieldsToQuery)
-            + ' FROM ' + String.escapeSingleQuotes(objectApiName)
+            + ' FROM ' + String.escapeSingleQuotes(NamespaceUtil.qualify(objectApiName))
             + ' WHERE ' + whereClause
             + ' LIMIT 1';
 
@@ -489,20 +495,26 @@ public with sharing class DuplicationDetectionHelper {
         SObject record, String fieldName, String fullExpression
     ) {
         Set<String> keyComponents = new Set<String>();
-        Object value = record.get(fieldName);
+        // Configuration stores un-prefixed names; resolve to runtime API name for the field read.
+        String qualifiedFieldName = NamespaceUtil.qualify(fieldName);
+        Object value = record.get(qualifiedFieldName);
+        if (value == null) {
+            value = record.get(fieldName);
+        }
         if (value == null) return keyComponents;
 
         String normalizedVal = String.valueOf(value).trim().toLowerCase();
         if (String.isBlank(normalizedVal)) return keyComponents;
 
-        // Cross-mobile logic: same as buildConditionForField
+        // Cross-mobile logic: same as buildConditionForField. Mobile fields are already
+        // qualified by extractMobileFields(), so the resulting keys are namespace-stable.
         if (fieldName.toLowerCase().contains('mobile')) {
             Set<String> mobileFields = extractMobileFields(fullExpression);
             for (String mf : mobileFields) {
                 keyComponents.add(mf.toLowerCase() + '=' + normalizedVal);
             }
         } else {
-            keyComponents.add(fieldName.toLowerCase() + '=' + normalizedVal);
+            keyComponents.add(qualifiedFieldName.toLowerCase() + '=' + normalizedVal);
         }
 
         return keyComponents;
@@ -597,7 +609,7 @@ public with sharing class DuplicationDetectionHelper {
         String bulkWhere = '(' + String.join(inConditions, ' OR ') + ')';
 
         String query = 'SELECT ' + fieldsToSelect
-            + ' FROM ' + String.escapeSingleQuotes(objectApiName)
+            + ' FROM ' + String.escapeSingleQuotes(NamespaceUtil.qualify(objectApiName))
             + ' WHERE ' + bulkWhere
             + ' LIMIT 500';
 
@@ -670,7 +682,8 @@ public with sharing class DuplicationDetectionHelper {
         for (String part : cleaned.split(',')) {
             part = part.trim();
             if (String.isNotBlank(part)) {
-                fields.add(part);
+                // Always emit the namespace-qualified API name so SOQL and SObject.get() resolve correctly.
+                fields.add(NamespaceUtil.qualify(part));
             }
         }
 

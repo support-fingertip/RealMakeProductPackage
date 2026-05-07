@@ -57,11 +57,7 @@ public with sharing class LeadScoringDesignerController {
         List<PicklistOption> options = new List<PicklistOption>();
         if (String.isBlank(fieldApiName)) return options;
 
-        Map<String, Schema.SObjectField> fieldMap =
-            Schema.SObjectType.Lead__c.fields.getMap();
-
-        // Field API names in getMap() are lowercase
-        Schema.SObjectField field = fieldMap.get(fieldApiName.toLowerCase());
+        Schema.SObjectField field = NamespaceUtil.describeField(Lead__c.SObjectType, fieldApiName);
         if (field == null) return options;
 
         Schema.DescribeFieldResult dfr = field.getDescribe();
@@ -169,8 +165,7 @@ public with sharing class LeadScoringDesignerController {
         Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return options;
 
-        Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
-        Schema.SObjectField field = fieldMap.get(fieldApiName.toLowerCase());
+        Schema.SObjectField field = NamespaceUtil.describeField(objType, fieldApiName);
         if (field == null) return options;
 
         Schema.DescribeFieldResult dfr = field.getDescribe();

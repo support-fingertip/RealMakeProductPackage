@@ -184,8 +184,12 @@ public with sharing class DynamicFormExecutionController {
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
 
         for (String fieldApiName : fieldApiNames) {
-            if (fieldMap.containsKey(fieldApiName.toLowerCase())) {
-                Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldApiName.toLowerCase()).getDescribe();
+            Schema.SObjectField sfField = fieldMap.get(fieldApiName.toLowerCase());
+            if (sfField == null) {
+                sfField = fieldMap.get(NamespaceUtil.qualify(fieldApiName).toLowerCase());
+            }
+            if (sfField != null) {
+                Schema.DescribeFieldResult fieldDescribe = sfField.getDescribe();
 
                 FieldMetadata metadata = new FieldMetadata();
                 metadata.apiName = fieldDescribe.getName();

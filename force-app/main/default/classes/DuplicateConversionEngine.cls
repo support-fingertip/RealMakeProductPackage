@@ -137,7 +137,7 @@ public with sharing class DuplicateConversionEngine {
             String lookupField = config.Primary_Object_API_Name__c;
 
             if (String.isNotBlank(lookupField)) {
-                leadToUse = (Id) relatedDuplicates[0].get(lookupField);
+                leadToUse = (Id) relatedDuplicates[0].get(NamespaceUtil.qualify(lookupField));
                 existingLeadId = leadToUse;
             }
 
@@ -214,10 +214,18 @@ public with sharing class DuplicateConversionEngine {
         }
 
         try {
-            // Dynamic query using config's primary object
-            String query = 'SELECT Id, Lead_Status__c, Is_Active__c, Project__c,'
-                + ' Lead_Source__c, Lead_Sub_Source__c'
-                + ' FROM ' + String.escapeSingleQuotes(primaryObjectName)
+            // Dynamic query using config's primary object. Field references in the
+            // query string need explicit namespace prefixes because Salesforce does
+            // not auto-prefix identifiers inside dynamic SOQL strings.
+            String fLeadStatus    = NamespaceUtil.qualify('Lead_Status__c');
+            String fIsActive      = NamespaceUtil.qualify('Is_Active__c');
+            String fProject       = NamespaceUtil.qualify('Project__c');
+            String fLeadSource    = NamespaceUtil.qualify('Lead_Source__c');
+            String fLeadSubSource = NamespaceUtil.qualify('Lead_Sub_Source__c');
+
+            String query = 'SELECT Id, ' + fLeadStatus + ', ' + fIsActive + ', ' + fProject + ','
+                + ' ' + fLeadSource + ', ' + fLeadSubSource
+                + ' FROM ' + String.escapeSingleQuotes(NamespaceUtil.qualify(primaryObjectName))
                 + ' WHERE Id = :existingLeadId LIMIT 1';
             List<SObject> results = Database.query(query);
             if (results.isEmpty()) return reengagedType;
@@ -225,26 +233,26 @@ public with sharing class DuplicateConversionEngine {
             SObject existing = results[0];
 
             // Read source info from the incoming (new) record
-            String newSource = (String) newRecord.get('Lead_Source__c');
-            String newSubSource = (String) newRecord.get('Lead_Sub_Source__c');
+            String newSource = (String) newRecord.get(fLeadSource);
+            String newSubSource = (String) newRecord.get(fLeadSubSource);
 
             // Use the Is_Active__c formula field as the source of truth.
             // Fall back to config-based inactive statuses if formula is unavailable.
             Boolean isActive;
-            Object isActiveFormula = existing.get('Is_Active__c');
+            Object isActiveFormula = existing.get(fIsActive);
             if (isActiveFormula != null) {
                 isActive = (Boolean) isActiveFormula;
             } else {
-                String leadStatus = (String) existing.get('Lead_Status__c');
+                String leadStatus = (String) existing.get(fLeadStatus);
                 isActive = !inactiveStatuses.contains(leadStatus);
             }
 
             if (isActive) {
                 // Re-engaged: active duplicate
-                existing.put('Lead_Type__c', reengagedType);
-                existing.put('Last_Reengaged_Source__c', newSource);
-                existing.put('Last_Reengaged_Sub__c', newSubSource);
-                existing.put('Last_Reengaged_Date__c',  Date.today());
+                existing.put(NamespaceUtil.qualify('Lead_Type__c'), reengagedType);
+                existing.put(NamespaceUtil.qualify('Last_Reengaged_Source__c'), newSource);
+                existing.put(NamespaceUtil.qualify('Last_Reengaged_Sub__c'), newSubSource);
+                existing.put(NamespaceUtil.qualify('Last_Reengaged_Date__c'),  Date.today());
 
                 try {
                     skipProcessing = true;
@@ -276,16 +284,17 @@ public with sharing class DuplicateConversionEngine {
             // If the lead was inactive, still attempt a basic reopen (without RR)
             // so the status and type are correctly updated even if LeadReopenService failed
             try {
+                String fIsActiveFb = NamespaceUtil.qualify('Is_Active__c');
                 SObject fallbackLead = Database.query(
-                    'SELECT Id, Is_Active__c FROM ' + String.escapeSingleQuotes(primaryObjectName)
+                    'SELECT Id, ' + fIsActiveFb + ' FROM ' + String.escapeSingleQuotes(NamespaceUtil.qualify(primaryObjectName))
                     + ' WHERE Id = :existingLeadId LIMIT 1'
                 );
-                Boolean wasInactive = fallbackLead.get('Is_Active__c') != null
-                    && !(Boolean) fallbackLead.get('Is_Active__c');
+                Boolean wasInactive = fallbackLead.get(fIsActiveFb) != null
+                    && !(Boolean) fallbackLead.get(fIsActiveFb);
                 if (wasInactive) {
-                    fallbackLead.put('Lead_Status__c', defaultStatus);
-                    fallbackLead.put('Lead_Type__c', reopenedType);
-                    fallbackLead.put('Last_Reopened_Date__c', Date.today());
+                    fallbackLead.put(NamespaceUtil.qualify('Lead_Status__c'), defaultStatus);
+                    fallbackLead.put(NamespaceUtil.qualify('Lead_Type__c'), reopenedType);
+                    fallbackLead.put(NamespaceUtil.qualify('Last_Reopened_Date__c'), Date.today());
                     update fallbackLead;
                     return reopenedType;
                 }
@@ -372,10 +381,10 @@ public with sharing class DuplicateConversionEngine {
 
         // Include lookup field if provided
         if (String.isNotBlank(lookupFieldToSelect)) {
-            query += ', ' + lookupFieldToSelect;
+            query += ', ' + NamespaceUtil.qualify(lookupFieldToSelect);
         }
 
-        query += ' FROM ' + objectApiName +
+        query += ' FROM ' + NamespaceUtil.qualify(objectApiName) +
             ' WHERE ' + whereClause;
 
         if (record.Id != null) {
@@ -437,9 +446,10 @@ public with sharing class DuplicateConversionEngine {
                 }
             }
 
-            // Dynamically link Lead using config
+            // Dynamically link Lead using config. The lookup field on the related object
+            // mirrors the primary object's name (e.g. Lead__c on Enquiry_Source__c).
             if (leadToUse != null && String.isNotBlank(config.Primary_Object_API_Name__c)) {
-                relatedRecord.put(config.Primary_Object_API_Name__c, leadToUse);
+                setFieldValue(relatedRecord, config.Primary_Object_API_Name__c, leadToUse);
             }
 
             // Set essential fields that may not be in field mappings.
@@ -510,12 +520,17 @@ public with sharing class DuplicateConversionEngine {
                 List<String> parts = fieldName.split('\\.');
                 SObject current = record;
                 for (Integer i = 0; i < parts.size() - 1; i++) {
-                    current = current.getSObject(parts[i]);
+                    current = current.getSObject(NamespaceUtil.qualify(parts[i]));
                     if (current == null) return null;
                 }
-                return current.get(parts[parts.size() - 1]);
+                return current.get(NamespaceUtil.qualify(parts[parts.size() - 1]));
             }
-            return record.get(fieldName);
+            // Try the runtime API name; fall back to the literal so standard fields still work.
+            Object val = record.get(NamespaceUtil.qualify(fieldName));
+            if (val == null) {
+                val = record.get(fieldName);
+            }
+            return val;
         } catch (Exception e) {
             System.debug('Error getting field value: ' + e.getMessage());
             return null;
@@ -524,7 +539,12 @@ public with sharing class DuplicateConversionEngine {
 
     private static void setFieldValue(SObject record, String fieldName, Object value) {
         try {
-            record.put(fieldName, value);
+            Schema.SObjectField sfField = NamespaceUtil.describeField(record.getSObjectType(), fieldName);
+            if (sfField != null) {
+                record.put(sfField, value);
+            } else {
+                record.put(fieldName, value);
+            }
         } catch (Exception e) {
             System.debug('Error setting field value: ' + e.getMessage());
         }
@@ -583,6 +603,10 @@ public with sharing class DuplicateConversionEngine {
     // ============================================================================
     private static Duplication_Configuration__c getConfiguration(String objectApiName) {
         try {
+            // Tolerate config records stored with either prefixed or un-prefixed names.
+            Set<String> objectNameCandidates = new Set<String>{
+                objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+            };
             List<Duplication_Configuration__c> configs = [
                 SELECT Id,
                 Primary_Object_API_Name__c,
@@ -590,7 +614,7 @@ public with sharing class DuplicateConversionEngine {
                 Related_Object_API_Name__c,
                 Related_Expression__c
                 FROM Duplication_Configuration__c
-                WHERE Primary_Object_API_Name__c = :objectApiName
+                WHERE Primary_Object_API_Name__c IN :objectNameCandidates
                 AND Active__c = true
                 LIMIT 1
             ];
@@ -622,6 +646,15 @@ public with sharing class DuplicateConversionEngine {
     }
 
     private static SObject createDynamicObject(String objectApiName) {
-        return (SObject) Type.forName(objectApiName).newInstance();
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
+        if (sType != null) {
+            return sType.newSObject();
+        }
+        // Fallback: Type.forName resolves namespaced classes/objects when describe misses.
+        Type t = Type.forName(NamespaceUtil.qualify(objectApiName));
+        if (t == null) {
+            t = Type.forName(objectApiName);
+        }
+        return (SObject) t.newInstance();
     }
 }

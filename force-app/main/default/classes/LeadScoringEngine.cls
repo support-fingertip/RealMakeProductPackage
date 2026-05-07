@@ -233,15 +233,17 @@ public with sharing class LeadScoringEngine {
             Map<Id, Integer> countsMap = new Map<Id, Integer>();
 
             try {
-                String soql = 'SELECT ' + String.escapeSingleQuotes(r.Lookup_Field__c) + ', COUNT(Id) cnt '
-                    + 'FROM ' + String.escapeSingleQuotes(r.Related_Object__c) + ' '
-                    + 'WHERE ' + String.escapeSingleQuotes(r.Lookup_Field__c) + ' IN :leadIds '
-                    + 'GROUP BY ' + String.escapeSingleQuotes(r.Lookup_Field__c);
+                String objApi = NamespaceUtil.qualify(r.Related_Object__c);
+                String lookupFieldApi = NamespaceUtil.qualify(r.Lookup_Field__c);
+                String soql = 'SELECT ' + String.escapeSingleQuotes(lookupFieldApi) + ' lookupId, COUNT(Id) cnt '
+                    + 'FROM ' + String.escapeSingleQuotes(objApi) + ' '
+                    + 'WHERE ' + String.escapeSingleQuotes(lookupFieldApi) + ' IN :leadIds '
+                    + 'GROUP BY ' + String.escapeSingleQuotes(lookupFieldApi);
 
                 List<AggregateResult> aggResults = Database.query(soql);
 
                 for (AggregateResult ar : aggResults) {
-                    Id leadId = (Id) ar.get(r.Lookup_Field__c);
+                    Id leadId = (Id) ar.get('lookupId');
                     Integer cnt = (Integer) ar.get('cnt');
                     countsMap.put(leadId, cnt);
                 }
