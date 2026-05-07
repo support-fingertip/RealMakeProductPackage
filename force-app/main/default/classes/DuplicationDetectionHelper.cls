@@ -9,6 +9,10 @@ public with sharing class DuplicationDetectionHelper {
     ) {
         Map<Id, List<String>> duplicateMap = new Map<Id, List<String>>();
 
+        Set<String> objectNameCandidates = new Set<String>{
+            objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+        };
+
         List<Duplication_Configuration__c> configs = [
             SELECT Id,
                    Primary_Object_API_Name__c,
@@ -16,7 +20,7 @@ public with sharing class DuplicationDetectionHelper {
                    Related_Object_API_Name__c,
                    Related_Expression__c
             FROM Duplication_Configuration__c
-            WHERE Primary_Object_API_Name__c = :objectApiName
+            WHERE Primary_Object_API_Name__c IN :objectNameCandidates
             AND Active__c = true
             LIMIT 1
         ];
@@ -310,10 +314,13 @@ public with sharing class DuplicationDetectionHelper {
         Map<String, Object> fieldValues,
         String fieldsToQuery
     ) {
+        Set<String> objectNameCandidates = new Set<String>{
+            objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+        };
         List<Duplication_Configuration__c> configs = [
-            SELECT Id, Primary_Expression__c
+            SELECT Id, Primary_Object_API_Name__c, Primary_Expression__c
             FROM Duplication_Configuration__c
-            WHERE Primary_Object_API_Name__c = :objectApiName
+            WHERE Primary_Object_API_Name__c IN :objectNameCandidates
             AND Active__c = true
             LIMIT 1
         ];
@@ -321,11 +328,16 @@ public with sharing class DuplicationDetectionHelper {
         if (configs.isEmpty()) return new List<SObject>();
 
         // Build a temporary SObject to pass to buildWhereClauseFromExpression
-        SObject tempRecord = Schema.getGlobalDescribe().get(objectApiName).newSObject();
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
+        if (sType == null) return new List<SObject>();
+        SObject tempRecord = sType.newSObject();
         for (String fieldName : fieldValues.keySet()) {
             Object val = fieldValues.get(fieldName);
             if (val != null) {
-                tempRecord.put(fieldName, val);
+                Schema.SObjectField sfField = NamespaceUtil.describeField(sType, fieldName);
+                if (sfField != null) {
+                    tempRecord.put(sfField, val);
+                }
             }
         }
 

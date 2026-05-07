@@ -51,7 +51,7 @@ public with sharing class DynamicApprovalController {
         }
         
         try {
-            return recordId.getSObjectType().getDescribe().getName();
+            return NamespaceUtil.strip(recordId.getSObjectType().getDescribe().getName());
         } catch (Exception e) {
             throw new AuraHandledException('Error getting object API name: ' + e.getMessage());
         }
@@ -76,7 +76,7 @@ public with sharing class DynamicApprovalController {
     public static List<FieldOption> discoverPicklistFields(String objectApiName) {
         List<FieldOption> options = new List<FieldOption>();
         
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return options;
         }
@@ -108,12 +108,12 @@ public with sharing class DynamicApprovalController {
     public static List<PicklistValueOption> getPicklistValues(String objectApiName, String fieldApiName) {
         List<PicklistValueOption> options = new List<PicklistValueOption>();
         
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return options;
         }
         
-        Schema.SObjectField field = objectType.getDescribe().fields.getMap().get(fieldApiName);
+        Schema.SObjectField field = NamespaceUtil.describeField(objectType, fieldApiName);
         if (field == null) {
             return options;
         }
@@ -139,7 +139,7 @@ public with sharing class DynamicApprovalController {
     public static List<FieldOption> discoverAllFields(String objectApiName) {
         List<FieldOption> options = new List<FieldOption>();
         
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return options;
         }
@@ -170,7 +170,7 @@ public with sharing class DynamicApprovalController {
         List<FieldOption> fieldOptions = new List<FieldOption>();
         
         try {
-            Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType sObjectType = NamespaceUtil.describeObject(objectApiName);
             
             if (sObjectType == null) {
                 return fieldOptions;
@@ -277,17 +277,20 @@ public with sharing class DynamicApprovalController {
         }
         
         String objectApiName = recordId.getSObjectType().getDescribe().getName();
-        
+        Set<String> objectApiNameCandidates = new Set<String>{
+            objectApiName, NamespaceUtil.strip(objectApiName), NamespaceUtil.qualify(objectApiName)
+        };
+
         // Get all active configurations for this object
         List<Approval_Configuration__c> configs = [
             SELECT Id, Name, Object_API_Name__c, Process_Type__c, Process_Label__c,
                    Sequence_Order__c,
-                   Status_Field_API_Name__c, Approved_Status_Value__c, 
+                   Status_Field_API_Name__c, Approved_Status_Value__c,
                    Rejected_Status_Value__c, Pending_Status_Value__c,
                    Prerequisite_Process_Type__c, Prerequisite_Status_Value__c,
                    Steps_JSON__c, Approval_Process_API_Name__c
             FROM Approval_Configuration__c
-            WHERE Object_API_Name__c = :objectApiName
+            WHERE Object_API_Name__c IN :objectApiNameCandidates
             AND Is_Active__c = true
             ORDER BY Sequence_Order__c NULLS LAST, Process_Label__c
         ];
@@ -509,7 +512,7 @@ public with sharing class DynamicApprovalController {
         }
 
         // Get field describe info for types
-        Schema.SObjectType sType = Schema.getGlobalDescribe().get(config.Object_API_Name__c);
+        Schema.SObjectType sType = NamespaceUtil.describeObject(config.Object_API_Name__c);
         Map<String, Schema.SObjectField> fieldMap = sType != null ? sType.getDescribe().fields.getMap() : new Map<String, Schema.SObjectField>();
 
         // Query the record for these fields
@@ -856,30 +859,37 @@ public with sharing class DynamicApprovalController {
         Map<String, Object> fieldValues = (Map<String, Object>) JSON.deserializeUntyped(fieldValuesJson);
         if (fieldValues.isEmpty()) return;
 
-        Schema.SObjectType sType = Schema.getGlobalDescribe().get(config.Object_API_Name__c);
+        Schema.SObjectType sType = NamespaceUtil.describeObject(config.Object_API_Name__c);
+        if (sType == null) {
+            throw new AuraHandledException('Unable to resolve object: ' + config.Object_API_Name__c);
+        }
         Map<String, Schema.SObjectField> fieldMap = sType.getDescribe().fields.getMap();
 
         SObject record = sType.newSObject(recordId);
         for (String fieldName : fieldValues.keySet()) {
             Object val = fieldValues.get(fieldName);
             Schema.SObjectField sField = fieldMap.get(fieldName.toLowerCase());
+            if (sField == null) {
+                sField = fieldMap.get(NamespaceUtil.qualify(fieldName).toLowerCase());
+            }
             if (sField == null || !sField.getDescribe().isUpdateable()) continue;
 
+            String resolvedFieldName = sField.getDescribe().getName();
             Schema.DisplayType dt = sField.getDescribe().getType();
             if (val == null || (val instanceof String && String.isBlank((String) val))) {
-                record.put(fieldName, null);
+                record.put(resolvedFieldName, null);
             } else if (dt == Schema.DisplayType.DATE) {
-                record.put(fieldName, Date.valueOf(String.valueOf(val)));
+                record.put(resolvedFieldName, Date.valueOf(String.valueOf(val)));
             } else if (dt == Schema.DisplayType.DATETIME) {
-                record.put(fieldName, DateTime.valueOf(String.valueOf(val).replace('T', ' ')));
+                record.put(resolvedFieldName, DateTime.valueOf(String.valueOf(val).replace('T', ' ')));
             } else if (dt == Schema.DisplayType.CURRENCY || dt == Schema.DisplayType.DOUBLE || dt == Schema.DisplayType.PERCENT) {
-                record.put(fieldName, Decimal.valueOf(String.valueOf(val)));
+                record.put(resolvedFieldName, Decimal.valueOf(String.valueOf(val)));
             } else if (dt == Schema.DisplayType.INTEGER) {
-                record.put(fieldName, Integer.valueOf(String.valueOf(val)));
+                record.put(resolvedFieldName, Integer.valueOf(String.valueOf(val)));
             } else if (dt == Schema.DisplayType.BOOLEAN) {
-                record.put(fieldName, Boolean.valueOf(String.valueOf(val)));
+                record.put(resolvedFieldName, Boolean.valueOf(String.valueOf(val)));
             } else {
-                record.put(fieldName, String.valueOf(val));
+                record.put(resolvedFieldName, String.valueOf(val));
             }
         }
 

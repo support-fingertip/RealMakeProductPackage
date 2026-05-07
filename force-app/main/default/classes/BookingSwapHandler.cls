@@ -234,10 +234,12 @@ public with sharing class BookingSwapHandler {
      * Handles simple children as well as parent-with-line-item patterns (e.g. Receipt -> Receipt Line Items).
      */
     private static void cloneChildRecords(Id oldBookingId, Id newBookingId, ChildCloneConfig config) {
-        List<String> fields = getFieldNames(config.objectApiName);
-        String bookingField = String.escapeSingleQuotes(config.bookingLookupField);
+        String objectApi = NamespaceUtil.qualify(config.objectApiName);
+        String bookingFieldApi = NamespaceUtil.qualify(config.bookingLookupField);
+        List<String> fields = getFieldNames(objectApi);
+        String bookingField = String.escapeSingleQuotes(bookingFieldApi);
         String query = 'SELECT ' + String.join(fields, ', ') +
-                       ' FROM ' + String.escapeSingleQuotes(config.objectApiName) +
+                       ' FROM ' + String.escapeSingleQuotes(objectApi) +
                        ' WHERE ' + bookingField + ' = :oldBookingId';
         List<SObject> fullRecords = Database.query(query);
         if (fullRecords.isEmpty()) return;
@@ -245,7 +247,7 @@ public with sharing class BookingSwapHandler {
         List<SObject> clones = new List<SObject>();
         for (SObject rec : fullRecords) {
             SObject clone = rec.clone(false, true, false, false);
-            clone.put(config.bookingLookupField, newBookingId);
+            clone.put(bookingFieldApi, newBookingId);
             clones.add(clone);
         }
         insert clones;
@@ -267,10 +269,13 @@ public with sharing class BookingSwapHandler {
      */
     private static void cloneLineItems(Id oldBookingId, Id newBookingId,
                                         ChildCloneConfig config, Map<Id, Id> parentMap) {
-        List<String> fields = getFieldNames(config.lineItemObjectApiName);
-        String bookingField = String.escapeSingleQuotes(config.lineItemBookingLookupField);
+        String lineItemObjectApi = NamespaceUtil.qualify(config.lineItemObjectApiName);
+        String lineItemBookingFieldApi = NamespaceUtil.qualify(config.lineItemBookingLookupField);
+        String lineItemParentFieldApi = NamespaceUtil.qualify(config.lineItemParentLookupField);
+        List<String> fields = getFieldNames(lineItemObjectApi);
+        String bookingField = String.escapeSingleQuotes(lineItemBookingFieldApi);
         String query = 'SELECT ' + String.join(fields, ', ') +
-                       ' FROM ' + String.escapeSingleQuotes(config.lineItemObjectApiName) +
+                       ' FROM ' + String.escapeSingleQuotes(lineItemObjectApi) +
                        ' WHERE ' + bookingField + ' = :oldBookingId';
         List<SObject> fullRecords = Database.query(query);
         if (fullRecords.isEmpty()) return;
@@ -278,11 +283,11 @@ public with sharing class BookingSwapHandler {
         List<SObject> clones = new List<SObject>();
         for (SObject rec : fullRecords) {
             SObject clone = rec.clone(false, true, false, false);
-            clone.put(config.lineItemBookingLookupField, newBookingId);
+            clone.put(lineItemBookingFieldApi, newBookingId);
             // Reparent to the cloned parent record
-            Id oldParentId = (Id) rec.get(config.lineItemParentLookupField);
+            Id oldParentId = (Id) rec.get(lineItemParentFieldApi);
             if (oldParentId != null && parentMap.containsKey(oldParentId)) {
-                clone.put(config.lineItemParentLookupField, parentMap.get(oldParentId));
+                clone.put(lineItemParentFieldApi, parentMap.get(oldParentId));
             }
             clones.add(clone);
         }
@@ -348,8 +353,11 @@ public with sharing class BookingSwapHandler {
     // ==================== UTILITY ====================
 
     private static List<String> getFieldNames(String objectApiName) {
-        Map<String, Schema.SObjectField> fieldMap =
-            Schema.getGlobalDescribe().get(objectApiName).getDescribe().fields.getMap();
+        Schema.SObjectType sType = NamespaceUtil.describeObject(objectApiName);
+        if (sType == null) {
+            return new List<String>();
+        }
+        Map<String, Schema.SObjectField> fieldMap = sType.getDescribe().fields.getMap();
         return new List<String>(fieldMap.keySet());
     }
 }

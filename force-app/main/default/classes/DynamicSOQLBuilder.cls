@@ -306,7 +306,7 @@ public class DynamicSOQLBuilder {
             return null;
         }
 
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectName.trim());
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectName.trim());
         if (objectType == null) {
             return null;
         }

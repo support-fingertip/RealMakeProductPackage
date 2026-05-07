@@ -32,7 +32,7 @@ public with sharing class DynamicFormConfigController {
     private static List<FieldOption> getObjectFieldsInternal(String objectApiName, Boolean updateableOnly) {
         List<FieldOption> fields = new List<FieldOption>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return fields;
         }
@@ -59,7 +59,7 @@ public with sharing class DynamicFormConfigController {
     public static List<ChildRelationshipOption> getChildRelationships(String objectApiName) {
         List<ChildRelationshipOption> childRels = new List<ChildRelationshipOption>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return childRels;
         }

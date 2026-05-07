@@ -59,7 +59,7 @@ trigger CostSheetTrigger on Cost_Sheet__c (before update, after insert, after up
             if (cs.Is_Locked__c == true) continue;
             Boolean discountChanged = false;
             for (Integer i = 1; i <= 6; i++) {
-                String fld = 'Discount_' + i + '__c';
+                String fld = NamespaceUtil.qualify('Discount_' + i + '__c');
                 if (cs.get(fld) != oldCs.get(fld)) {
                     discountChanged = true;
                     break;

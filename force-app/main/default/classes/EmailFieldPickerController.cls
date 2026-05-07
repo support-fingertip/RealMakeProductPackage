@@ -152,7 +152,7 @@ public with sharing class EmailFieldPickerController {
                 return fields;
             }
             
-            Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType sObjectType = NamespaceUtil.describeObject(objectApiName);
             if (sObjectType == null) {
                 throw new AuraHandledException('Object not found: ' + objectApiName);
             }
@@ -360,7 +360,7 @@ public with sharing class EmailFieldPickerController {
                 return relationships;
             }
             
-            Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType sObjectType = NamespaceUtil.describeObject(objectApiName);
             if (sObjectType == null) {
                 throw new AuraHandledException('Object not found: ' + objectApiName);
             }
@@ -466,7 +466,7 @@ public with sharing class EmailFieldPickerController {
     }
     
     private static String getNameField(String objectApiName) {
-        Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType sObjectType = NamespaceUtil.describeObject(objectApiName);
         Schema.DescribeSObjectResult describeResult = sObjectType.getDescribe();
         Map<String, Schema.SObjectField> fieldMap = describeResult.fields.getMap();
         

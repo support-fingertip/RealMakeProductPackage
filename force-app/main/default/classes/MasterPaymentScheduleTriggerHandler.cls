@@ -30,13 +30,13 @@ public with sharing class MasterPaymentScheduleTriggerHandler {
         // Query existing sum of Percentage__c per Project, excluding records in current trigger
         Map<Id, Decimal> existingSumByProject = new Map<Id, Decimal>();
         for (AggregateResult ar : [
-            SELECT Project__c, SUM(Percentage__c) totalPct
+            SELECT Project__c proj, SUM(Percentage__c) totalPct
             FROM Master_Payment_Schedule__c
             WHERE Project__c IN :projectIds
             AND Id NOT IN :triggerRecordIds
             GROUP BY Project__c
         ]) {
-            existingSumByProject.put((Id) ar.get('Project__c'), (Decimal) ar.get('totalPct'));
+            existingSumByProject.put((Id) ar.get('proj'), (Decimal) ar.get('totalPct'));
         }
 
         // Sum trigger records' percentages per Project

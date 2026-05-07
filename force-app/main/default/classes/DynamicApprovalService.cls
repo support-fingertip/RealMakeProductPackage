@@ -303,7 +303,7 @@ public with sharing class DynamicApprovalService {
      * @description Check if object has a specific field
      */
     private static Boolean hasField(String objectApiName, String fieldName) {
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return false;
         }

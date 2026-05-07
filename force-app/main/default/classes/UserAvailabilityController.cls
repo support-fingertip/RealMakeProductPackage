@@ -6,6 +6,10 @@
  */
 public with sharing class UserAvailabilityController {
 
+    // Test-only injection points for Custom Metadata Type records (CMDT can't be inserted via DML).
+    @TestVisible private static List<User_Availability_Profile_Config__mdt> testProfileConfigs;
+    @TestVisible private static List<Shift_Configuration__mdt> testShiftConfigs;
+
     // ═══════════════════════════════════════════════════════════════════
     //  INNER CLASSES
     // ═══════════════════════════════════════════════════════════════════
@@ -78,13 +82,23 @@ public with sharing class UserAvailabilityController {
 
         result.put('currentProfile', currentProfileName);
 
-        List<User_Availability_Profile_Config__mdt> configs = [
-            SELECT Profile_Name__c, Visible_Profiles__c, Default_Shift__c
-            FROM User_Availability_Profile_Config__mdt
-            WHERE Profile_Name__c = :currentProfileName
-            AND Is_Active__c = true
-            LIMIT 1
-        ];
+        List<User_Availability_Profile_Config__mdt> configs;
+        if (Test.isRunningTest() && testProfileConfigs != null) {
+            configs = new List<User_Availability_Profile_Config__mdt>();
+            for (User_Availability_Profile_Config__mdt c : testProfileConfigs) {
+                if (c.Profile_Name__c == currentProfileName && c.Is_Active__c == true) {
+                    configs.add(c);
+                }
+            }
+        } else {
+            configs = [
+                SELECT Profile_Name__c, Visible_Profiles__c, Default_Shift__c
+                FROM User_Availability_Profile_Config__mdt
+                WHERE Profile_Name__c = :currentProfileName
+                AND Is_Active__c = true
+                LIMIT 1
+            ];
+        }
 
         List<String> visibleProfiles = new List<String>();
         String defaultShift = 'Day Shift';
@@ -118,12 +132,7 @@ public with sharing class UserAvailabilityController {
     public static List<ShiftInfo> getShiftConfigurations() {
         List<ShiftInfo> shifts = new List<ShiftInfo>();
 
-        for (Shift_Configuration__mdt config : [
-            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
-            FROM Shift_Configuration__mdt
-            WHERE Is_Active__c = true
-            ORDER BY Is_Default__c DESC, Shift_Name__c ASC
-        ]) {
+        for (Shift_Configuration__mdt config : queryShiftConfigs()) {
             ShiftInfo info = new ShiftInfo();
             info.shiftName = config.Shift_Name__c;
             info.startTime = config.Start_Time__c;
@@ -133,6 +142,61 @@ public with sharing class UserAvailabilityController {
         }
 
         return shifts;
+    }
+
+    /**
+     * Returns active shift configs from CMDT, or the test mock when running under tests.
+     * CMDT records cannot be inserted via DML, so tests assign in-memory instances to
+     * `testShiftConfigs` instead.
+     */
+    private static List<Shift_Configuration__mdt> queryShiftConfigs() {
+        if (Test.isRunningTest() && testShiftConfigs != null) {
+            return testShiftConfigs;
+        }
+        return [
+            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
+            FROM Shift_Configuration__mdt
+            WHERE Is_Active__c = true
+            ORDER BY Is_Default__c DESC, Shift_Name__c ASC
+        ];
+    }
+
+    private static List<Shift_Configuration__mdt> queryShiftByName(String shiftName) {
+        if (Test.isRunningTest() && testShiftConfigs != null) {
+            List<Shift_Configuration__mdt> matches = new List<Shift_Configuration__mdt>();
+            for (Shift_Configuration__mdt c : testShiftConfigs) {
+                if (c.Shift_Name__c == shiftName) {
+                    matches.add(c);
+                    break;
+                }
+            }
+            return matches;
+        }
+        return [
+            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
+            FROM Shift_Configuration__mdt
+            WHERE Shift_Name__c = :shiftName
+            LIMIT 1
+        ];
+    }
+
+    private static List<Shift_Configuration__mdt> queryDefaultShiftConfig() {
+        if (Test.isRunningTest() && testShiftConfigs != null) {
+            List<Shift_Configuration__mdt> matches = new List<Shift_Configuration__mdt>();
+            for (Shift_Configuration__mdt c : testShiftConfigs) {
+                if (c.Is_Default__c == true) {
+                    matches.add(c);
+                    break;
+                }
+            }
+            return matches;
+        }
+        return [
+            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
+            FROM Shift_Configuration__mdt
+            WHERE Is_Default__c = true
+            LIMIT 1
+        ];
     }
 
     /**
@@ -151,23 +215,11 @@ public with sharing class UserAvailabilityController {
 
         String userShift = String.isNotBlank(u.Shift__c) ? u.Shift__c : 'Day Shift';
 
-        List<Shift_Configuration__mdt> configs = [
-            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
-            FROM Shift_Configuration__mdt
-            WHERE Shift_Name__c = :userShift
-            AND Is_Active__c = true
-            LIMIT 1
-        ];
+        List<Shift_Configuration__mdt> configs = queryShiftByName(userShift);
 
         if (configs.isEmpty()) {
             // Fallback to default shift
-            configs = [
-                SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
-                FROM Shift_Configuration__mdt
-                WHERE Is_Default__c = true
-                AND Is_Active__c = true
-                LIMIT 1
-            ];
+            configs = queryDefaultShiftConfig();
         }
 
         ShiftInfo info = new ShiftInfo();
@@ -197,13 +249,7 @@ public with sharing class UserAvailabilityController {
         }
 
         // Validate that the shift exists
-        List<Shift_Configuration__mdt> configs = [
-            SELECT Shift_Name__c
-            FROM Shift_Configuration__mdt
-            WHERE Shift_Name__c = :shiftName
-            AND Is_Active__c = true
-            LIMIT 1
-        ];
+        List<Shift_Configuration__mdt> configs = queryShiftByName(shiftName);
 
         if (configs.isEmpty()) {
             throw new AuraHandledException('Invalid shift: ' + shiftName);
@@ -232,13 +278,7 @@ public with sharing class UserAvailabilityController {
             throw new AuraHandledException('Shift name is required.');
         }
 
-        List<Shift_Configuration__mdt> configs = [
-            SELECT Shift_Name__c
-            FROM Shift_Configuration__mdt
-            WHERE Shift_Name__c = :shiftName
-            AND Is_Active__c = true
-            LIMIT 1
-        ];
+        List<Shift_Configuration__mdt> configs = queryShiftByName(shiftName);
 
         if (configs.isEmpty()) {
             throw new AuraHandledException('Invalid shift: ' + shiftName);
@@ -879,13 +919,7 @@ public with sharing class UserAvailabilityController {
      * @return ShiftInfo with the shift details
      */
     private static ShiftInfo getShiftInfoByName(String shiftName) {
-        List<Shift_Configuration__mdt> configs = [
-            SELECT Shift_Name__c, Start_Time__c, End_Time__c, Is_Default__c
-            FROM Shift_Configuration__mdt
-            WHERE Shift_Name__c = :shiftName
-            AND Is_Active__c = true
-            LIMIT 1
-        ];
+        List<Shift_Configuration__mdt> configs = queryShiftByName(shiftName);
 
         ShiftInfo info = new ShiftInfo();
         if (!configs.isEmpty()) {

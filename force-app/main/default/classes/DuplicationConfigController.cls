@@ -26,7 +26,7 @@ public with sharing class DuplicationConfigController {
         List<FieldOption> fieldOptions = new List<FieldOption>();
         
         try {
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
             if (objType != null) {
                 Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
                 
@@ -63,7 +63,7 @@ public with sharing class DuplicationConfigController {
         List<ObjectOption> relatedObjects = new List<ObjectOption>();
         
         try {
-            Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
             if (objType != null) {
                 Schema.DescribeSObjectResult objDescribe = objType.getDescribe();
                 List<Schema.ChildRelationship> childRelationships = objDescribe.getChildRelationships();

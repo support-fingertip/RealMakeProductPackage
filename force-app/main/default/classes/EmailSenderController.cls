@@ -90,9 +90,9 @@ public with sharing class EmailSenderController {
         if (recordId == null) {
             return null;
         }
-        return recordId.getSObjectType().getDescribe().getName();
+        return NamespaceUtil.strip(recordId.getSObjectType().getDescribe().getName());
     }
-    
+
     // ============ PREPARE EMAIL DATA ============
     
     @AuraEnabled

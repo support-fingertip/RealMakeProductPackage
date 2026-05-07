@@ -397,7 +397,7 @@ public with sharing class ApprovalActionHandler {
         // Remove any invalid field names
         Set<String> validFields = new Set<String>();
         try {
-            Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType sObjectType = NamespaceUtil.describeObject(objectApiName);
             Map<String, Schema.SObjectField> fieldsMap = sObjectType.getDescribe().fields.getMap();
             
             for (String fieldName : fieldsToQuery) {
@@ -486,7 +486,7 @@ public with sharing class ApprovalActionHandler {
         }
         
         try {
-            Schema.SObjectType feedItemType = Schema.getGlobalDescribe().get(CHATTER_FEED_ITEM_OBJECT);
+            Schema.SObjectType feedItemType = NamespaceUtil.describeObject(CHATTER_FEED_ITEM_OBJECT);
 
             if (feedItemType == null) {
                 System.debug('Chatter is not enabled');

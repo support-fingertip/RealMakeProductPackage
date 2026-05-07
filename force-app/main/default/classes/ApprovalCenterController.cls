@@ -601,7 +601,7 @@ public static Map<String, Object> getRecordDetails(Id recordId) {
         throw new AuraHandledException('Record ID is required');
     }
 
-    String objectApiName = recordId.getSObjectType().getDescribe().getName();
+    String objectApiName = NamespaceUtil.strip(recordId.getSObjectType().getDescribe().getName());
     String objectLabel = recordId.getSObjectType().getDescribe().getLabel();
 
     Map<String, Schema.SObjectField> fieldsMap =
@@ -802,10 +802,12 @@ public static List<Map<String, Object>> getApprovalHistory(Id recordId, String a
             throw new AuraHandledException('Record ID, child object, and lookup field are required');
         }
 
-        Schema.SObjectType childType = Schema.getGlobalDescribe().get(childObject);
+        Schema.SObjectType childType = NamespaceUtil.describeObject(childObject);
         if (childType == null) {
             throw new AuraHandledException('Invalid child object: ' + childObject);
         }
+        String childApiName = childType.getDescribe().getName();
+        String lookupApiName = NamespaceUtil.qualify(lookupField);
 
         Map<String, Schema.SObjectField> fieldsMap = childType.getDescribe().fields.getMap();
 
@@ -855,8 +857,8 @@ public static List<Map<String, Object>> getApprovalHistory(Id recordId, String a
         }
 
         String soql = 'SELECT ' + String.join(queryFields, ', ') +
-                       ' FROM ' + String.escapeSingleQuotes(childObject) +
-                       ' WHERE ' + String.escapeSingleQuotes(lookupField) + ' = :recordId' +
+                       ' FROM ' + String.escapeSingleQuotes(childApiName) +
+                       ' WHERE ' + String.escapeSingleQuotes(lookupApiName) + ' = :recordId' +
                        ' ORDER BY CreatedDate DESC LIMIT 50';
 
         List<SObject> records = Database.query(soql);
@@ -889,7 +891,7 @@ public static List<Map<String, Object>> getApprovalHistory(Id recordId, String a
 
         String label = objectApiName;
         try {
-            Schema.SObjectType sot = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.SObjectType sot = NamespaceUtil.describeObject(objectApiName);
             if (sot != null) {
                 label = sot.getDescribe().getLabel();
             }
@@ -902,10 +904,12 @@ public static List<Map<String, Object>> getApprovalHistory(Id recordId, String a
     }
 
     private static Boolean hasField(String objectApiName, String fieldName) {
-        Schema.SObjectType objectType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objectType = NamespaceUtil.describeObject(objectApiName);
         if (objectType == null) {
             return false;
         }
-        return objectType.getDescribe().fields.getMap().containsKey(fieldName.toLowerCase());
+        Map<String, Schema.SObjectField> fmap = objectType.getDescribe().fields.getMap();
+        return fmap.containsKey(fieldName.toLowerCase()) ||
+               fmap.containsKey(NamespaceUtil.qualify(fieldName).toLowerCase());
     }
 }

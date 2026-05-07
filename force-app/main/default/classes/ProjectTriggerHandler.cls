@@ -13,9 +13,9 @@ public with sharing class ProjectTriggerHandler {
         // PROJECT_R04: Prevent deletion if children exist
         Map<Id, Integer> towerCounts = new Map<Id, Integer>();
         for (AggregateResult ar : [
-            SELECT Project__c, COUNT(Id) cnt FROM Tower__c WHERE Project__c IN :projectIds GROUP BY Project__c
+            SELECT Project__c proj, COUNT(Id) cnt FROM Tower__c WHERE Project__c IN :projectIds GROUP BY Project__c
         ]) {
-            towerCounts.put((Id) ar.get('Project__c'), (Integer) ar.get('cnt'));
+            towerCounts.put((Id) ar.get('proj'), (Integer) ar.get('cnt'));
         }
 
         for (Project__c p : projects) {
@@ -37,12 +37,12 @@ public with sharing class ProjectTriggerHandler {
             // PROJECT_R05: Cannot complete if Available/Blocked units exist
             Map<Id, Integer> unitCounts = new Map<Id, Integer>();
             for (AggregateResult ar : [
-                SELECT Project__c, COUNT(Id) cnt FROM Unit__c
+                SELECT Project__c proj, COUNT(Id) cnt FROM Unit__c
                 WHERE Project__c IN :completingProjects
                 AND Status__c IN ('Available', 'Blocked')
                 GROUP BY Project__c
             ]) {
-                unitCounts.put((Id) ar.get('Project__c'), (Integer) ar.get('cnt'));
+                unitCounts.put((Id) ar.get('proj'), (Integer) ar.get('cnt'));
             }
 
             for (Project__c p : newList) {

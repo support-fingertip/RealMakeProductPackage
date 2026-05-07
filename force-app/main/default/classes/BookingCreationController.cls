@@ -179,13 +179,16 @@ public with sharing class BookingCreationController {
             if (val == null) continue;
 
             Schema.SObjectField sField = bookingFieldMap.get(fieldName.toLowerCase());
+            if (sField == null) {
+                sField = bookingFieldMap.get(NamespaceUtil.qualify(fieldName).toLowerCase());
+            }
             if (sField == null) continue;
 
             Schema.DescribeFieldResult dfr = sField.getDescribe();
             if (!dfr.isCreateable()) continue;
 
             try {
-                booking.put(fieldName, convertValue(val, dfr.getType()));
+                booking.put(sField, convertValue(val, dfr.getType()));
             } catch (Exception e) {
                 System.debug('Field set error: ' + fieldName + ': ' + e.getMessage());
             }
@@ -232,13 +235,16 @@ public with sharing class BookingCreationController {
                     if (val == null || fieldName == 'key') continue;
 
                     Schema.SObjectField sField = coAppFieldMap.get(fieldName.toLowerCase());
+                    if (sField == null) {
+                        sField = coAppFieldMap.get(NamespaceUtil.qualify(fieldName).toLowerCase());
+                    }
                     if (sField == null) continue;
 
                     Schema.DescribeFieldResult dfr = sField.getDescribe();
                     if (!dfr.isCreateable()) continue;
 
                     try {
-                        coApp.put(fieldName, convertValue(val, dfr.getType()));
+                        coApp.put(sField, convertValue(val, dfr.getType()));
                     } catch (Exception e) {
                         System.debug('Co-applicant field error: ' + fieldName + ': ' + e.getMessage());
                     }

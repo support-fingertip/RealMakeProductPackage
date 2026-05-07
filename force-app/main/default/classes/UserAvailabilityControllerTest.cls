@@ -8,6 +8,38 @@
 private class UserAvailabilityControllerTest {
 
     /**
+     * Build the in-memory CMDT mocks the controller reads when running under tests.
+     * CMDT records cannot be inserted via DML, so we inject these into the controller's
+     * @TestVisible static lists.
+     */
+    private static void seedCmdtMocks() {
+        UserAvailabilityController.testProfileConfigs = new List<User_Availability_Profile_Config__mdt>{
+            new User_Availability_Profile_Config__mdt(
+                Profile_Name__c = 'System Administrator',
+                Visible_Profiles__c = 'System Administrator,Standard User',
+                Default_Shift__c = 'Day Shift',
+                Is_Active__c = true
+            )
+        };
+        UserAvailabilityController.testShiftConfigs = new List<Shift_Configuration__mdt>{
+            new Shift_Configuration__mdt(
+                Shift_Name__c = 'Day Shift',
+                Start_Time__c = '09:00',
+                End_Time__c = '18:00',
+                Is_Default__c = true,
+                Is_Active__c = true
+            ),
+            new Shift_Configuration__mdt(
+                Shift_Name__c = 'Night Shift',
+                Start_Time__c = '20:00',
+                End_Time__c = '06:00',
+                Is_Default__c = false,
+                Is_Active__c = true
+            )
+        };
+    }
+
+    /**
      * @description Helper to create a Daily_Log__c for the current user/date
      * so that Availability_History__c records can be inserted (Master-Detail).
      */
@@ -38,6 +70,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testGetProfileConfigReturnsVisibleProfiles() {
+        seedCmdtMocks();
         Test.startTest();
         Map<String, Object> config = UserAvailabilityController.getProfileConfig();
         Test.stopTest();
@@ -323,6 +356,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testSetMyAvailabilityToFalseWithReason() {
+        seedCmdtMocks();
         Id currentUserId = UserInfo.getUserId();
 
         Test.startTest();
@@ -347,6 +381,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testSetMyAvailabilityToFalseWithoutReason() {
+        seedCmdtMocks();
         Id currentUserId = UserInfo.getUserId();
 
         Test.startTest();
@@ -599,6 +634,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testGetShiftConfigurations() {
+        seedCmdtMocks();
         Test.startTest();
         List<UserAvailabilityController.ShiftInfo> shifts =
             UserAvailabilityController.getShiftConfigurations();
@@ -650,6 +686,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testUpdateMyShift() {
+        seedCmdtMocks();
         Id currentUserId = UserInfo.getUserId();
 
         Test.startTest();
@@ -692,6 +729,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testUpdateUserShift() {
+        seedCmdtMocks();
         Id currentUserId = UserInfo.getUserId();
 
         Test.startTest();
@@ -779,6 +817,7 @@ private class UserAvailabilityControllerTest {
 
     @isTest
     static void testAvailabilityHistoryRecordsShift() {
+        seedCmdtMocks();
         Id currentUserId = UserInfo.getUserId();
 
         User u = new User(Id = currentUserId, Shift__c = 'Day Shift');

@@ -122,7 +122,7 @@ public with sharing class DashboardConfigController {
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getObjectFields(String objectApiName) {
         List<Map<String, String>> fields = new List<Map<String, String>>();
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return fields;
 
         Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -157,7 +157,7 @@ public with sharing class DashboardConfigController {
     @AuraEnabled(cacheable=true)
     public static List<Map<String, String>> getPicklistValues(String objectApiName, String fieldApiName) {
         List<Map<String, String>> options = new List<Map<String, String>>();
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) return options;
 
         Schema.DescribeFieldResult fd = objType.getDescribe().fields.getMap().get(fieldApiName).getDescribe();

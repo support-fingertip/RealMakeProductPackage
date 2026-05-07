@@ -190,7 +190,7 @@ public with sharing class IntegrationMappingController {
     public static List<FieldOption> getObjectFields(String objectApiName) {
         List<FieldOption> fields = new List<FieldOption>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectApiName);
+        Schema.SObjectType objType = NamespaceUtil.describeObject(objectApiName);
         if (objType == null) {
             return fields;
         }

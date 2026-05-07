@@ -65,12 +65,15 @@ public with sharing class CostSheetTriggerHandler {
                 continue;
             }
 
-            // Check every writable field for changes
+            // Check every writable field for changes.
+            // The exemption sets are stored without a namespace prefix; in a managed
+            // package the fieldMap keys carry the prefix, so strip before comparing.
             List<String> changedFields = new List<String>();
             for (String fieldApiName : fieldMap.keySet()) {
+                String unqualifiedName = NamespaceUtil.strip(fieldApiName);
                 // Skip system-managed and approval-engine fields
-                if (SYSTEM_FIELDS.contains(fieldApiName) ||
-                    APPROVAL_ENGINE_FIELDS.contains(fieldApiName)) {
+                if (SYSTEM_FIELDS.contains(unqualifiedName) ||
+                    APPROVAL_ENGINE_FIELDS.contains(unqualifiedName)) {
                     continue;
                 }
 

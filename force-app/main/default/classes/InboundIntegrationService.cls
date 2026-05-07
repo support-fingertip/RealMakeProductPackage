@@ -462,7 +462,7 @@ public with sharing class InboundIntegrationService {
     @TestVisible
     private static SObject mapToSObject(String targetObjectName, Map<String, Object> data,
                                          List<Integration_Field_Mapping__c> fieldMappings) {
-        Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(targetObjectName);
+        Schema.SObjectType sObjectType = NamespaceUtil.describeObject(targetObjectName);
         if (sObjectType == null) {
             throw new InboundProcessingException('Invalid Target_Object__c: ' + targetObjectName);
         }
@@ -729,7 +729,7 @@ public with sharing class InboundIntegrationService {
         try {
             if (String.isNotBlank(externalIdField)) {
                 // ── Upsert using the external ID field ──
-                Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(targetObject);
+                Schema.SObjectType sObjectType = NamespaceUtil.describeObject(targetObject);
                 Schema.SObjectField extIdFieldToken = sObjectType.getDescribe().fields.getMap().get(externalIdField.toLowerCase());
 
                 if (extIdFieldToken == null) {

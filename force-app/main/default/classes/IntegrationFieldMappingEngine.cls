@@ -33,7 +33,11 @@ public with sharing class IntegrationFieldMappingEngine {
         validateRequiredFields(rules, payload);
 
         // Create target SObject
-        SObject record = Schema.getGlobalDescribe().get(config.Target_Object__c).newSObject();
+        Schema.SObjectType targetType = NamespaceUtil.describeObject(config.Target_Object__c);
+        if (targetType == null) {
+            throw new IntegrationMappingException('Target object not found: ' + config.Target_Object__c);
+        }
+        SObject record = targetType.newSObject();
 
         // Apply each field rule
         for (Integration_Field_Rule__c rule : rules) {
@@ -58,7 +62,10 @@ public with sharing class IntegrationFieldMappingEngine {
             // Convert and set the value (skip nulls to avoid restricted picklist errors)
             Object convertedValue = convertValue(rawValue, rule);
             if (convertedValue != null) {
-                record.put(rule.SF_Field_API_Name__c, convertedValue);
+                Schema.SObjectField sfField = NamespaceUtil.describeField(targetType, rule.SF_Field_API_Name__c);
+                if (sfField != null) {
+                    record.put(sfField, convertedValue);
+                }
             }
         }
 
@@ -78,6 +85,7 @@ public with sharing class IntegrationFieldMappingEngine {
 
         validateRequiredFields(rules, payload);
 
+        Schema.SObjectType targetType = NamespaceUtil.describeObject(config.Target_Object__c);
         Map<String, Object> fieldMap = new Map<String, Object>();
 
         for (Integration_Field_Rule__c rule : rules) {
@@ -99,7 +107,14 @@ public with sharing class IntegrationFieldMappingEngine {
 
             Object convertedValue = convertValue(rawValue, rule);
             if (convertedValue != null) {
-                fieldMap.put(rule.SF_Field_API_Name__c, convertedValue);
+                String fieldKey = rule.SF_Field_API_Name__c;
+                if (targetType != null) {
+                    Schema.SObjectField sfField = NamespaceUtil.describeField(targetType, fieldKey);
+                    if (sfField != null) {
+                        fieldKey = sfField.getDescribe().getName();
+                    }
+                }
+                fieldMap.put(fieldKey, convertedValue);
             }
         }
 
@@ -113,8 +128,14 @@ public with sharing class IntegrationFieldMappingEngine {
      * @param fieldMap The field map from mapPayloadToFieldMap
      */
     public static void applyFieldMap(SObject record, Map<String, Object> fieldMap) {
+        Schema.SObjectType sType = record.getSObjectType();
         for (String fieldName : fieldMap.keySet()) {
-            record.put(fieldName, fieldMap.get(fieldName));
+            Schema.SObjectField sfField = NamespaceUtil.describeField(sType, fieldName);
+            if (sfField != null) {
+                record.put(sfField, fieldMap.get(fieldName));
+            } else {
+                record.put(fieldName, fieldMap.get(fieldName));
+            }
         }
     }
 
