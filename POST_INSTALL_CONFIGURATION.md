@@ -1,855 +1,972 @@
-<!--
-  RealMake-Product — Post-Install Configuration Guide
-  Source of truth for implementation engineers and Salesforce admins.
--->
-
 # RealMake-Product
+## Setup Guide for Administrators
 
-## Post-Install Configuration Guide
+Welcome! This guide walks you through everything that needs to be set up
+**after** the RealMake-Product package is installed in your Salesforce
+organisation. It is written for business administrators — you do not need
+to be a developer to follow it.
 
-> **Audience:** Salesforce admins and implementation engineers configuring the
-> RealMake-Product package after deployment.
-> **Outcome:** A fully configured org where Pre-Sales, Sales, Post-Sales,
-> Channel Partner, GRE, and Finance teams can transact end-to-end.
-> **Estimated effort:** 2 – 5 working days for a single-project org;
-> 1 – 2 weeks for multi-project / multi-region rollouts.
+By the end of this guide your team will be able to:
 
-A condensed, interactive version of this guide lives on the **Welcome Guide**
-tab inside Salesforce (LWC `postInstallationGuide`). This file is the
-authoritative written reference.
+- Capture and assign leads automatically
+- Generate pricing (cost sheets) and bookings
+- Send demand letters, collect receipts, and issue refunds
+- Manage channel partners and complaints
+- See dashboards and reports tailored to each team
+
+---
+
+## How to use this guide
+
+Each section follows the same simple structure:
+
+> **What it does** — a one-paragraph explanation in plain English.
+> **Why you need it** — what breaks if you skip it.
+> **Before you begin** — anything that must already be in place.
+> **How to set it up** — numbered steps with the exact screens to open.
+> **How to check it works** — a quick test you can run.
+> **Tip / Common mistake** — things that catch people out.
+
+Work through the sections in order. If you only have 30 minutes today, do
+**Part A** (sections 1 – 5). The rest can wait until your functional leads
+are ready.
 
 ---
 
 ## Table of contents
 
-1. [Overview & module map](#1-overview--module-map)
-2. [How to read this guide (by role)](#2-how-to-read-this-guide-by-role)
-3. [Quick-start — first 30 minutes](#3-quick-start--first-30-minutes)
-4. [Pre-flight checklist](#4-pre-flight-checklist)
-5. [Permission sets & profiles](#5-permission-sets--profiles)
-6. [Seed Custom Metadata records](#6-seed-custom-metadata-records)
-7. [Remote sites, CSP & named credentials](#7-remote-sites-csp--named-credentials)
-8. [General Setup](#8-general-setup)
-9. [Round Robin (lead assignment)](#9-round-robin-lead-assignment)
-10. [Queues — verify membership](#10-queues--verify-membership)
-11. [Lead Duplication](#11-lead-duplication)
-12. [Cost Sheet (pricing)](#12-cost-sheet-pricing)
-13. [Discount Approval Matrix](#13-discount-approval-matrix)
-14. [Approval Configuration (generic engine)](#14-approval-configuration-generic-engine)
-15. [Push To Sales (pre-sales → sales hand-off)](#15-push-to-sales-pre-sales--sales-hand-off)
-16. [Post-Sales Configuration](#16-post-sales-configuration)
-17. [Tabs to expose per app](#17-tabs-to-expose-per-app)
-18. [Dashboards & reports](#18-dashboards--reports)
-19. [Lead Scoring](#19-lead-scoring)
-20. [Email templates](#20-email-templates)
-21. [Document templates](#21-document-templates)
-22. [Complaint Escalation Matrix](#22-complaint-escalation-matrix)
-23. [Channel Partner module](#23-channel-partner-module)
-24. [Integration framework](#24-integration-framework)
-25. [Dynamic forms & field mapping](#25-dynamic-forms--field-mapping)
-26. [AI / Aria chatbot (optional)](#26-ai--aria-chatbot-optional)
-27. [Performance, forecasting & user availability](#27-performance-forecasting--user-availability)
-28. [Static resources](#28-static-resources)
-29. [Scheduled Apex jobs](#29-scheduled-apex-jobs)
-30. [Smoke tests](#30-smoke-tests)
-31. [Go-live checklist](#31-go-live-checklist)
-32. [Troubleshooting matrix](#32-troubleshooting-matrix)
-33. [Glossary](#33-glossary)
+**Part A — Foundations (do these first)**
+1. Before you start
+2. Give your team access
+3. Load the starter data
+4. Connect to the outside world
+5. Tell the system about your business
+
+**Part B — Pre-Sales setup**
+6. Distribute leads to your team automatically (Round Robin)
+7. Catch duplicate leads
+8. Score your leads
+9. Set up lead capture rules
+
+**Part C — Sales setup**
+10. Build the Cost Sheet (your pricing engine)
+11. Approve discounts
+12. Hand leads over to Sales (Push To Sales)
+
+**Part D — Post-Sales setup**
+13. Define your payment schedule
+14. Configure demand letters
+15. Configure receipts, refunds, and credit / debit notes
+16. Set up approval flows
+17. Handle complaints
+
+**Part E — Communication**
+18. Email templates
+19. Document (PDF) templates
+
+**Part F — Optional modules**
+20. Channel Partner module
+21. Dashboards and reports
+22. Integrations with other systems
+23. The Aria AI assistant
+24. Performance, forecasting, availability
+
+**Part G — Going live**
+25. Apps and tabs for each team
+26. Background jobs to schedule
+27. Final tests before go-live
+28. Troubleshooting
+29. Glossary
+30. Where to get help
 
 ---
 
-## 1. Overview & module map
+# Part A — Foundations
 
-RealMake-Product is a real-estate CRM suite. Configuration is grouped into
-nine functional modules, each rendered by Lightning Web Components and backed
-by configuration records:
+## 1. Before you start
 
-```mermaid
-flowchart LR
-    A[Pre-Sales]   --> B[Sales]
-    B              --> C[Post-Sales]
-    A             --o D[Channel Partner]
-    C              --> E[Finance & Demands]
-    F[Integration] -.-> A
-    F              -.-> B
-    F              -.-> C
-    G[Approvals]   -.-> B
-    G              -.-> C
-    H[AI / Aria]   -.-> A
-    I[Dashboards & Reports] -.-> A
-    I              -.-> B
-    I              -.-> C
-```
+> **What it does:** confirms the package is healthy in your org.
+> **Why you need it:** if any of these are wrong, the rest of this guide
+> will fail in confusing ways.
 
-| Module | Primary records | Primary tabs / LWCs |
+**Before you begin**, sit with someone who has Salesforce System Administrator
+access — you will need it for almost every step.
+
+**How to check**
+
+Open Salesforce **Setup** (the gear icon, top right) and confirm:
+
+| What | Where | What you want to see |
 |---|---|---|
-| **Pre-Sales** | `Lead__c`, `Followup__c`, `Site_Visit__c`, `Campaign__c` | Pre-Sales Admin Config, Round Robin Configurator, Duplication Configurator, Lead Scoring Designer |
-| **Sales** | `Booking__c`, `Cost_Sheet__c`, `Unit__c`, `Tower__c`, `Project__c` | Formula Builder, Discount Approval Matrix, Push To Sales |
-| **Post-Sales** | `Payment_Schedule__c`, `Demands__c`, `Receipt__c`, `Refund__c`, `Credit_Note__c`, `Debit_Note__c` | Post-Sales Admin |
-| **Channel Partner** | `Channel_Partner__c`, `CP_Module_Config__c`, `Daily_Log__c` | CP Module Config |
-| **Approvals** | `Approval_Configuration__c`, `Discount_Approval_Matrix__c` | Approval Center, Bulk Approval Manager, Step Builder |
-| **Integration** | `Integration_*__c`, `Integration_*__mdt` | Integration Dashboard, Mapping Designer, Test Console |
-| **Forms & Mapping** | `Dynamic_Form_Configuration__c`, `Field_Mapping_*__c` | Form Configurator Builder, Field Mapping Setup |
-| **AI / Aria** | `AI_Integration_Config__mdt` | Aria Chat Bot, Aria Lead Capture Form |
-| **Dashboards / Reports** | `Dashboard_*__mdt`, `Dashboard_Configuration__c`, `Report_Configuration__c` | CRM Dashboards, CRM Reports |
+| The deployment finished cleanly | Deployment Status | Every line says *Succeeded* |
+| Lightning Experience is on | Lightning Experience Transition | *Enabled* |
+| My Domain is enabled | My Domain | *Deployed* and *My Domain is ready for use* |
+| Email is allowed to leave the org | Deliverability | *Access to Send Email* = *All email* (in Production) |
+| You have at least one verified sender | Organization-Wide Email Addresses | At least one verified entry |
+
+**One-time tool to install**
+
+Install the free browser extension **Salesforce Inspector Reloaded**
+(available for Chrome, Edge and Firefox). You will use its *Data Import*
+panel in Section 3 to upload starter data. It saves hours of clicking.
+
+**Tip.** Keep a notepad open as you work through this guide — every team's
+business rules (statuses, discount bands, payment milestones) will be
+asked for in later sections, and writing them down first is much faster
+than discovering them ad-hoc.
 
 ---
 
-## 2. How to read this guide (by role)
+## 2. Give your team access
 
-| Role | Read sections | Skip |
+> **What it does:** tells Salesforce which users can see which tabs,
+> records, and buttons.
+> **Why you need it:** without this, your users will open the app and
+> see empty screens.
+
+**Step 1 — Assign two platform permission sets**
+
+Setup → **Permission Sets**. Tick each of the following and assign them to
+yourself plus any other admins:
+
+- *sfdc_nc_constraints_engine_deploy*
+- *sfdc_scrt2*
+
+These come from Salesforce platform and are required by the package.
+
+**Step 2 — Decide who does what**
+
+In real estate companies the teams usually break down like this:
+
+| Team | What they do |
+|---|---|
+| **Pre-Sales** | Receive enquiries, qualify them, book site visits |
+| **Sales** | Take a qualified lead, build a cost sheet, close the booking |
+| **Post-Sales / CRM** | Send demand letters, collect payments, handle handover |
+| **Finance** | Approve receipts, refunds, credit/debit notes |
+| **Channel Partner (CP)** | Manage external partner brokers |
+| **GRE** | Greet walk-in visitors at the site |
+
+Make a list of every user on your team and which group they belong to.
+
+**Step 3 — Set up profiles or permission sets per team**
+
+For each team, ask your admin to:
+
+- Make the relevant tabs visible (the full list is in Section 25)
+- Give read / edit access to the objects that team works with
+- Allow the Apex classes and Visualforce pages the package uses
+
+If you are early in the rollout, the simplest approach is to give the
+implementation user **System Administrator** while you finish setup, and
+tighten things up just before go-live.
+
+**Common mistake.** Forgetting to make tabs visible to a team — users
+report that "the screens are missing" when really their profile just hides
+the tabs.
+
+---
+
+## 3. Load the starter data
+
+> **What it does:** loads the small pieces of data that *the package itself*
+> depends on — for example, which fields to show on the Cost Sheet, and
+> which prompts to show when a lead changes status.
+> **Why you need it:** without this, several screens look completely empty
+> even though the package is installed.
+
+These records are called **Custom Metadata** in Salesforce. You only upload
+them once.
+
+**Step 1 — Download the starter bundle**
+
+Open the **Welcome Guide** tab in Salesforce (it ships with the package,
+icon: trophy). The first section, *Upload Custom Metadata Records*,
+contains a public download link to a ZIP of CSV files.
+
+**Step 2 — Upload each CSV using Salesforce Inspector**
+
+For each file in the bundle:
+
+1. Open Salesforce, click the Inspector icon → **Data Import**.
+2. **Action** — *Insert* (or *Upsert* if you're re-running after fixing rows).
+3. **Object** — the name shown in the table below.
+4. Drag the CSV into the panel.
+5. Click **Run Import**.
+
+| File / Object name | What it controls | Mandatory? |
 |---|---|---|
-| **Tech / project lead** | 1 – 4, 31 – 32 | — |
-| **Salesforce admin** (full setup) | All | — |
-| **Pre-Sales lead** | 8, 9, 10, 11, 15, 19, 20 | 12 – 14, 16 |
-| **Sales lead** | 12, 13, 14, 15, 17, 21 | 11, 19 |
-| **Post-Sales / Finance lead** | 14, 16, 18, 20, 21, 22 | 9, 11, 19 |
-| **CP manager** | 19, 23, 20 | 12 – 16 |
-| **Integration engineer** | 6, 7, 24, 25 | 9, 11 – 13 |
-| **AI / digital lead** | 6, 7, 26 | — |
+| Cost_Sheet_Field_Config__mdt | Which rows appear on the cost sheet, in what order | **Yes** — Cost Sheet is blank without this |
+| Lead_Status_Action_Config__mdt | What happens when a lead moves to each status (e.g. ask for a reason when "Lost") | **Yes** — status updates won't prompt without this |
+| Dashboard_Tab_Config__mdt | Which tabs appear on the home dashboard | **Yes** — dashboard is blank without this |
+| Dashboard_Field_Config__mdt | Which fields show inside each dashboard tab | **Yes** |
+| AI_Integration_Config__mdt | API key and model for the AI chatbot | Only if you're using the AI assistant |
+| Forecast_Config__mdt | Sales-forecast funnel definition | Only if using forecasting |
+| Shift_Configuration__mdt | Working hour shifts | Only if tracking user availability |
+| User_Availability_Profile_Config__mdt | Maps profiles to shifts | Only if tracking user availability |
+| Integration_Doc_Setting__mdt | Logo, company name, watermark on integration documents | Only if you generate outbound docs |
+
+**How to check it works.** Open the **Cost Sheet** tab — you should see
+field labels (Base Price, GST, etc.) instead of an empty screen.
+
+**Tip.** If you need to change any of this later, you do *not* re-import.
+Use Setup → **Custom Metadata Types** → *Manage Records* → *Edit*.
 
 ---
 
-## 3. Quick-start — first 30 minutes
+## 4. Connect to the outside world
 
-Do these six things before anything else. They unblock the rest of the setup.
+> **What it does:** tells Salesforce which external websites and APIs the
+> package is allowed to talk to.
+> **Why you need it:** Salesforce blocks all outbound traffic by default
+> for security. Payment gateways, SMS providers, the AI assistant, etc.
+> will not work until you whitelist them.
 
-1. **Verify the deploy succeeded** — Setup → Deployment Status → all green.
-2. **Assign yourself System Administrator** plus the two platform permission
-   sets (Section 5).
-3. **Import the seed CMDT bundle** (Section 6). Without it, Cost Sheet, Lead
-   status modal, and the home dashboard will look empty.
-4. **Replace the placeholder remote site** `ApexDevNet` with the customer's
-   real outbound hosts (Section 7).
-5. **Create one active `General_Setup__c` row** (Section 8) so the duplication
-   fallback and Push-To-Sales target are defined.
-6. **Open the Welcome Guide tab** — it lists the next six configuration tasks
-   in the in-app accordion.
+You will probably do this section together with the third-party vendors
+(payment, SMS, email, ERP). Each vendor will give you a URL to whitelist.
 
-You can now hand off the org to functional leads and continue with the rest of
-this guide module-by-module.
+**Step 1 — Whitelist the external URLs**
+
+Setup → **Remote Site Settings** → **New Remote Site**.
+
+For each vendor, add an entry: paste the URL, give it a friendly name,
+tick *Active*.
+
+**Step 2 — Whitelist any embedded content**
+
+If a vendor sends back HTML you display on screen (a payment page, an iframe,
+a font, etc.), also add the URL to:
+
+Setup → **CSP Trusted Sites** → **New Trusted Site**.
+
+**Step 3 — Set up secure credentials**
+
+For anything that needs a username/password or an OAuth flow, prefer
+**Named Credentials** over typing credentials into the package's
+configuration screens. Setup → **Named Credentials**.
+
+**Common mistake.** Forgetting CSP Trusted Sites. The callout itself works
+but the embedded page is blank — users think the integration is broken.
 
 ---
 
-## 4. Pre-flight checklist
+## 5. Tell the system about your business
 
-| Item | Where to check | Expected |
+> **What it does:** sets two organisation-wide defaults — what to do with
+> duplicate leads, and what record gets created when Pre-Sales hands a
+> lead over to Sales.
+> **Why you need it:** these are the "fallback" rules. Without them the
+> package doesn't know what to do in edge cases.
+
+**How to set it up**
+
+1. From the App Launcher (the 9-dot grid), search for **General Setup** and
+   open it.
+2. Click **New**.
+3. Fill in:
+
+   | Field on screen | What to choose | Plain-English meaning |
+   |---|---|---|
+   | Active | ✓ ticked | Exactly one row should be active at a time |
+   | Lead Duplication Type | *Close*, *Merge*, or *Flag* | What to do with duplicate leads when no specific rule matches |
+   | Push To Sales Type | *Booking*, *Opportunity*, or both | Which record Sales gets when Pre-Sales pushes a qualified lead |
+   | Description | free text | Useful for distinguishing UAT from Production |
+
+4. Save.
+
+---
+
+# Part B — Pre-Sales setup
+
+## 6. Distribute leads to your team automatically (Round Robin)
+
+> **What it does:** when a new lead arrives, the system picks the next
+> sales person in line and assigns it to them automatically.
+> **Why you need it:** it stops leads from sitting unowned, and it makes
+> distribution fair across the team.
+
+**How it thinks**
+
+You create **buckets** (e.g. *US Platinum*, *International Silver*).
+Each bucket has:
+
+- A **filter** — which leads belong in this bucket (e.g. *Country = USA AND
+  Project = Skyline*).
+- A list of **members** — the people who should take leads from this bucket,
+  in order.
+
+When a new lead arrives, the system finds the first matching bucket and
+assigns the lead to the next member in rotation.
+
+**How to set it up**
+
+1. From the App Launcher open the **RoundRobin Configurator** tab. (If
+   you'd prefer a step-by-step wizard, use the **RR Wizard** tab instead.)
+2. Click **New Bucket**. Give it a clear name like *US Platinum Leads*.
+3. Add filter rows for what defines this bucket — Project, Source, Country,
+   Lead Type, etc. All filters within one bucket are AND-ed together.
+4. Add members — the salespeople who should receive these leads. The
+   **sequence number** sets the rotation order; the lowest sequence is
+   picked first.
+5. Save.
+6. Make sure the queues those buckets reference exist (Section 25 lists
+   them) and have members.
+
+**How to check it works**
+
+Create a test lead that matches one of your bucket filters. The owner
+should be set automatically. Create a second one — it should go to the
+next person in rotation.
+
+**Common mistake.** Defining the bucket but forgetting to populate the
+matching **queue** with people. The lead lands in the queue and sits there.
+
+---
+
+## 7. Catch duplicate leads
+
+> **What it does:** when someone enquires twice, the system recognises it
+> and either closes the duplicate, merges it, or flags it for a human.
+> **Why you need it:** you don't want two salespeople calling the same
+> customer.
+
+**How to set it up**
+
+1. Open the **Duplication Configurator** tab.
+2. Click **New Rule**.
+3. Choose the **match fields** — what makes two leads "the same"?
+   Common choices: *Mobile Number*, *Email*, or a combination like
+   *Mobile + Project + Source*.
+4. Choose the **action**:
+   - **Close** — the new (duplicate) lead is closed automatically.
+   - **Merge** — fields from the new lead are merged into the existing one.
+   - **Flag** — the lead is left for a human to review.
+5. Save.
+
+**Schedule the nightly cleanup**
+
+Ask your admin to schedule the *CleanupDuplicateLeadsBatch* job to run
+every night. This catches duplicates that arrive through bulk imports.
+
+**How to check it works**
+
+Create a lead, then create a second one with the same mobile number — the
+second should be handled per the rule.
+
+---
+
+## 8. Score your leads
+
+> **What it does:** gives each lead a numeric score so your salespeople
+> know which to call first.
+> **Why you need it:** when 200 leads come in a day, scoring tells the
+> team which 20 are worth calling now.
+
+**How it works**
+
+You create **rules** that add or subtract points based on lead attributes,
+and **tiers** that bucket the scores into Hot / Warm / Cold.
+
+**How to set it up**
+
+1. Open the **Lead Scoring Designer** tab.
+2. Create **tiers** (e.g. *Hot* = 70+, *Warm* = 40–69, *Cold* = 0–39).
+3. Create **rules**. Examples to start with:
+   - *Source = Website* → +10 points
+   - *Number of Site Visits ≥ 2* → +20 points
+   - *No follow-up in 7 days* → −10 points
+4. Activate each rule (tick *Active*).
+5. Use the **Recompute** button on the designer to update scores on
+   existing leads.
+
+**How to check it works**
+
+Open a lead that matches one of your rules and confirm the score reflects
+the points.
+
+---
+
+## 9. Set up lead capture rules
+
+> **What it does:** when a lead changes status (e.g. *Qualified → Lost*),
+> the system can require the user to fill in a reason, schedule a follow-up,
+> or log a site visit.
+> **Why you need it:** keeps your data clean and your pipeline honest.
+
+This is already controlled by the **Lead_Status_Action_Config** starter
+data you loaded in Section 3. To change the rules:
+
+1. Setup → **Custom Metadata Types** → find *Lead Status Action Config*.
+2. Click **Manage Records**.
+3. For each status, edit:
+   - *Requires Remarks?*
+   - *Requires Lost Reason?*
+   - *Requires Follow-Up?*
+   - *Requires Site Visit?*
+   - *Mandatory* vs *Optional* flags
+   - *Section Label* — the header shown above the prompt
+4. Save.
+
+**Tip.** Start simple — make Lost reason mandatory, and follow-up optional.
+You can tighten the rules once the team is comfortable.
+
+---
+
+# Part C — Sales setup
+
+## 10. Build the Cost Sheet (your pricing engine)
+
+> **What it does:** generates a complete pricing breakdown — base price,
+> GST, PLC, floor rise, maintenance, stamp duty, registration — whenever
+> a salesperson opens a deal.
+> **Why you need it:** so every quote uses the same formula and you avoid
+> manual maths errors.
+
+**Where the rules live**
+
+Pricing rules are stored on the **Project** record, because each project
+typically has its own base price and tax rules.
+
+**How to set it up (do this per project)**
+
+1. Open a **Project** record.
+2. On the right side of the page, click **Launch Formula Builder**.
+3. For each row on the cost sheet, write the formula. Examples:
+   - *Base Price* = *Project Base Price × Unit Sqft*
+   - *GST* = *Base Price × 5%*
+   - *Floor Rise* = *Floor Rise Per Sqft × Unit Sqft*
+4. Save.
+
+Repeat for every active project.
+
+**Tip.** If many projects share the same formulas, create a
+**Project Calculation Template** once and link it from each Project, instead
+of re-typing every formula.
+
+**How to check it works**
+
+1. Open a Lead linked to that project.
+2. Click the **New Cost Sheet** quick action.
+3. Confirm the calculated total matches what you expect on paper.
+4. Once approved, click **Create Booking** to convert it.
+
+---
+
+## 11. Approve discounts
+
+> **What it does:** when a salesperson offers a discount, the system
+> automatically routes it to the right approver based on the discount
+> percentage.
+> **Why you need it:** prevents large discounts from being given without
+> management review.
+
+**How to set it up**
+
+1. Open the **Discount Approval Matrix** tab.
+2. Add one row per discount band. A typical setup:
+
+   | Discount range | Goes to | Outcome |
+   |---|---|---|
+   | 0 – 5 % | (no approver) | Auto-approved |
+   | 5 – 15 % | Sr. Sales Manager | Manual approval |
+   | 15 – 25 % | Director | Manual approval |
+   | Above 25 % | CEO + Director | Two-step approval |
+
+3. Pick the approver (a user or a queue) per row.
+4. Ask your admin to schedule the *DiscountApprovalEscalationBatch* job so
+   that approvals which sit too long are escalated up the chain.
+
+**How to check it works**
+
+Create a test discount request at, say, 8% — it should land in the
+Sr. Manager's Approval Center.
+
+---
+
+## 12. Hand leads over to Sales (Push To Sales)
+
+> **What it does:** once Pre-Sales decides a lead is worth pursuing, one
+> click hands it to the Sales team with all the right information copied
+> across.
+> **Why you need it:** removes the spreadsheet hand-off and ensures Sales
+> gets the same data Pre-Sales had.
+
+> **Important.** The setup screen is **Pre-Sales Admin Config → General
+> Setup Config sub-tab**. There is an older standalone tab called
+> *Push To Sales Field Map* — ignore it, it is deprecated.
+
+**How to set it up**
+
+1. Open the **Pre-Sales Admin Config** tab.
+2. Click into the **General Setup Config** sub-tab.
+3. Map each Pre-Sales lead field to the corresponding field on the Sales
+   record (Booking or Opportunity, whichever you chose in Section 5).
+   Example:
+   - *Lead.Mobile* → *Booking.Customer Mobile*
+   - *Lead.Project* → *Booking.Project*
+   - *Lead.Owner* → *Booking.Sales Owner*
+4. Save.
+5. Ask your admin to add the **Push to Sales** quick action button to the
+   Lead page layout used by Pre-Sales.
+
+**How to check it works**
+
+Find a qualified lead, click **Push to Sales**, and confirm a Booking is
+created with the right fields and the new owner.
+
+**Bulk version.** For one-time bulk hand-offs (e.g. migrating historical
+leads), use the **Pre-Sales Bulk Config** tab.
+
+---
+
+# Part D — Post-Sales setup
+
+## 13. Define your payment schedule
+
+> **What it does:** describes the milestones at which your customer is
+> expected to pay (Booking, Foundation, Roofing, Possession, etc.).
+> **Why you need it:** the package uses this to generate demand letters,
+> reminders, and reports automatically.
+
+**How to set it up**
+
+1. Open the **Master Payment Schedule** tab.
+2. For each project (or once, if all projects share the same schedule),
+   add one row per milestone:
+
+   | Milestone | % of total | Due |
+   |---|---|---|
+   | At Booking | 10% | Immediately |
+   | Foundation Complete | 15% | 30 days after Booking |
+   | First Slab | 10% | 30 days after Foundation |
+   | … | … | … |
+   | Possession | 10% | 30 days after final slab |
+
+3. Save.
+
+**Tip.** Always make the percentages add up to 100%. The system warns you
+if they don't.
+
+---
+
+## 14. Configure demand letters
+
+> **What it does:** automatically sends the customer a formal letter
+> asking for payment when a milestone falls due.
+> **Why you need it:** removes the manual chase work and keeps cash flow
+> predictable.
+
+**How to set it up**
+
+1. Open the **Demand Letter Config** screen.
+2. For each project add a row with:
+   - The **document template** to use (set up in Section 19)
+   - The **email template** to use (set up in Section 18)
+   - **Grace Period (days)** — how long after the due date before it's
+     considered overdue
+   - **Include Interest?** — whether overdue interest is added
+3. Save.
+
+**How to check it works**
+
+Click *Raise Demand* on a test Booking — the email should be sent and the
+PDF should be generated and attached.
+
+---
+
+## 15. Configure receipts, refunds, and credit / debit notes
+
+> **What it does:** controls how each kind of money movement is recorded.
+> **Why you need it:** every project / customer type may follow slightly
+> different rules (advance receipts, milestone receipts, partial refunds).
+
+**How to set it up**
+
+1. Open the **Post-Sales Admin** tab.
+2. Click **New Configuration**.
+3. For **each** kind of process you want to enable (Receipt, Refund,
+   Credit Note, Debit Note, Payment Schedule), create one row and fill in:
+
+   - **Configuration Type** — choose the process
+   - **Matches when** — the criteria that decide when this rule applies
+     (e.g. *Project = Skyline*)
+   - **Document Template** — the PDF to issue (Section 19)
+   - **Email Template** — the email to send (Section 18)
+   - **Auto Send Email** — tick if it should send without a human pressing
+     "send"
+   - **Approval Configuration** — link to a Section 16 approval if needed
+   - **Reminders** — tick *Enable Reminders* if the system should chase
+
+4. Save.
+
+**Tip.** Build one configuration first, test it end-to-end, then duplicate
+it for the other process types.
+
+---
+
+## 16. Set up approval flows
+
+> **What it does:** lets you say "this kind of record must be approved
+> before it goes live" — for Bookings, Refunds, Unit Blocks, Cost Sheets
+> and more.
+> **Why you need it:** financial controls, audit trail, and four-eyes
+> compliance.
+
+**How to set it up (do this per process you want to approve)**
+
+1. Open the **Approval Configuration** tab.
+2. Click **New**.
+3. Fill in the basics:
+   - **Process Label** — what people will see (e.g. *Booking Approval*)
+   - **What kind of record?** — Booking / Refund / Unit Block / etc.
+   - **Status field & values** — which field holds the status, and what
+     are the *Pending*, *Approved* and *Rejected* values
+4. Define the **steps**. Use the *Step Builder* — for each step pick:
+   - The approver (a user, a queue, or a manager-of-submitter)
+   - The conditions under which the step applies
+5. Define the **post-decision actions**:
+   - When approved → e.g. set status to *Active*, send confirmation email
+   - When rejected → e.g. set status to *Rejected*, notify submitter
+6. (Optional) **Chain it** — say "this approval can only start once the
+   Cost Sheet is approved".
+7. Tick *Active* and save.
+
+**How users approve**
+
+Users see pending items in the **Approval Center** tab. They can also
+approve in bulk via **Bulk Approval Manager**.
+
+**How to check it works**
+
+Submit a test record and confirm:
+- It changes to Pending status
+- The right person sees it in Approval Center
+- When they approve, the post-decision actions fire
+
+---
+
+## 17. Handle complaints
+
+> **What it does:** when a customer raises a complaint, the system routes
+> it to the right person and escalates it if it sits too long.
+> **Why you need it:** SLA management — keeps complaints from getting lost.
+
+**How to set it up**
+
+1. Open the **Complaint Escalation Matrix** screen.
+2. For each combination of *Project × Category × Priority* (e.g. *Skyline /
+   Plumbing / High*), add a row with three escalation levels:
+
+   | Level | Days to wait | Owner | Notify? |
+   |---|---|---|---|
+   | Level 1 | 1 day | Site Engineer | ✓ |
+   | Level 2 | 3 days | Site Manager | ✓ |
+   | Level 3 | 7 days | Customer Care Head | ✓ |
+
+3. Tick *Auto Reassign* if the owner of the complaint should change at
+   each escalation level.
+4. Save.
+
+**How to check it works**
+
+Open a complaint and leave it alone for the *Level 1 Days*. The system
+should escalate it automatically.
+
+---
+
+# Part E — Communication
+
+## 18. Email templates
+
+> **What it does:** stores all the emails your business sends — welcome
+> emails, demand letters, payment confirmations, reminders, etc.
+> **Why you need it:** so the wording, branding and recipients are
+> consistent every time.
+
+**How to set up a template**
+
+1. Open the **Email Template Config** screen.
+2. Click **New**.
+3. Fill in:
+   - **Template Name** — friendly name (e.g. *Welcome Email - Skyline*)
+   - **For which record?** — Booking / Lead / Receipt / etc.
+   - **Subject** — supports merge fields like `{!Lead.Name}`
+   - **Body** — the HTML content of the email (the editor has a visual mode)
+   - **Recipients** — who it goes to (the customer, a CC list, a queue)
+   - **From Address** — must be a verified Org-Wide Email Address
+     (Setup → *Organization-Wide Email Addresses*)
+   - **Attachments** — static or dynamically generated
+4. Tick *Active* and save.
+
+**Tip.** Set *Default = true* on exactly one template per process — that's
+the one the system picks when no specific rule matches.
+
+**Common mistake.** Setting a *From Address* that isn't verified — the
+email silently fails to send.
+
+---
+
+## 19. Document (PDF) templates
+
+> **What it does:** stores the PDF templates your business issues — demand
+> letters, receipts, allotment letters, NOCs, etc.
+> **Why you need it:** branded, consistent documents generated in one click.
+
+**How to set up a template**
+
+1. Open the **Document Designer** screen.
+2. Click **New Template**.
+3. Fill in:
+   - **Template Name**
+   - **For which record?** — Booking / Receipt / Refund / etc.
+   - **Page setup** — Size (A4 / Letter), Orientation (Portrait / Landscape)
+   - **Logo** — your company logo URL
+   - **File name pattern** — e.g. *Demand-{!Booking.Name}-{!TODAY()}.pdf*
+   - **Body** — drag fields and free text into the canvas
+4. Save and preview on a real record.
+
+Then link the template into the place that issues it: e.g. the *Demand
+Letter Config* (Section 14) or the *Post-Sales Configuration* (Section 15).
+
+---
+
+# Part F — Optional modules
+
+Only configure these if your business uses them.
+
+## 20. Channel Partner module
+
+> **What it does:** manages external partner brokers — their leads, credit
+> validity, and commission rules.
+> **Why you need it:** if your business works through external brokers.
+
+**How to set it up**
+
+1. Open the **CP Module Config** tab.
+2. Create one row with:
+   - **CP Source Name** — the Lead Source value used for CP-originated
+     leads (e.g. *Channel Partner*)
+   - **Assignment Type** — how CP leads route (e.g. *Owner of CP*)
+   - **CP Approval Process** — the approval that activates a new CP
+   - **CP Active Statuses** — multi-pick of statuses considered "active"
+   - **Credit settings** — active/expired status values and expiry days
+   - **Lead status mappings** — default / reopened / inactive lists
+3. Save.
+
+---
+
+## 21. Dashboards and reports
+
+> **What it does:** gives each team a home screen of the records they
+> care about.
+> **Why you need it:** users open Salesforce and immediately see their work.
+
+The home dashboard is mostly driven by the starter data you loaded in
+Section 3 (Dashboard_Tab_Config and Dashboard_Field_Config).
+
+**To customise further:**
+
+1. Open the **Dashboard Configurator** screen.
+2. Create per-user or per-profile overrides — e.g. *Pre-Sales users see
+   Open Leads*, *Finance users see Pending Receipts*.
+3. Save.
+
+For reports, use the **Report Configurator** screen — same idea, but for
+custom reports your users can run.
+
+---
+
+## 22. Integrations with other systems
+
+> **What it does:** connects Salesforce to your payment gateway, SMS
+> provider, ERP, lead-capture website forms, etc.
+> **Why you need it:** if you want data to flow in or out automatically.
+
+This is the most technical section — your IT team or implementation
+partner usually owns it. The package gives them a no-code framework.
+
+**The pieces involved (use the Integration Mapping Designer):**
+
+1. **Authentication profile** — username/password, API key, OAuth, etc.
+2. **Endpoint** — the URL and HTTP method to call (for outbound).
+3. **Source config** — for incoming traffic, the public URL and what
+   object to create.
+4. **Field mapping** — which incoming field goes to which Salesforce field.
+5. **Request template** — the body of the outbound request.
+6. **Retry rules** — how many times to retry, when to give up.
+7. **Logging** — all calls and errors are recorded automatically.
+
+**How to check it works**
+
+Use the **Integration Test Console** to fire a sample request without
+affecting real data.
+
+**Tip.** Build, test and monitor one integration end-to-end before adding
+the next.
+
+---
+
+## 23. The Aria AI assistant
+
+> **What it does:** an AI chatbot ("Aria") that captures leads, answers
+> common questions, and helps users navigate the CRM.
+> **Why you need it:** if AI is licensed and you want a chat experience.
+
+**How to set it up**
+
+1. Sign up with an AI provider (OpenAI, Anthropic, Azure OpenAI, etc.)
+   and get an API key.
+2. Add the provider's host URL in **Remote Site Settings** *and*
+   **CSP Trusted Sites** (Section 4).
+3. Setup → **Custom Metadata Types** → *AI Integration Config* → *Manage
+   Records* → *New*:
+   - **Provider** (e.g. *OpenAI*)
+   - **Model** (e.g. *gpt-4o*)
+   - **Endpoint** (the provider's API URL)
+   - **API Key**
+   - **Active** ✓
+4. Drop the Aria chatbot component onto a Lightning Home page.
+5. For inbound lead capture on your public website, drop *Aria Lead
+   Capture Form* on an Experience Cloud page.
+
+---
+
+## 24. Performance, forecasting, availability
+
+These are three small optional modules. Skip the ones you don't need.
+
+- **Performance** — set sales targets per user per quarter via the
+  *Performance Manager* screen. The leaderboard shows live ranking.
+- **Forecasting** — needs the *Forecast_Config* starter data (Section 3).
+  Open the *Sales Forecaster* screen for funnel / moving-average / health
+  scores.
+- **User Availability** — needs the *Shift_Configuration* and
+  *User_Availability_Profile_Config* starter data (Section 3). Users
+  toggle their own availability from a small widget; managers see it on
+  *User Availability Manager*.
+
+---
+
+# Part G — Going live
+
+## 25. Apps and tabs for each team
+
+Setup → **App Manager** → for each app click *Edit* → *Navigation Items*
+and add the tabs each team needs. Suggested mapping:
+
+**Pre-Sales app** — Leads, Followups, Site Visits, Campaigns, Enquiry
+Source, RoundRobin Configurator, Duplication Configurator, Pre-Sales Admin
+Config, Pre-Sales Bulk Config, Lead Scoring Designer, Welcome Guide.
+
+**Sales app** — Bookings, Cost Sheets, Units, Towers, Projects, Car
+Parking, Push To Sales, Formula Builder, Discount Approval Matrix,
+Discount Approval Log.
+
+**Post-Sales / Finance app** — Payment Schedule, Master Payment Schedule,
+Refunds, Post-Sales Admin, Unit Block Requests, Complaints, Inspections.
+
+**Channel Partner app** — Channel Partners, CP Module Config, Daily Log.
+
+**Admin / cross-functional app** — CRM Dashboards, CRM Reports, Field
+Mapping Setup, Integration Mapping Designer, Integration Source Configs,
+GRE, Bulk Lead Reassignment, Formula Builder, Welcome Guide.
+
+**Don't forget Queues.** The package ships 9 queues (US/International ×
+Leads/Platinum/Silver/Escalations, plus Partner Relations). Setup →
+**Queues** → add a public group or users to each one — the queues are
+empty by default.
+
+---
+
+## 26. Background jobs to schedule
+
+Once everything above is configured, ask your admin to schedule these
+recurring jobs (Setup → *Apex Classes → Schedule Apex*):
+
+| Job | When | Why |
 |---|---|---|
-| Package deploy status | Setup → Deployment Status | All components **Succeeded** |
-| Source API version | `sfdx-project.json` | `62.0` or higher |
-| My Domain | Setup → My Domain | Deployed **and** enabled (LWCs require it) |
-| Lightning Experience | Setup → Lightning Experience Transition | Enabled |
-| Person Accounts | Setup → Account Settings | Enable **only** if the customer uses them |
-| Multi-currency | Setup → Company Information | Enable **before** seeding pricing data |
-| Email deliverability | Setup → Deliverability | Access level = **All email** (Sandbox: System only) |
-| Org-wide email addresses | Setup → Organization-Wide Addresses | At least one verified, matching template `From_Address__c` values |
-
-> Install **Salesforce Inspector Reloaded** (Chrome / Edge / Firefox) before
-> Section 6 — every CMDT seed step uses its Data Import panel.
+| Cleanup Duplicate Leads Batch | Every night 1 am | Catches duplicates from bulk imports |
+| Discount Approval Escalation Batch | Every morning 8 am | Escalates stuck discount approvals |
+| Demand Reminder Batch | Daily | Sends payment reminders |
+| Complaint Escalation Batch | Hourly | Honours complaint SLA timers |
+| Integration Retry Batch | Every 30 minutes | Retries failed external calls |
+| Integration Log Purge | Weekly | Keeps the logs table small |
+| Lead Score Recompute | Daily | Updates scores as data changes |
 
 ---
 
-## 5. Permission sets & profiles
+## 27. Final tests before go-live
 
-The package ships with two platform-managed permission sets and expects you to
-extend the customer's existing profiles. Do this **before** anything else,
-otherwise tabs and LWCs will not render.
+Don't skip these. Do all ten on a sandbox or UAT org before flipping the
+switch:
 
-### 5.1 Permission sets to assign
+1. Create a new lead — does it auto-assign to the right person?
+2. Create a duplicate lead — is it closed / merged / flagged?
+3. Open a Cost Sheet on a real Lead — do the totals match a hand-calculated
+   sheet?
+4. Convert that Cost Sheet to a Booking — are fields mapped correctly?
+5. Request a discount above your auto-approve band — does the right person
+   get the approval?
+6. Push a Lead from Pre-Sales — does the Booking / Opportunity appear with
+   the right owner?
+7. Raise a demand letter on the Booking — does the customer get the email
+   with the PDF attached?
+8. Open every active integration in the Test Console — does each return a
+   success?
+9. Submit one record from each approving process — does Approval Center
+   show it to the right approver?
+10. Open the Welcome Guide tab — do all six in-app sections render?
 
-| Permission set | Assign to |
-|---|---|
-| `sfdc_nc_constraints_engine_deploy` | Admins / power users |
-| `sfdc_scrt2` | Admins / power users |
-
-### 5.2 Profile updates (per team)
-
-For each functional team — Pre-Sales, Sales, Post-Sales, Channel Partner,
-GRE, Finance — clone an existing profile and grant:
-
-- **Object access** to every `__c` object the team touches.
-- **Tab visibility** for the tabs listed in Section 17.
-- **Apex class access** for the controllers behind the LWCs the team uses,
-  e.g. `FormulaBuilderController`, `PushToSalesController`,
-  `ApprovalCenterController`.
-- **Visualforce page access** for the VF demand-letter pages.
-- **Field-level security** — at minimum, the picklists in
-  `Lead_Status_Action_Config__mdt` and the financial fields on `Cost_Sheet__c`
-  / `Booking__c`.
-
-> While the customer is still finalising profiles, assigning the implementation
-> user **System Administrator** keeps the rest of the setup unblocked.
+If all ten pass, you're ready.
 
 ---
 
-## 6. Seed Custom Metadata records
+## 28. Troubleshooting
 
-Several modules ship with empty Custom Metadata Types. Seed them once, then
-the features below will work. The CSV bundle is on the public link in the
-Welcome Guide LWC (`postInstallationGuide.js`, step `upload`).
-
-### 6.1 Import flow (per CMDT)
-
-1. Open the target org and **Salesforce Inspector** → **Data Import**.
-2. **Action** = `Insert` (use `Upsert` if re-running after fixes).
-3. **Object** = the CMDT API name from the table below.
-4. Paste / drag the CSV from the bundle.
-5. Click **Run Import**. Fix and re-run any failed rows.
-
-### 6.2 CMDT inventory
-
-| CMDT API name | Purpose | Required? |
+| What you see | Likely reason | Fix |
 |---|---|---|
-| `Cost_Sheet_Field_Config__mdt` | Field layout, order, visibility, defaults for the Cost Sheet UI | **Yes** |
-| `Lead_Status_Action_Config__mdt` | Per-status rules: requires follow-up / site visit / lost reason / remarks | **Yes** |
-| `Dashboard_Tab_Config__mdt` | Tabs shown on the home notification dashboard | **Yes** |
-| `Dashboard_Field_Config__mdt` | Fields shown on each dashboard tab card | **Yes** |
-| `AI_Integration_Config__mdt` | Provider, model, endpoint, API key for Aria / AI | If AI used |
-| `Forecast_Config__mdt` | Funnel stages, moving-average window, seasonality, health-score weights | If forecasting used |
-| `Shift_Configuration__mdt` | Working-hour shifts (start / end / default) | If availability tracked |
-| `User_Availability_Profile_Config__mdt` | Maps profiles → shifts and visible profiles | If availability tracked |
-| `Integration_Doc_Setting__mdt` | Company name, header colour, logo, watermark for integration documents | If outbound docs issued |
-
-### 6.3 Editing later
-
-- Single record → Setup → Custom Metadata Types → **Manage Records → Edit**.
-- Bulk → Salesforce Inspector **Data Export** → spreadsheet edit → **Data
-  Import** with **Action = Update**.
+| Welcome Guide tab is blank | My Domain isn't enabled | Setup → My Domain |
+| Cost Sheet screen has no rows | Section 3 starter data wasn't loaded | Re-run the Custom Metadata import |
+| Home dashboard is empty | Same — Dashboard starter data missing | Re-run the import |
+| Lead status change doesn't ask for a reason | Lead Status Action Config rows missing or inactive | Edit them in Setup → Custom Metadata Types |
+| New leads aren't being assigned | Bucket has no members, *or* its filter doesn't match the lead, *or* the queue is empty | Check Section 6 and Section 25 |
+| Discount approval just sits there | No matrix row covers the discount % | Add a row in Section 11 |
+| Push to Sales button does nothing | Either the button isn't on the page layout, or the field mapping is empty | Check Section 12 |
+| Demand letter email never arrives | The "From Address" isn't a verified Org-Wide Email Address | Setup → Organization-Wide Addresses → verify it |
+| External API call fails | Host not in Remote Site Settings | Add it (Section 4) |
+| External page won't render inside Salesforce | Host not in CSP Trusted Sites | Add it (Section 4) |
+| AI chatbot doesn't respond | API key wrong, or provider host not whitelisted | Section 23 + Section 4 |
+| Approval Center is empty for everyone | The Approval Configuration isn't *Active*, or its *Matches when* criteria match nothing | Section 16 |
 
 ---
 
-## 7. Remote sites, CSP & named credentials
+## 29. Glossary
 
-The package deploys one placeholder remote site (`ApexDevNet`,
-http://www.apexdevnet.com). Replace / extend it before any callout will work.
-
-| Setup area | Add entries for |
+| Term | Plain meaning |
 |---|---|
-| **Remote Site Settings** | Every external host hit by Apex callouts (payment gateway, SMS, email, AI provider, ERP, document service). Set `Disable Protocol Security = false`. |
-| **CSP Trusted Sites** | Every external domain whose resources (fonts, scripts, iframes) the LWCs load. |
-| **Named Credentials** | OAuth and signed callouts — prefer this over hardcoded URLs in `Integration_Endpoint__c`. |
-| **Auth. Providers** | If OAuth flows are user-initiated, define them here first. |
-
-> For payment gateways and AI providers, you **also** need to add their hosts
-> in CSP Trusted Sites or the LWC will silently fail to render embedded UI.
-
----
-
-## 8. General Setup
-
-**Object:** `General_Setup__c` — one active row per org defines fallback
-behaviour for two cross-cutting features.
-
-| Field | Allowed values | Purpose |
-|---|---|---|
-| `Is_Active__c` | `true` | Exactly one active row at a time |
-| `Lead_Duplication_Type__c` | `Close` / `Merge` / `Flag` | Fallback when no `Duplication_Configuration__c` rule matches |
-| `Push_To_Sales_Type__c` | `Booking` / `Opportunity` / both | Target record created by Push-To-Sales |
-| `Description__c` | free text | Document environment intent (e.g. "UAT — flag only") |
-
-**Where:** App Launcher → search `General Setup` (or Setup → Object Manager →
-`General_Setup__c` → list view).
+| **Cost Sheet** | The pricing breakdown shown to a customer before they book |
+| **Booking** | A confirmed sale — the customer has agreed to buy a unit |
+| **Demand Letter** | A formal request asking the customer to pay an instalment |
+| **Receipt** | A record that money has been received from the customer |
+| **Credit / Debit Note** | An adjustment to the customer's balance |
+| **Unit Block** | Reserving a specific unit so no one else can sell it |
+| **Round Robin** | Rotating leads through a list of salespeople in order |
+| **Channel Partner (CP)** | An external broker selling on your behalf |
+| **GRE** | Guest Relations Executive — the person who greets site walk-ins |
+| **Queue** | A shared inbox of records; users with the queue assigned can pick them up |
+| **CMDT (Custom Metadata)** | Configuration records that travel with the package — what you loaded in Section 3 |
+| **LWC** | Lightning Web Component — the technology behind the package's screens |
+| **Aria** | The AI assistant persona shipped with the package |
 
 ---
 
-## 9. Round Robin (lead assignment)
-
-Distribute inbound leads across a team using filter-driven buckets and a
-sequenced rotation.
-
-### 9.1 Configure
-
-1. Open the **RoundRobin Configurator** tab (LWC `roundRobinConfiguratorLWC`)
-   — or **RR Wizard** for an end-to-end guided flow.
-2. Create one `Round_Robin__c` bucket per team / region (e.g. *US Platinum*).
-3. Add filter rows in `Round_Robin_Filter__c` (project, source, lead type,
-   country). **Filters within a bucket are AND-ed**; create multiple buckets
-   for OR semantics.
-4. Add members in `Round_Robin_Member__c`. The **sequence number** controls
-   rotation; the lowest sequence receives the next eligible lead.
-5. (Optional) Weight members via `Round_Robin_Field_Priority__c`.
-6. Make sure the matching **queues** (Section 10) exist for the bucket.
-
-### 9.2 Verify
-
-- Create a test lead matching the bucket's filters.
-- Confirm ownership lands on the next member in rotation; create a second
-  matching lead and confirm it rotates.
-
----
-
-## 10. Queues — verify membership
-
-The package deploys these Lead / Case queues, **but with no members**. Add
-public groups or users to each one (Setup → Queues):
-
-- `USLeads`, `USPlatinumGold`, `USSilverBronze`, `USEscalations`
-- `InternationalLeads`, `InternationalPlatinumGold`,
-  `InternationalSilverBronze`, `InternationalEscalations`
-- `PartnerRelations`
-
----
-
-## 11. Lead Duplication
-
-1. Open the **Duplication Configurator** tab (LWC `duplicationConfigurator`).
-2. Create one or more `Duplication_Configuration__c` rules. For each rule pick:
-   - **Match fields** (e.g. `Mobile + Project + Source`).
-   - **Action** — `Close`, `Merge`, or `Flag`.
-3. Schedule `CleanupDuplicateLeadsBatch` (snippet in `/scripts`) to run
-   nightly:
-
-   ```apex
-   System.schedule(
-       'Cleanup Duplicate Leads',
-       '0 0 1 * * ?',
-       new CleanupDuplicateLeadsBatch()
-   );
-   ```
-
-4. **Verify** — create a duplicate Lead; it should be flagged / closed /
-   merged within seconds.
-
----
-
-## 12. Cost Sheet (pricing)
-
-Per-project pricing lives on `Project__c`.
-
-### 12.1 Configure
-
-1. Confirm `Cost_Sheet_Field_Config__mdt` rows were seeded (Section 6).
-2. Open each `Project__c` record.
-3. Launch **Formula Builder** from the Project page (LWC `formulaBuilder`,
-   controller `FormulaBuilderController`).
-4. For each line item (Base Price, GST %, PLC, Floor Rise / Sqft,
-   Maintenance / Sqft, Stamp Duty, Registration, …) define the formula or
-   map it to a Project field.
-5. **Save** — every Cost Sheet generated for that project will pick up these
-   formulas automatically.
-6. (Optional) Create `Project_Calculation_Template__c` to share a formula set
-   across multiple projects.
-
-### 12.2 Verify
-
-- Open a Lead linked to the project.
-- Run the **New Cost Sheet** quick action — confirm totals match expected
-  math.
-- Approve the Cost Sheet, then promote it via the **Create Booking** quick
-  action (LWC `createBookingFromCostSheet`).
-
----
-
-## 13. Discount Approval Matrix
-
-1. Open the **Discount Approval Matrix** tab (LWC `discountMatrixForm` /
-   `discountApprovalPanel`).
-2. Add a `Discount_Approval_Matrix__c` row per band — example:
-
-   | Discount band | Approver |
-   |---|---|
-   | 0 – 5 % | Auto-approve |
-   | 5 – 15 % | Sr. Manager |
-   | > 15 % | Director |
-
-3. Pick approver users **or** queues per row.
-4. Schedule `DiscountApprovalEscalationBatch` so unattended approvals
-   auto-escalate to the next level.
-5. Audit trail of every approval / rejection lands in
-   `Discount_Approval_Log__c`.
-
----
-
-## 14. Approval Configuration (generic engine)
-
-`Approval_Configuration__c` powers the dynamic approval engine used by
-Booking, Refund, Unit Block, Cost Sheet, etc.
-
-| Field | Purpose |
-|---|---|
-| `Process_Label__c` | Human-readable name shown in the Approval Center |
-| `Process_Type__c` | `Booking` / `Refund` / `Unit Block` / `Cost Sheet` / … |
-| `Object_API_Name__c` | The triggering object's API name |
-| `Status_Field_API_Name__c` | The status picklist field |
-| `Pending_Status_Value__c` | Status while approval is in flight |
-| `Approved_Status_Value__c` | Status on approval |
-| `Rejected_Status_Value__c` | Status on rejection |
-| `Approval_Process_API_Name__c` | (Optional) Existing Salesforce approval process |
-| `Steps_JSON__c` | Steps definition — built via `approvalStepConfig` / `stepBuilder` LWCs |
-| `Required_Fields_JSON__c` | Fields that must be populated before submit |
-| `Matching_Criteria__c` | Expression selecting eligible records |
-| `On_Approval_JSON__c` | Field updates / actions on approval |
-| `On_Rejection_JSON__c` | Field updates / actions on rejection |
-| `Prerequisite_Process_Type__c` + `Prerequisite_Status_Value__c` | Chain approvals (e.g. Cost Sheet must be approved before Booking) |
-| `Sequence_Order__c` | Order when multiple configs match |
-| `Is_Active__c` | true |
-
-End-users approve via the **Approval Center** (LWC `approvalCenter`) or
-**Bulk Approval Manager**.
-
----
-
-## 15. Push To Sales (pre-sales → sales hand-off)
-
-> **The canonical setup tab is `Pre-Sales Admin Config` → `General Setup
-> Config` sub-tab.** The standalone `Push To Sales Field Map` tab is
-> deprecated.
-
-### 15.1 Configure
-
-1. Open the **Pre-Sales Admin Config** tab (LWC `presalesAdminConfig`).
-2. Switch to the **General Setup Config** sub-tab.
-3. Define the pre-sales → sales **field mapping** (uses
-   `Field_Mapping_Configuration__c` + `Field_Mapping_Detail__c`).
-4. Add the `Lead__c.Push_to_Sales` quick action (LWC `pushToSalesAction`,
-   controller `PushToSalesController`) to the Lead page layout used by
-   pre-sales reps.
-5. Add the **Push To Sales** tab to the Sales app for visibility on
-   handed-over records.
-
-### 15.2 Verify
-
-- Push a qualified Lead.
-- Confirm the resulting Booking / Opportunity carries the mapped fields and
-  the new owner from the Push-To-Sales config.
-
-For bulk imports use **Pre-Sales Bulk Config** (LWC `presalesBulkConfig`).
-
----
-
-## 16. Post-Sales Configuration
-
-The post-sales engine is driven by `Post_Sales_Configuration__c` rows
-(per process) and `Post_Sales_Config_Master__c` (global defaults).
-
-### 16.1 Configuration matrix
-
-Create one `Post_Sales_Configuration__c` row per process type:
-
-| Group | Field | Purpose |
-|---|---|---|
-| **Selector** | `Configuration_Type__c` | `Demand` / `Receipt` / `Refund` / `Credit Note` / `Debit Note` / `Schedule` |
-| | `Matching_Criteria__c` | Records the config applies to |
-| | `Is_Active__c` | true |
-| **Schedule** | `Schedule_Mode__c`, `Schedule_Source__c`, `Schedule_Edit_Mode__c` | How payment schedules are generated and edited |
-| **Demand** | `Demand_Mode__c`, `Demand_Due_Duration__c`, `Due_Date_Offset_Days__c`, `Grace_Period_Days__c` | Demand cadence |
-| **Receipt** | `Receipt_Creation_Mode__c`, `Receipt_Amount_Field__c`, `Receipt_Field_Mapping__c` | Receipt generation |
-| **Documents** | `Document_Template__c`, `VF_Page_Name__c` | Output document |
-| **Email** | `Email_Template__c`, `Auto_Send_Email__c` | Outbound email |
-| **Approval** | `Approval_Configuration__c` | Links to Section 14 |
-| **Financials** | `Include_Interest__c`, `Include_Previous_Dues__c`, `Amount_Composition_Config__c` | Amount composition |
-| **Reminders** | `Enable_Reminders__c`, `Reminder_Config__c` | Reminder cadence |
-
-### 16.2 Project-level demand-letter defaults
-
-`Demand_Letter_Config__c` — one row per `Project__c`. Set template, email
-template, grace days, interest flag.
-
-### 16.3 Payment schedule master
-
-`Master_Payment_Schedule__c` — one row per milestone:
-
-| Field | Notes |
-|---|---|
-| `Sequence__c` | Order of the milestone |
-| `Percentage__c` | % of total due at this milestone |
-| `Days_After_Booking__c` / `Days_After_Previous__c` | Cadence |
-| `Payment_Type__c` | `Booking` / `Construction` / `Possession` / … |
-| `Applicable_For__c` | Project / Unit type filter |
-| `Milestone_Description__c` | Free text for the demand letter |
-| `Is_Active__c` | true |
-
----
-
-## 17. Tabs to expose per app
-
-App Builder → **App Manager → edit → Navigation Items**. Suggested mapping:
-
-### 17.1 Pre-Sales app
-
-`Lead__c`, `Followup__c`, `Site_Visit__c`, `Campaign__c`, `Enquiry_Source__c`,
-`RoundRobin_Configurator`, `Duplication_Configurator`,
-`Pre_Sales_Admin_Config`, `Pre_Sales_Bulk_Config`, `Lead_Scoring_Designer`,
-`Welcome_Guide`.
-
-### 17.2 Sales app
-
-`Booking__c`, `Cost_Sheet__c`, `Unit__c`, `Tower__c`, `Project__c`,
-`Car_Parking__c`, `Push_To_Sales`, `Formula_Builder`,
-`Discount_Approval_Matrix`, `Discount_Approval_Log__c`.
-
-### 17.3 Post-Sales / Finance app
-
-`Payment_Schedule__c`, `Master_Payment_Schedule__c`, `Refund__c`,
-`Post_Sales_Admin`, `Unit_Block_Request__c`, `Complaint__c`, `Inspection__c`.
-
-### 17.4 Channel Partner app
-
-`Channel_Partner__c`, `CP_Module_Config__c`, `Daily_Log__c`.
-
-### 17.5 Admin / cross-functional
-
-`CRM_Dashboards`, `CRM_Reports`, `Field_Mapping_Setup`,
-`Integration_Mapping_Designer`, `Integration_Source_Config__c`,
-`Integration_Field_Rule__c`, `Integration_Lookup_Rule__c`, `GRE`,
-`Bulk_Lead_Reassignment`, `Formula_Builder`, `Welcome_Guide`.
-
----
-
-## 18. Dashboards & reports
-
-The home dashboard is driven by CMDT plus optional record-level overrides.
-
-1. Seed `Dashboard_Tab_Config__mdt` (Section 6) — which tabs appear.
-2. Seed `Dashboard_Field_Config__mdt` (Section 6) — fields per tab card.
-3. (Optional) Override per user / per org with `Dashboard_Configuration__c`
-   (JSON, edited via the **Dashboard Configurator** LWC).
-4. Configure reports via `Report_Configuration__c` and the
-   **Report Configurator** LWC; users consume them through `reportViewer`.
-
----
-
-## 19. Lead Scoring
-
-1. Open the **Lead Scoring Designer** tab (LWC `leadScoringDesigner`).
-2. Create `Lead_Score_Tier__c` rows — Hot / Warm / Cold thresholds.
-3. Create `Lead_Score_Rule__c` rows. Each rule is one positive or negative
-   signal — e.g. *Source = Website → +10*, *Site Visits ≥ 2 → +20*.
-4. Activate the rules (`Is_Active__c = true`).
-5. Recompute scores on existing leads via the batch button on the designer.
-
----
-
-## 20. Email templates
-
-**Object:** `Email_Template_Config__c`. Editor: `emailSender`,
-`emailFieldPicker`, `emailMergeFieldPicker`, `emailPreviewModal`.
-
-| Field | Purpose |
-|---|---|
-| `Template_Name__c` | Display name |
-| `Object_API_Name__c` | The object the template is bound to |
-| `Subject__c` | Subject line — supports merge fields |
-| `Email_Body__c` | HTML body |
-| `Recipients_Config__c` | JSON list of recipient fields / users / queues |
-| `From_Address__c` | Must match a verified Org-Wide Address |
-| `Reply_To__c` | Reply-to address |
-| `Attachments_Config__c` | JSON for static / dynamic attachments |
-| `Matching_Criteria__c` | When this template auto-applies |
-| `Allow_Additional_Recipients__c` | Whether the sender can add ad-hoc recipients |
-| `Is_Default__c` | Exactly one default per `(Object_API_Name__c, Action_Binding__c)` |
-| `Is_Active__c` | true |
-| `Action_Binding__c` | The button / process that fires it |
-
----
-
-## 21. Document templates
-
-**Object:** `Document_Template__c`. Editor: `documentDesigner`,
-`documentManager`, `documentViewer`.
-
-| Field | Purpose |
-|---|---|
-| `Object_API_Name__c` | Source object |
-| `Template_HTML__c` / `Template_JSON__c` / `Template_Content_Document_Id__c` | Pick the rendering pipeline you use |
-| `Page_Size__c`, `Page_Orientation__c` | PDF layout |
-| `Logo_URL__c` | Branded header |
-| `File_Name_Pattern__c` | e.g. `Demand-{!Booking__c.Name}-{!TODAY()}.pdf` |
-| `Action_Binding__c` | Button / process that emits the document |
-| `Display_Context__c` | Where in the UI the template is offered |
-| `Include_Related_Lists__c` | Append related-list tables |
-| `Matching_Criteria__c` | Auto-selection criteria |
-| `Active__c` | true |
-
-Link templates from `Post_Sales_Configuration__c.Document_Template__c` and
-`Demand_Letter_Config__c.Document_Template__c`.
-
----
-
-## 22. Complaint Escalation Matrix
-
-**Object:** `Complaint_Escalation_Matrix__c`. One row per
-**Project × Category × Priority**.
-
-| Level | Days field | User field | Notify flag |
-|---|---|---|---|
-| Level 1 | `Level_1_Days__c` | `Level_1_User__c` | `Level_1_Notify__c` |
-| Level 2 | `Level_2_Days__c` | `Level_2_User__c` | `Level_2_Notify__c` |
-| Level 3 | `Level_3_Days__c` | `Level_3_User__c` | `Level_3_Notify__c` |
-
-Toggle `Auto_Reassign__c` to change ownership automatically on SLA breach.
-Edit through the `complaintEscalationConfig` LWC.
-
----
-
-## 23. Channel Partner module
-
-**Object:** `CP_Module_Config__c`. Create one active row per CP onboarding
-flow.
-
-| Field | Purpose |
-|---|---|
-| `CP_Source_Name__c` | Lead Source value for CP-originated leads |
-| `Assignment_Type__c` | Routing rule for CP leads (Round Robin / Owner of CP / …) |
-| `CP_Approval_Process__c` | Approval used to activate a CP |
-| `CP_Active_Statuses__c` | Multi-value list of "active" statuses |
-| `Credit_Active_Status__c` / `Credit_Expired_Status__c` / `Credit_Expiry_Days__c` | CP credit / commission lifecycle |
-| `Lead_Default_Status__c`, `Lead_Inactive_Statuses__c`, `Lead_Reengaged_Type__c`, `Lead_Reopened_Type__c` | Lead state transitions for CP-sourced leads |
-| `Is_Active__c` | true |
-
----
-
-## 24. Integration framework
-
-A full integration stack ships with the package. Configure only the parts the
-customer needs.
-
-```mermaid
-flowchart TB
-    src[Integration_Source_Config__c<br/>inbound] --> log[Integration_Log__c]
-    auth[Integration_Auth_Profile__c] --> ep[Integration_Endpoint__c<br/>outbound]
-    ep --> log
-    map[Integration_Field_Mapping__c<br/>+Field_Rule + Lookup_Rule] --> ep
-    map --> src
-    tpl[Integration_Request_Template__c] --> ep
-    retry[Integration_Retry_Config__c] --> ep
-    log --> err[Integration_Error_Log__c]
-```
-
-### 24.1 Auth profiles — `Integration_Auth_Profile__c`
-
-One row per credential set. Pick `Auth_Type__c` and fill **only** the fields
-for that type:
-
-| Auth type | Required fields |
-|---|---|
-| API Key | `API_Key__c`, `Auth_Header_Name__c`, `Auth_Token_Prefix__c` |
-| Basic | `Username__c`, `Password__c` |
-| Bearer | `API_Key__c` |
-| OAuth2 | `OAuth_Client_Id__c`, `OAuth_Client_Secret__c`, `OAuth_Token_Endpoint__c`, `OAuth_Grant_Type__c`, `OAuth_Scope__c`, `Token_Cache_Duration__c` |
-| HMAC | `HMAC_Algorithm__c`, `HMAC_Header_Name__c`, `HMAC_Secret__c` |
-
-> Store production secrets in **Protected Custom Settings** or **Named
-> Credentials** if PCI / PII is in scope.
-
-### 24.2 Endpoints — `Integration_Endpoint__c`
-
-URL + method + headers per outbound call. Each endpoint links to an
-`Integration_Auth_Profile__c`. UI: `integrationEndpointList`,
-`integrationEndpointForm`.
-
-### 24.3 Source configs — `Integration_Source_Config__c`
-
-For inbound calls:
-
-| Field | Purpose |
-|---|---|
-| `Source_Name__c` | Logical name |
-| `Endpoint_URL__c` | Site / Public URL |
-| `Target_Object__c` | Object created / updated |
-| `API_Schema_JSON__c` | Expected payload schema |
-| `Validation_Rules_JSON__c` | Server-side validation |
-| `Enable_Duplicate_Check__c` | Toggles dedup |
-
-### 24.4 Field mappings
-
-- `Integration_Field_Mapping__c` — source ↔ target field map.
-- `Integration_Field_Rule__c` — transform rules.
-- `Integration_Lookup_Rule__c` — resolve a foreign key from a payload value.
-- `Integration_Response_Mapping__c` — map outbound responses back onto the
-  Salesforce record.
-
-UI: **Integration Mapping Designer** (`integrationMappingDesigner`),
-**Field Mapping Setup** (`fieldMappingSetup`, `fieldMapper`).
-
-### 24.5 Request templates
-
-`Integration_Request_Template__c` — body templates with merge fields,
-referenced by outbound calls.
-
-### 24.6 Retry
-
-`Integration_Retry_Config__c` — max attempts, back-off seconds, status codes
-to retry, dead-letter behaviour.
-
-### 24.7 Monitoring
-
-Logs land in `Integration_Log__c`, `Integration_Error_Log__c`, and
-`Field_Mapping_Error_Log__c`. Surface them via **Integration Dashboard**
-(`integrationDashboard`, `integrationMonitorCards`, `integrationErrorPanel`).
-Schedule a retention batch (Section 29) to trim old logs.
-
-### 24.8 Test console
-
-Use the `integrationTestConsole` LWC to dry-run any endpoint without touching
-production records — recommended for every change.
-
----
-
-## 25. Dynamic forms & field mapping
-
-- `Dynamic_Form_Configuration__c` — runtime forms via `dynamicFormButton`,
-  `dynamicFormModal`, `dynamicFormAction`. Editor: `formConfiguratorBuilder`.
-- `Field_Mapping_Configuration__c` + `Field_Mapping_Detail__c` — runtime
-  field remapping for inbound and Push-To-Sales flows. Editor:
-  `fieldMappingSetup`.
-
----
-
-## 26. AI / Aria chatbot (optional)
-
-Skip entirely if AI is not licensed by the customer.
-
-1. Seed at least one active `AI_Integration_Config__mdt` row:
-
-   | Field | Value |
-   |---|---|
-   | `Provider__c` | `OpenAI` / `Anthropic` / `Azure OpenAI` / etc. |
-   | `Model__c` | Model identifier |
-   | `Endpoint__c` | Provider API base URL |
-   | `API_Key__c` | API key (consider PCS for prod) |
-   | `Is_Active__c` | true |
-
-2. Add the provider host to **Remote Site Settings** and **CSP Trusted
-   Sites** (Section 7).
-3. (Optional) Configure language / locale via `ariaLangLocale`.
-4. Place `aiChatBot` / `ariaChatBot` on a Lightning Home or App page.
-5. Place `ariaLeadCaptureForm` on a public Experience Cloud site for
-   inbound chat-to-lead.
-
----
-
-## 27. Performance, forecasting & user availability
-
-All three modules are optional.
-
-### 27.1 Performance
-
-- Targets: `Performance_Target__c` — one per user per period.
-- Snapshots: `Performance_Snapshot__c` — produced by the scoring batch.
-- UI: `performanceManager`, `performanceLeaderboard`,
-  `performanceTargetForm`.
-
-### 27.2 Forecasting
-
-- Requires `Forecast_Config__mdt` (Section 6).
-- UI: `salesForecaster`.
-
-### 27.3 User availability
-
-- Requires `Shift_Configuration__mdt` and
-  `User_Availability_Profile_Config__mdt`.
-- UI: `userAvailabilityManager`, `myAvailabilityToggle`.
-
----
-
-## 28. Static resources
-
-| Static Resource | Action |
-|---|---|
-| `Property_images` | Replace with the customer's project imagery (zip). |
-| `SiteSamples` | Sample HTML / CSS bundle for Experience Cloud — replace if used. |
-| `chartjs` | Third-party chart library; **do not modify**. |
-
----
-
-## 29. Scheduled Apex jobs
-
-Schedule these after the records above are configured (Setup → **Apex Classes
-→ Schedule Apex**, or via anonymous Apex).
-
-| Job | Cadence | Purpose |
-|---|---|---|
-| `CleanupDuplicateLeadsBatch` | Daily 01:00 | Resolve duplicate leads per `Duplication_Configuration__c` |
-| `DiscountApprovalEscalationBatch` | Daily 08:00 | Escalate pending discount approvals past SLA |
-| Demand reminder batch | Daily | Send demand-letter reminders per `Reminder_Config__c` |
-| Complaint escalation batch | Hourly / daily | Honour `Complaint_Escalation_Matrix__c` SLAs |
-| Integration retry batch | Every 30 min | Retry failed integration calls per `Integration_Retry_Config__c` |
-| Integration log purge | Weekly | Trim `Integration_Log__c` / `Integration_Error_Log__c` |
-| Lead score recompute | Daily | Rebuild lead scores after rule changes |
-
----
-
-## 30. Smoke tests
-
-Run all of these **before** declaring the org configured. Each maps to one
-module above.
-
-| # | Test | Module |
-|---|---|---|
-| 1 | Lead matches a Round Robin filter and lands on the correct user | §9 |
-| 2 | Duplicate Lead is closed / merged / flagged per the active rule | §11 |
-| 3 | Cost Sheet totals match expected math; Create Booking produces a Booking with mapped fields | §12 |
-| 4 | Discount request > 5 % triggers approval to the configured approver | §13 |
-| 5 | Push To Sales on a qualified Lead creates the right Opportunity / Booking, with the right owner | §15 |
-| 6 | Demand Letter raised on a Booking emails the right template and attaches the right PDF | §16 |
-| 7 | Complaint left untouched breaches Level 1 SLA after `Level_1_Days__c` days and re-assigns / notifies | §22 |
-| 8 | Integration Test Console returns 200 for every active endpoint | §24 |
-| 9 | Approval Center lists pending items for the logged-in approver | §14 |
-| 10 | Welcome Guide tab loads with all six in-app sections expanded | §1 |
-
----
-
-## 31. Go-live checklist
-
-- [ ] All seed CMDT rows imported (§6)
-- [ ] One active `General_Setup__c` row (§8)
-- [ ] Round Robin buckets, members, queues populated (§9, §10)
-- [ ] Duplication rule + scheduled batch (§11)
-- [ ] Cost Sheet formulas saved on every active `Project__c` (§12)
-- [ ] Discount Approval Matrix populated for every band (§13)
-- [ ] Approval Configurations created for every approving process (§14)
-- [ ] Push-To-Sales mapping defined and quick action on layout (§15)
-- [ ] Post-Sales config + demand-letter config + payment-schedule master populated (§16)
-- [ ] Apps / tabs exposed to each team (§17)
-- [ ] Dashboards & reports configured (§18)
-- [ ] Lead scoring rules + tiers active (§19)
-- [ ] Email and document templates created and linked (§20, §21)
-- [ ] Complaint Escalation Matrix populated per project (§22)
-- [ ] Channel Partner module configured (§23) — if in scope
-- [ ] Integration auth profiles, endpoints, mappings, retry config in place (§24) — if in scope
-- [ ] AI chatbot wired up (§26) — if licensed
-- [ ] Scheduled Apex jobs activated (§29)
-- [ ] Smoke tests in §30 all pass
-
----
-
-## 32. Troubleshooting matrix
-
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Welcome Guide tab is blank | My Domain not enabled | Setup → My Domain → deploy & enable |
-| Cost Sheet UI shows no fields | `Cost_Sheet_Field_Config__mdt` not seeded | Re-run the CMDT import (§6) |
-| Home dashboard is empty | `Dashboard_Tab_Config__mdt` / `Dashboard_Field_Config__mdt` not seeded | Re-run the CMDT import (§6) |
-| Lead status modal missing follow-up / lost-reason prompts | `Lead_Status_Action_Config__mdt` rows missing or `Is_Active__c = false` | Seed / activate rows (§6) |
-| New leads not getting assigned | Bucket has no members **or** filter doesn't match the lead **or** queue has no members | Re-check §9 and §10 |
-| Discount approval stuck | No matrix row covers the band, or the approver is inactive | Review §13 |
-| Push To Sales does nothing | Quick action not on layout, or field mapping empty in Pre-Sales Admin Config | Re-check §15 |
-| Demand email not sent | `Auto_Send_Email__c = false`, or the Email Template's `From_Address__c` isn't a verified Org-Wide Address | Review §16, §20 |
-| Outbound callout fails with `Unauthorized endpoint` | Host missing from Remote Site Settings | Add the host (§7) |
-| LWC won't render external iframe / font | Host missing from CSP Trusted Sites | Add the host (§7) |
-| Aria / AI chat fails silently | `AI_Integration_Config__mdt` missing, inactive, or provider host not in Remote Sites | Review §26 |
-| Integration retries forever | `Integration_Retry_Config__c` has unbounded `Max_Attempts__c` or no dead-letter | Set bounded retries (§24.6) |
-| Approval Center empty for everyone | `Approval_Configuration__c.Is_Active__c = false`, or `Matching_Criteria__c` matches nothing | Review §14 |
-
----
-
-## 33. Glossary
-
-| Term | Meaning |
-|---|---|
-| **CMDT** | Custom Metadata Type — config records deployed as metadata |
-| **PCS** | Protected Custom Setting — preferred storage for secrets |
-| **LWC** | Lightning Web Component |
-| **OWA / OWE** | Organization-Wide Email Address |
-| **CP** | Channel Partner |
-| **GRE** | Guest Relations Executive (walk-in module) |
-| **Aria** | The AI chatbot persona shipped with the package |
-| **Round Robin bucket** | A `Round_Robin__c` record with its filters and members |
-| **Cost Sheet** | The pricing breakdown produced for a Lead / Unit before booking |
-| **Demand Letter** | The notice asking a customer to pay a milestone instalment |
-
----
-
-_For an interactive, searchable version of this guide inside Salesforce, open
-the **Welcome Guide** tab in any Lightning app the package is deployed to._
+## 30. Where to get help
+
+- **Inside Salesforce** — open the **Welcome Guide** tab for the short
+  interactive version of this document.
+- **Implementation partner** — your point of contact during rollout.
+- **Salesforce admin** — for anything that requires Setup access.
+- **Salesforce help** — https://help.salesforce.com for platform questions
+  (My Domain, Permission Sets, Org-Wide Addresses, etc.).
+
+Good luck with your rollout!
