@@ -159,6 +159,29 @@ export default class BulkRaiseDemand extends LightningElement {
         return this.demandResult && this.demandResult.results && this.demandResult.results.length > 0;
     }
 
+    get footerContextText() {
+        switch (this.currentStep) {
+            case 2:
+                return this.selectedMilestoneId
+                    ? `Selected: ${this.selectedMilestoneName}`
+                    : 'Select a milestone to continue';
+            case 3:
+                return this.selectedCount > 0
+                    ? `${this.selectedCount} booking${this.selectedCount === 1 ? '' : 's'} selected · Net ${this.formattedTotalNet}`
+                    : 'Select at least one booking';
+            case 4:
+                return `${this.selectedCount} booking${this.selectedCount === 1 ? '' : 's'} · Net ${this.formattedTotalNet}`;
+            case 5:
+                return 'Processing demands…';
+            case 6:
+                return this.demandResult && this.demandResult.totalProcessed
+                    ? `${this.demandResult.successCount || 0} of ${this.demandResult.totalProcessed} succeeded`
+                    : '';
+            default:
+                return '';
+        }
+    }
+
     // ============ LAUNCH ============
 
     handleLaunch() {
