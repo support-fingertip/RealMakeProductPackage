@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Page_Size__c</fullName>
     <defaultValue>&quot;A4&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <externalId>false</externalId>
     <label>Page Size</label>
     <length>20</length>

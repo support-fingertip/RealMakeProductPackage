@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Logo_Document_Id__c</fullName>
+    <deprecated>false</deprecated>
     <description>Logo source for the PDF header. Accepts: ContentDocument ID (069...), ContentVersion ID (068...), classic Document ID (015...), Attachment ID, Static Resource name, or file Title. The logo appears in the top-right corner of the PDF header.</description>
     <externalId>false</externalId>
     <fieldManageability>SubscriberControlled</fieldManageability>

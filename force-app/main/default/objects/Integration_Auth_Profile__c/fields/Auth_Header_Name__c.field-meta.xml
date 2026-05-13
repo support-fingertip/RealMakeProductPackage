@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Auth_Header_Name__c</fullName>
     <defaultValue>&quot;Authorization&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>Header name for API key authentication</description>
     <externalId>false</externalId>
     <label>Auth Header Name</label>

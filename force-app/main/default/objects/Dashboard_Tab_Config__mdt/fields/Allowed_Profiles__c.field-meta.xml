@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Allowed_Profiles__c</fullName>
+    <deprecated>false</deprecated>
     <fieldManageability>DeveloperControlled</fieldManageability>
     <label>Allowed Profiles</label>
     <length>5000</length>

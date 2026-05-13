@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lookup_Field__c</fullName>
+    <deprecated>false</deprecated>
     <description>API name of the lookup field on the related object that points to Lead__c (e.g. Lead__c). Used for Count-type rules.</description>
     <externalId>false</externalId>
     <label>Lookup Field</label>

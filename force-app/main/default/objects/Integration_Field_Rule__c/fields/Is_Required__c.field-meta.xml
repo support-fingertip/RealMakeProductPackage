@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Is_Required__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>Whether this API field is required. If true, the engine will reject payloads missing this field.</description>
     <label>Is Required</label>
     <trackHistory>false</trackHistory>

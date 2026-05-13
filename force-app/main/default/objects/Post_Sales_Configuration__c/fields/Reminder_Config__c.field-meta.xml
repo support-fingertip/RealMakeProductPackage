@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_Config__c</fullName>
+    <deprecated>false</deprecated>
     <description>JSON configuration for demand reminders. Stores up to 4 reminder levels with days after due date, against object, document template, and N/A status.</description>
     <label>Reminder Configuration</label>
     <length>32768</length>

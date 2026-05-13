@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Shift__c</fullName>
+    <deprecated>false</deprecated>
     <description>The shift the user was on when this availability change occurred</description>
     <externalId>false</externalId>
     <label>Shift</label>

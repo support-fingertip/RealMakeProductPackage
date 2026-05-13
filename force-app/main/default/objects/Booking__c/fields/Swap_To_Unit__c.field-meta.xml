@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Swap_To_Unit__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>The target Unit for a booking swap. Populate this field before changing Status to Swapped.</description>
     <label>Swap To Unit</label>
     <referenceTo>Unit__c</referenceTo>

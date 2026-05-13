@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Is_Static__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When true, this rule sets a fixed value (from Default_Value__c) directly on the Salesforce field without reading from the API payload. Used for system-set fields like Record_Source__c or Status__c.</description>
     <label>Is Static Value</label>
     <trackHistory>false</trackHistory>

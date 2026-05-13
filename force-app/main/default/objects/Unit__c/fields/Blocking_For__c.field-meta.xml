@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Blocking_For__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Blocking For</label>
     <referenceTo>User</referenceTo>
     <relationshipName>Units_Blocked_For</relationshipName>

@@ -149,6 +149,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Quotation/cost sheet for a unit against a lead</description>
     <enableActivities>true</enableActivities>
     <enableBulkApi>true</enableBulkApi>

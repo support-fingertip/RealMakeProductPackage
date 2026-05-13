@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Stores dynamic lead scoring rules. Each record defines one scoring criterion — field, operator, value, and points. Fully metadata-driven with zero hardcoded values.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

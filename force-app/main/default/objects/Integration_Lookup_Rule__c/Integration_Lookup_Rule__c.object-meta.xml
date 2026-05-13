@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Lookup resolution rule for reference/lookup fields. Defines how to resolve an API value (e.g., project_code) into a Salesforce record ID by querying a target object with a match field.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>false</enableBulkApi>

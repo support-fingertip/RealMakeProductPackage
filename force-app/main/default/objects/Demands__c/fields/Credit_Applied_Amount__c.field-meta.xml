@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Credit_Applied_Amount__c</fullName>
     <defaultValue>0</defaultValue>
+    <deprecated>false</deprecated>
     <description>Total credit note amount applied against this demand</description>
     <inlineHelpText>Amount reduced from this demand via credit notes</inlineHelpText>
     <label>Credit Applied Amount</label>

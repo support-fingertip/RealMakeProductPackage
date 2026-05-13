@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Unit_Field_API__c</fullName>
+    <deprecated>false</deprecated>
     <description>API name of the Unit__c field this discount applies to (e.g. Super_Builtup_Area__c, Built_up_Area__c). Used for validation: discount value cannot exceed this field&apos;s value on the unit.</description>
     <externalId>false</externalId>
     <label>Unit Field API Name</label>

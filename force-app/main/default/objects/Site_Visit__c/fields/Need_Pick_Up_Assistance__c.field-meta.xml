@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Need_Pick_Up_Assistance__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <label>Need Pick Up Assistance</label>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>

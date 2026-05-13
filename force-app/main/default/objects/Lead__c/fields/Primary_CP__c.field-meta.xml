@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Primary_CP__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Primary Channel Partner</label>
     <referenceTo>Channel_Partner__c</referenceTo>
     <relationshipLabel>Primary CP Leads</relationshipLabel>

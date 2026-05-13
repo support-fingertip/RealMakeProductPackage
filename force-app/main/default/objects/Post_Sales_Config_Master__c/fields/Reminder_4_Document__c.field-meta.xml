@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_4_Document__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Document template for 4th demand reminder</description>
     <label>4th Reminder Document</label>
     <referenceTo>Document_Template__c</referenceTo>

@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Defines score-to-tier mappings (e.g. 80-999 = Hot, 50-79 = Warm). Used by LeadScoringEngine to resolve a lead&apos;s tier from its total score.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

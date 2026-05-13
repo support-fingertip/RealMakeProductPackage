@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lookup_Object__c</fullName>
+    <deprecated>false</deprecated>
     <description>The Salesforce object to query for lookup resolution (e.g., Project__c, Campaign__c).</description>
     <externalId>false</externalId>
     <label>Lookup Object</label>

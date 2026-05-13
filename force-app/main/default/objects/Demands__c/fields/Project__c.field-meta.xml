@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Project__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Project associated with this demand, populated from Booking for reminder configuration lookup.</description>
     <label>Project</label>
     <referenceTo>Project__c</referenceTo>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>SiteVisit_Mandatory__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When true (and Requires_SiteVisit is true), all site visit fields (Scheduled Date, Project) are mandatory.</description>
     <fieldManageability>DeveloperControlled</fieldManageability>
     <label>Site Visit Mandatory</label>

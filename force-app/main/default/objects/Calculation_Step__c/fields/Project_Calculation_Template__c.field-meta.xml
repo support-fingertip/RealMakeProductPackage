@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Project_Calculation_Template__c</fullName>
+    <deprecated>false</deprecated>
     <label>Project Calculation Template</label>
     <referenceTo>Project_Calculation_Template__c</referenceTo>
     <relationshipLabel>Calculation Steps</relationshipLabel>

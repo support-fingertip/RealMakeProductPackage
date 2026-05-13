@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Last_Reengaged_Campaign__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Last Re-engaged Campaign</label>
     <referenceTo>Campaign__c</referenceTo>
     <relationshipLabel>Reengaged Campaign Leads</relationshipLabel>

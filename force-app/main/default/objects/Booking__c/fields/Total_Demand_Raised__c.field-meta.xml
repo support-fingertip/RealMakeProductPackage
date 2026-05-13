@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_Demand_Raised__c</fullName>
+    <deprecated>false</deprecated>
     <label>Total Demand Raised</label>
     <summarizedField>Demands__c.Demand_Amount__c</summarizedField>
     <summaryForeignKey>Demands__c.Booking__c</summaryForeignKey>

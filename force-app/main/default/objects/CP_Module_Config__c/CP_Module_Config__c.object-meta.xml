@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Single-record configuration for the Channel Partner module. Stores all business parameters (source names, status values, credit days, etc.) so that zero values are hardcoded in Apex.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

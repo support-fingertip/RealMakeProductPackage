@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Configurable escalation matrix for customer complaints. Defines multi-level escalation rules based on priority, category, and overdue thresholds.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Level_3_Days__c</fullName>
     <defaultValue>10</defaultValue>
+    <deprecated>false</deprecated>
     <description>Days overdue to trigger Level 3 escalation (e.g., notify senior management)</description>
     <externalId>false</externalId>
     <label>Level 3 - Days Overdue</label>

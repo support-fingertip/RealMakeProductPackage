@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Parent_Project__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Parent project for tower hierarchy. If set, this project is a tower/wing under the parent project.</description>
     <label>Parent Project</label>
     <referenceTo>Project__c</referenceTo>

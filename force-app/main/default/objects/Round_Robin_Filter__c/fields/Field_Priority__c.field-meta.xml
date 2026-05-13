@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Field_Priority__c</fullName>
     <defaultValue>0</defaultValue>
+    <deprecated>false</deprecated>
     <description>Universal weight for this filter field, auto-populated from Round_Robin_Field_Priority__c master</description>
     <externalId>false</externalId>
     <label>Field Priority</label>

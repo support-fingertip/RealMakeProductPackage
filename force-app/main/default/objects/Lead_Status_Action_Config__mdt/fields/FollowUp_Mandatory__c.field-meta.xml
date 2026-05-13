@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>FollowUp_Mandatory__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When true (and Requires_FollowUp is true), all follow-up fields (Due Date, Subject, Notes) are mandatory.</description>
     <fieldManageability>DeveloperControlled</fieldManageability>
     <label>Follow-Up Mandatory</label>

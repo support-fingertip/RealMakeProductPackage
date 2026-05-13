@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Project__c</fullName>
     <deleteConstraint>Restrict</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Parent project this tower belongs to.</description>
     <label>Project</label>
     <referenceTo>Project__c</referenceTo>

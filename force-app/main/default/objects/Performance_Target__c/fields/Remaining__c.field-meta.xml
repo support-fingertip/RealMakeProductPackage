@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Remaining__c</fullName>
+    <deprecated>false</deprecated>
     <externalId>false</externalId>
     <formula>MAX(Target_Value__c - Actual_Value__c, 0)</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>

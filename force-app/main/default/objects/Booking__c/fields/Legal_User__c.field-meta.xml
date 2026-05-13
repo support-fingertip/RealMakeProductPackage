@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Legal_User__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Legal User (Snapshot)</label>
     <referenceTo>User</referenceTo>
     <relationshipLabel>LegalUser Bookings</relationshipLabel>

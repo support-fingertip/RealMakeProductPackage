@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lead_Reopened_Type__c</fullName>
     <defaultValue>&quot;Re-opened&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>Lead Type value when a closed lead is re-opened.</description>
     <externalId>false</externalId>
     <label>Lead Reopened Type</label>

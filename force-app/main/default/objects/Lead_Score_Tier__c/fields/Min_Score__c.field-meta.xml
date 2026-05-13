@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Min_Score__c</fullName>
+    <deprecated>false</deprecated>
     <description>Minimum score (inclusive) for this tier. A lead with score &gt;= Min_Score and &lt;= Max_Score falls into this tier.</description>
     <externalId>false</externalId>
     <label>Min Score</label>

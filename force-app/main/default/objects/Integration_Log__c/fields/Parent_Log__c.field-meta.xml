@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Parent_Log__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Self-referential lookup for retry chain</description>
     <label>Parent Log</label>
     <referenceTo>Integration_Log__c</referenceTo>

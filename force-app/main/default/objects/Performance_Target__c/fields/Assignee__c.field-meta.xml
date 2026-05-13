@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Assignee__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Assignee</label>
     <referenceTo>User</referenceTo>
     <relationshipLabel>Performance Targets</relationshipLabel>

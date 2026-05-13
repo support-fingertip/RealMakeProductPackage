@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Min_Value__c</fullName>
+    <deprecated>false</deprecated>
     <description>Minimum discount amount for this approval level to apply</description>
     <label>Min Value</label>
     <precision>14</precision>

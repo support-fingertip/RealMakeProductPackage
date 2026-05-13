@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_2_Object__c</fullName>
+    <deprecated>false</deprecated>
     <description>Object against which the 2nd reminder is configured</description>
     <label>2nd Reminder Object</label>
     <required>false</required>

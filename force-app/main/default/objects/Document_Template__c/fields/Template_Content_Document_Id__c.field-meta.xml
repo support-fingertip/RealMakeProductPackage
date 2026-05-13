@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Template_Content_Document_Id__c</fullName>
+    <deprecated>false</deprecated>
     <description>ContentDocument ID storing the template JSON file. Used instead of Template_JSON__c for large templates.</description>
     <externalId>false</externalId>
     <label>Template Content Document Id</label>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Level_1_User__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>Custom user to notify at Level 1 (when Level 1 Notify = Custom User)</description>
     <label>Level 1 - Custom User</label>
     <referenceTo>User</referenceTo>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Auto_Demand_Date__c</fullName>
+    <deprecated>false</deprecated>
     <description>Date on which the system should automatically raise a demand for this payment schedule. Used by the AutoDemandBatch scheduled job.</description>
     <label>Auto Demand Date</label>
     <required>false</required>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_4_Date__c</fullName>
+    <deprecated>false</deprecated>
     <description>Scheduled date for 4th reminder email.</description>
     <label>4th Reminder Date</label>
     <required>false</required>

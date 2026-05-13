@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Termination_Mail_Date__c</fullName>
+    <deprecated>false</deprecated>
     <description>Scheduled date for termination mail with interest.</description>
     <label>Termination Mail Date</label>
     <required>false</required>

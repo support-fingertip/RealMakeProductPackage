@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Stores performance targets for users, teams, and organization. Supports hierarchy rollup via self-referencing Parent_Target__c lookup.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

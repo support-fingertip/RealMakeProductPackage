@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lead_Inactive_Statuses__c</fullName>
+    <deprecated>false</deprecated>
     <description>JSON array of lead statuses that are considered inactive/closed for dedup purposes. Example: [&quot;Unqualified&quot;,&quot;Closed Lost&quot;,&quot;Booked&quot;]</description>
     <label>Lead Inactive Statuses (JSON)</label>
     <length>1000</length>

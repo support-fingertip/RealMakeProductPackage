@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_GST_Paid__c</fullName>
+    <deprecated>false</deprecated>
     <description>Sum of GST amounts paid across all receipt line items</description>
     <label>Total GST Paid</label>
     <precision>18</precision>

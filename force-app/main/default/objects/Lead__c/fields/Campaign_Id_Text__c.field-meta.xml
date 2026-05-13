@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Campaign_Id_Text__c</fullName>
+    <deprecated>false</deprecated>
     <description>Staging field for external systems to pass Campaign auto-number text (e.g., CMP-00042). Before-insert trigger resolves this to the actual Campaign record Id and sets Campaign__c. External systems should map to this field instead of Campaign__c.</description>
     <externalId>false</externalId>
     <inlineHelpText>Enter the Campaign ID (e.g., CMP-00042). System will automatically link the Campaign.</inlineHelpText>

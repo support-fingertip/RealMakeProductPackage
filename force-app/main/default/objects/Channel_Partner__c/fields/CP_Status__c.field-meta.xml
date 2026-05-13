@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>CP_Status__c</fullName>
+    <deprecated>false</deprecated>
     <label>CP Status</label>
     <required>true</required>
     <trackHistory>false</trackHistory>

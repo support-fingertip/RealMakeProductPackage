@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Operation__c</fullName>
+    <deprecated>false</deprecated>
     <description>Determines when this mapping is applied: related_creation (creating enquiry source), reengaged_update (updating primary record on re-engagement), reopened_update (updating primary record on reopen).</description>
     <label>Operation</label>
     <required>false</required>

@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Universal master table storing priority weights for Lead fields used in Round Robin matching. Higher priority = more important field for RR specificity scoring.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Last_Modified_By_User__c</fullName>
+    <deprecated>false</deprecated>
     <description>Tracks who last modified the mapping configuration through the UI.</description>
     <externalId>false</externalId>
     <label>Last Modified By User</label>

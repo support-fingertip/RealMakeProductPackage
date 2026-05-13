@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Data_Type__c</fullName>
+    <deprecated>false</deprecated>
     <description>The data type conversion rule. Defines how to convert the incoming API string value to the Salesforce field type.</description>
     <label>Data Type</label>
     <required>false</required>

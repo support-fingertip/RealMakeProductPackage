@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Additional_Filter__c</fullName>
+    <deprecated>false</deprecated>
     <description>Optional additional SOQL WHERE clause filter (e.g., Is_Active__c = true). Appended to the lookup query.</description>
     <label>Additional Filter</label>
     <length>1000</length>

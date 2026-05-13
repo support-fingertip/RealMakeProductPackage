@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Grand_Total__c</fullName>
+    <deprecated>false</deprecated>
     <formula>Total_Unit_Price__c + IF(ISBLANK(GST_Amount__c),0,GST_Amount__c)</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <label>Grand Total</label>

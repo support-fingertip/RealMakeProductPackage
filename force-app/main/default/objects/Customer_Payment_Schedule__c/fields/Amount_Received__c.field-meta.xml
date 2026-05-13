@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Amount_Received__c</fullName>
+    <deprecated>false</deprecated>
     <description>Updated by Receipt Line Item trigger</description>
     <label>Amount Received</label>
     <precision>14</precision>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Action_Binding__c</fullName>
+    <deprecated>false</deprecated>
     <description>Specifies which system actions this email template is bound to (e.g., Demand Raiser).</description>
     <label>Action Binding</label>
     <required>false</required>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_Amount_Paid__c</fullName>
+    <deprecated>false</deprecated>
     <label>Total Amount Paid</label>
     <summarizedField>Receipt__c.Total_Amount__c</summarizedField>
     <summaryForeignKey>Receipt__c.Booking__c</summaryForeignKey>

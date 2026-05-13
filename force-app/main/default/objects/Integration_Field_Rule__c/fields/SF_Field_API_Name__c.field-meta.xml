@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>SF_Field_API_Name__c</fullName>
+    <deprecated>false</deprecated>
     <description>The Salesforce field API name on the target object (e.g., First_Name__c, Primary_Mobile__c).</description>
     <externalId>false</externalId>
     <label>SF Field API Name</label>

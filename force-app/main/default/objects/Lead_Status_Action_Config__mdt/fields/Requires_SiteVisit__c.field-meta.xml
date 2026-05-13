@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Requires_SiteVisit__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When true, the Site Visit section is shown and site visit creation is expected.</description>
     <fieldManageability>DeveloperControlled</fieldManageability>
     <label>Requires Site Visit</label>

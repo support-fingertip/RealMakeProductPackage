@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Previous_History__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Previous History</label>
     <referenceTo>Reassignment_History__c</referenceTo>
     <relationshipLabel>Next History</relationshipLabel>

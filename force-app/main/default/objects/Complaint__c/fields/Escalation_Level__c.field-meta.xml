@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Escalation_Level__c</fullName>
     <defaultValue>0</defaultValue>
+    <deprecated>false</deprecated>
     <description>Current escalation level (0 = not escalated, 1-3 = escalation levels)</description>
     <externalId>false</externalId>
     <label>Escalation Level</label>

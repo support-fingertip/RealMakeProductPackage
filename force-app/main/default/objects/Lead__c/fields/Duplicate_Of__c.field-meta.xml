@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Duplicate_Of__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <description>References the existing lead when this record is a detected duplicate. Used by the leadDuplicateRedirector LWC to redirect users to the original lead.</description>
     <label>Duplicate Of</label>
     <referenceTo>Lead__c</referenceTo>

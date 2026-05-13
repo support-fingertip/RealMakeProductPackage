@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Receipt_Sent__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <label>Receipt Sent</label>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>

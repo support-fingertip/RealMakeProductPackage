@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_3_Days__c</fullName>
     <defaultValue>21</defaultValue>
+    <deprecated>false</deprecated>
     <description>Number of days after demand raised to send 3rd reminder. Set to 0 or blank to disable.</description>
     <externalId>false</externalId>
     <inlineHelpText>Days after demand raised for 3rd reminder (default 21). Set 0 to disable.</inlineHelpText>

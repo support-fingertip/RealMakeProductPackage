@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Payment milestone lines within a cost sheet</description>
     <enableActivities>true</enableActivities>
     <enableBulkApi>true</enableBulkApi>

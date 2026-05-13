@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Demand__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Demand</label>
     <referenceTo>Demands__c</referenceTo>
     <relationshipLabel>Receipt Line Items (Demand)</relationshipLabel>

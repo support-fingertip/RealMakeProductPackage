@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Conditional_Rule__c</fullName>
+    <deprecated>false</deprecated>
     <description>JSON condition for when to apply</description>
     <label>Conditional Rule</label>
     <length>32768</length>

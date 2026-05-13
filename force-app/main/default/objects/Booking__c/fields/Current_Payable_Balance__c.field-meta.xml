@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Current_Payable_Balance__c</fullName>
+    <deprecated>false</deprecated>
     <formula>Outstanding_Demand_Amount__c - Advance_Payment_Available__c</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <label>Current Payable Balance</label>

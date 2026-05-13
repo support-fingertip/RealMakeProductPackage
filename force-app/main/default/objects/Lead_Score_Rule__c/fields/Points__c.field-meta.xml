@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Points__c</fullName>
     <defaultValue>0</defaultValue>
+    <deprecated>false</deprecated>
     <description>Number of points to add (or subtract if negative) when this rule matches.</description>
     <externalId>false</externalId>
     <label>Points</label>

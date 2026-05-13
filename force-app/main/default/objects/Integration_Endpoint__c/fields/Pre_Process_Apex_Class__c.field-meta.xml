@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Pre_Process_Apex_Class__c</fullName>
+    <deprecated>false</deprecated>
     <description>Apex class implementing IIntegrationHook to execute before the integration callout or before processing inbound data.</description>
     <externalId>false</externalId>
     <inlineHelpText>Enter the API name of an Apex class that implements IIntegrationHook. This runs before the callout (outbound) or before data mapping (inbound).</inlineHelpText>

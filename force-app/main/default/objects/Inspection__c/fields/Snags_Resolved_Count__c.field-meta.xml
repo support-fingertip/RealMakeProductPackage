@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Snags_Resolved_Count__c</fullName>
+    <deprecated>false</deprecated>
     <label>Snags Resolved Count</label>
     <summaryFilterItems>
         <field>Snag__c.Status__c</field>

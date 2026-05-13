@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_1_Sent__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>Whether 1st reminder email has been sent.</description>
     <label>1st Reminder Sent</label>
     <trackHistory>false</trackHistory>

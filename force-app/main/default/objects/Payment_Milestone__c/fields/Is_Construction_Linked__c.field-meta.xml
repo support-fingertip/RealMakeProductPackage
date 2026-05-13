@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Is_Construction_Linked__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <label>Is Construction Linked</label>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>

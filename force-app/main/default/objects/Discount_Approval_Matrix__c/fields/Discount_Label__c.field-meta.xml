@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Discount_Label__c</fullName>
+    <deprecated>false</deprecated>
     <description>Display label for this discount category (e.g. Rate Discount, Scheme Discount)</description>
     <externalId>false</externalId>
     <label>Discount Label</label>

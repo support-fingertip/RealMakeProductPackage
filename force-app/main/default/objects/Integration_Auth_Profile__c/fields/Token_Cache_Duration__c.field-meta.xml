@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Token_Cache_Duration__c</fullName>
+    <deprecated>false</deprecated>
     <description>Duration in seconds to cache authentication tokens</description>
     <externalId>false</externalId>
     <label>Token Cache Duration</label>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Enable_Duplicate_Check__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When enabled, the Generic Integration API checks for duplicate records using DuplicationDetectionHelper before inserting. Requires a matching Duplication_Configuration__c record for the target object.</description>
     <label>Enable Duplicate Check</label>
     <trackHistory>false</trackHistory>

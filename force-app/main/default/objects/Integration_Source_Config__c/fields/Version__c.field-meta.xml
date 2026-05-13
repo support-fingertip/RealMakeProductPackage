@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Version__c</fullName>
     <defaultValue>1</defaultValue>
+    <deprecated>false</deprecated>
     <description>Version number of this mapping configuration. Increment when updating mappings for audit/rollback.</description>
     <externalId>false</externalId>
     <label>Version</label>

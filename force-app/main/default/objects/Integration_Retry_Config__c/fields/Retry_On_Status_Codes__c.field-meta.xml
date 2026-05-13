@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Retry_On_Status_Codes__c</fullName>
     <defaultValue>&quot;408,429,500,502,503,504&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>Comma-separated HTTP status codes to retry on</description>
     <externalId>false</externalId>
     <label>Retry On Status Codes</label>

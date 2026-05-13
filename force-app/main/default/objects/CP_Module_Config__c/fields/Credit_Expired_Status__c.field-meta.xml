@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Credit_Expired_Status__c</fullName>
     <defaultValue>&quot;Expired&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>Status value for expired CP credits.</description>
     <externalId>false</externalId>
     <label>Credit Expired Status</label>

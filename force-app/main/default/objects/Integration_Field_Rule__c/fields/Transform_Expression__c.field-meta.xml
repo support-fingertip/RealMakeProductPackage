@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Transform_Expression__c</fullName>
+    <deprecated>false</deprecated>
     <description>Optional transformation expression applied to the value. Supported: UPPERCASE, LOWERCASE, TRIM, PREFIX:value, SUFFIX:value</description>
     <label>Transform Expression</label>
     <length>500</length>

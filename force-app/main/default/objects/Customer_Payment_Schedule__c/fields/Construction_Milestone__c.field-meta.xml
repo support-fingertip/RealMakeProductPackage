@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Construction_Milestone__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Construction Milestone</label>
     <referenceTo>Construction_Milestone__c</referenceTo>
     <relationshipLabel>Customer Payment Schedules</relationshipLabel>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Reminder_2_Days__c</fullName>
     <defaultValue>14</defaultValue>
+    <deprecated>false</deprecated>
     <description>Days after due date to send 2nd demand reminder</description>
     <externalId>false</externalId>
     <label>2nd Reminder (Days)</label>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Escalation_Email_Time__c</fullName>
     <defaultValue>&quot;10:00&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>Time of day (HH:MM format) when escalation emails should be sent for overdue snags and complaints.</description>
     <externalId>false</externalId>
     <inlineHelpText>Time for daily escalation emails (default 10:00 AM)</inlineHelpText>

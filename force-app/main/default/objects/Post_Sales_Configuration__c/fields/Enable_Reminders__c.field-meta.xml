@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Enable_Reminders__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <description>When checked, demand reminders will be sent based on the reminder configuration.</description>
     <label>Enable Demand Reminders</label>
     <trackHistory>false</trackHistory>

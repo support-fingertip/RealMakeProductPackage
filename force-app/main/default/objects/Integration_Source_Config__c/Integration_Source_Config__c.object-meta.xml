@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Parent configuration record defining an API integration source (e.g., CP API, Website API, Broker API). Each source maps to one or more target Salesforce objects and holds the field mapping rules as children.</description>
     <enableActivities>true</enableActivities>
     <enableBulkApi>true</enableBulkApi>

@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>CP_Source_Name__c</fullName>
     <defaultValue>&quot;Channel Partner&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <description>The source name used when a CP submits a lead (e.g., Channel Partner, Broker).</description>
     <externalId>false</externalId>
     <label>CP Source Name</label>

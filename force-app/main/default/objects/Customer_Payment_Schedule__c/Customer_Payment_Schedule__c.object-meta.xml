@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Per-booking payment schedule generated from cost sheet lines</description>
     <enableActivities>true</enableActivities>
     <enableBulkApi>true</enableBulkApi>

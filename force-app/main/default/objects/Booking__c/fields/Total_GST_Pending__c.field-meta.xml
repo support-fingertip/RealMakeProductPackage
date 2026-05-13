@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_GST_Pending__c</fullName>
+    <deprecated>false</deprecated>
     <description>Total GST amount pending across all payment schedules</description>
     <label>Total GST Pending</label>
     <precision>18</precision>

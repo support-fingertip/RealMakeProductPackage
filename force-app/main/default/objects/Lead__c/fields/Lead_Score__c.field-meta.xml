@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lead_Score__c</fullName>
     <defaultValue>0</defaultValue>
+    <deprecated>false</deprecated>
     <description>Dynamically calculated lead score based on active Lead_Score_Rule__c records. Updated on insert/update by LeadScoringEngine.</description>
     <externalId>false</externalId>
     <label>Lead Score</label>

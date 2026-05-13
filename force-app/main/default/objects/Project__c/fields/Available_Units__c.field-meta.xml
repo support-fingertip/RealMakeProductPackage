@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Available_Units__c</fullName>
+    <deprecated>false</deprecated>
     <label>Available Units</label>
     <summaryFilterItems>
         <field>Unit__c.Status__c</field>

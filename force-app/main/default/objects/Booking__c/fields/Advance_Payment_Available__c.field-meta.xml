@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Advance_Payment_Available__c</fullName>
+    <deprecated>false</deprecated>
     <label>Advance Payment Available</label>
     <summarizedField>Advance_Payment__c.Available_Amount__c</summarizedField>
     <summaryFilterItems>

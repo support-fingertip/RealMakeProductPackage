@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Payment_Schedule_Source__c</fullName>
+    <deprecated>false</deprecated>
     <description>Source for generating payment schedules - Master Payment Schedule or Cost Sheet children</description>
     <label>Payment Schedule Source</label>
     <required>false</required>

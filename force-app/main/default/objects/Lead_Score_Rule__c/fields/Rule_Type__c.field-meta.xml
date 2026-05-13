@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Rule_Type__c</fullName>
+    <deprecated>false</deprecated>
     <description>Whether this rule evaluates a field value on Lead__c or counts related child records.</description>
     <label>Rule Type</label>
     <required>true</required>

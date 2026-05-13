@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Sales_Person__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Sales Person</label>
     <referenceTo>User</referenceTo>
     <relationshipName>Bookings2</relationshipName>

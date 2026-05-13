@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Nationality__c</fullName>
     <defaultValue>&quot;Indian&quot;</defaultValue>
+    <deprecated>false</deprecated>
     <externalId>false</externalId>
     <label>Nationality</label>
     <length>50</length>

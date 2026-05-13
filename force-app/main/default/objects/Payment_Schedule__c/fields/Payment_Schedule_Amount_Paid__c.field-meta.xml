@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Payment_Schedule_Amount_Paid__c</fullName>
+    <deprecated>false</deprecated>
     <description>Total base amount paid against this payment schedule</description>
     <label>Base Amount Paid</label>
     <precision>18</precision>

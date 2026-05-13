@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Master_Payment_Schedule__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
     <label>Master Payment Schedule</label>
     <referenceTo>Master_Payment_Schedule__c</referenceTo>
     <relationshipLabel>Payment Schedules</relationshipLabel>

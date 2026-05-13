@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Sale_Deed_Executed__c</fullName>
     <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
     <label>Sale Deed Executed</label>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>

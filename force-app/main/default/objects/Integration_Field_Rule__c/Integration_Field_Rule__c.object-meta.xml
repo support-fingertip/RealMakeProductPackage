@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Individual field mapping rule: maps an API JSON field to a Salesforce object field. Child of Integration_Source_Config__c. Supports required flag, default values, type conversion, and lookup resolution.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>false</enableBulkApi>

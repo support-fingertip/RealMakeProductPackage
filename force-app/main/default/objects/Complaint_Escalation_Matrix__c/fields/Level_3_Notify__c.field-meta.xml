@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Level_3_Notify__c</fullName>
+    <deprecated>false</deprecated>
     <description>Who to notify at Level 3</description>
     <label>Level 3 - Notify</label>
     <required>false</required>

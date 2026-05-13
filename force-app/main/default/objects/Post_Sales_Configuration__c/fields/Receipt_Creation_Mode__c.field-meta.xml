@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Receipt_Creation_Mode__c</fullName>
+    <deprecated>false</deprecated>
     <description>Booking config: whether receipt is auto-created on booking creation or manual via Financial Transaction Manager</description>
     <label>Receipt Creation Mode</label>
     <required>false</required>

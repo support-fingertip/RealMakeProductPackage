@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Integration_Field_Rule__c</fullName>
+    <deprecated>false</deprecated>
     <description>Master-detail to the parent Integration Field Rule that this lookup resolution applies to.</description>
     <label>Integration Field Rule</label>
     <referenceTo>Integration_Field_Rule__c</referenceTo>

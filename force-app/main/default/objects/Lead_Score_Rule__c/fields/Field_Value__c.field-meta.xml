@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Field_Value__c</fullName>
+    <deprecated>false</deprecated>
     <description>The value to compare against (e.g. &quot;Above 2 Cr&quot;, &quot;Immediate&quot;, &quot;NRI&quot;). Stored as text; type coercion happens at runtime.</description>
     <externalId>false</externalId>
     <label>Field Value</label>

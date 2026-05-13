@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Unique_Key__c</fullName>
     <caseSensitive>false</caseSensitive>
+    <deprecated>false</deprecated>
     <description>External ID for upsert. Format: {USER_ID}-{YYYY-MM-DD}</description>
     <externalId>true</externalId>
     <label>Unique Key</label>

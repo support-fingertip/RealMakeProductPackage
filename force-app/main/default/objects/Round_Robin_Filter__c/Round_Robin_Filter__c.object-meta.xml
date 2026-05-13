@@ -143,6 +143,7 @@
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
     <description>Stores dynamic filter criteria for Round Robin matching. Each record represents one field-value filter condition.</description>
     <enableActivities>false</enableActivities>
     <enableBulkApi>true</enableBulkApi>

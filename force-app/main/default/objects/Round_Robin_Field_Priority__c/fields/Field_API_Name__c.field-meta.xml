@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Field_API_Name__c</fullName>
     <caseSensitive>false</caseSensitive>
+    <deprecated>false</deprecated>
     <description>API name of the Lead field (e.g. Project__c, Zone__c). Must be unique.</description>
     <externalId>false</externalId>
     <label>Field API Name</label>
