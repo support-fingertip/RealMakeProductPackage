@@ -159,6 +159,11 @@ export default class BulkRaiseDemand extends LightningElement {
         return this.demandResult && this.demandResult.results && this.demandResult.results.length > 0;
     }
 
+    get progressBarStyle() {
+        const pct = Math.min(100, Math.max(0, (this.currentStep / 6) * 100));
+        return `width: ${pct}%;`;
+    }
+
     get footerContextText() {
         switch (this.currentStep) {
             case 2:
