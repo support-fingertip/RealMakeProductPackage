@@ -341,31 +341,58 @@
 
                     <!-- Footer -->
                     <footer class="slds-modal__footer custom-modal-footer">
-                        <template if:true={isStep2}>
-                            <lightning-button label="Cancel" onclick={handleClose}></lightning-button>
-                            <lightning-button label="Load Bookings" variant="brand"
-                                icon-name="utility:forward" icon-position="right"
-                                onclick={handleLoadBookings}
-                                disabled={isLoadBookingsDisabled}></lightning-button>
-                        </template>
+                        <!-- Progress bar -->
+                        <div class="footer-progress" aria-hidden="true">
+                            <div class="footer-progress-fill" style={progressBarStyle}></div>
+                        </div>
 
-                        <template if:true={isStep3}>
-                            <lightning-button label="Back" icon-name="utility:back" onclick={handleBack}></lightning-button>
-                            <lightning-button label="Review & Configure" variant="brand"
-                                icon-name="utility:forward" icon-position="right"
-                                onclick={handleGoToReview}
-                                disabled={isReviewDisabled}></lightning-button>
-                        </template>
+                        <div class="footer-body">
+                            <!-- Left: Step context -->
+                            <div class="footer-context">
+                                <span class="footer-step-pill">
+                                    <span class="footer-step-dot"></span>
+                                    Step {currentStep} of 6
+                                </span>
+                                <span class="footer-context-text">{footerContextText}</span>
+                            </div>
 
-                        <template if:true={isStep4}>
-                            <lightning-button label="Back" icon-name="utility:back" onclick={handleBack}></lightning-button>
-                            <lightning-button label="Raise Demands" variant="brand"
-                                icon-name="utility:moneybag" onclick={handleRaiseDemands}></lightning-button>
-                        </template>
+                            <!-- Right: Actions -->
+                            <div class="footer-actions">
+                                <template if:true={isStep2}>
+                                    <button type="button" class="ghost-btn" onclick={handleClose}>Cancel</button>
+                                    <lightning-button class="footer-btn footer-btn-primary"
+                                        label="Load Bookings" variant="brand"
+                                        icon-name="utility:forward" icon-position="right"
+                                        onclick={handleLoadBookings}
+                                        disabled={isLoadBookingsDisabled}></lightning-button>
+                                </template>
 
-                        <template if:true={isStep6}>
-                            <lightning-button label="Close" variant="brand" onclick={handleClose}></lightning-button>
-                        </template>
+                                <template if:true={isStep3}>
+                                    <button type="button" class="ghost-btn ghost-btn-back" onclick={handleBack}>
+                                        <span class="ghost-btn-arrow">&larr;</span> Back
+                                    </button>
+                                    <lightning-button class="footer-btn footer-btn-primary"
+                                        label="Review & Configure" variant="brand"
+                                        icon-name="utility:forward" icon-position="right"
+                                        onclick={handleGoToReview}
+                                        disabled={isReviewDisabled}></lightning-button>
+                                </template>
+
+                                <template if:true={isStep4}>
+                                    <button type="button" class="ghost-btn ghost-btn-back" onclick={handleBack}>
+                                        <span class="ghost-btn-arrow">&larr;</span> Back
+                                    </button>
+                                    <lightning-button class="footer-btn footer-btn-primary"
+                                        label="Raise Demands" variant="brand"
+                                        icon-name="utility:moneybag" onclick={handleRaiseDemands}></lightning-button>
+                                </template>
+
+                                <template if:true={isStep6}>
+                                    <lightning-button class="footer-btn footer-btn-primary"
+                                        label="Close" variant="brand" onclick={handleClose}></lightning-button>
+                                </template>
+                            </div>
+                        </div>
                     </footer>
                 </div>
             </section>
